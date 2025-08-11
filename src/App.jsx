@@ -1,35 +1,40 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Layout } from "./views/Layout";
-import { Home } from "lucide-react";
+import { Home } from "./views/Home";
 import { Favorite } from "./views/Favorite";
 import { Cart } from "./views/Cart";
 import { Checkout } from "./views/Checkout";
+import { ProductProvider } from "./context/ProductContext";
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       {
-        path: '/',
-        element: <Home />
+        path: "/",
+        element: <Home />,
       },
       {
-        path: 'favorite',
-        element: <Favorite />
+        path: "favorite",
+        element: <Favorite />,
       },
       {
-        path: 'cart',
-        element: <Cart />
+        path: "cart",
+        element: <Cart />,
       },
       {
-        path: 'checkout',
-        element: <Checkout />
+        path: "checkout",
+        element: <Checkout />,
       },
-    ]
-  }
+    ],
+  },
 ]);
 
 export default function App() {
-  return <RouterProvider router={router} />
+  return (
+    <ProductProvider>
+      <RouterProvider router={router} />
+    </ProductProvider>
+  );
 }
