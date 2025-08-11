@@ -1,30 +1,34 @@
-// HeroSection.jsx
 import React from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 export default function HeroSection() {
-  const handleClick = () => {
-    alert("Explore button was clicked!");
-  };
-
   return (
-    <section className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-around py-16 px-4">
-      <div className="text-center md:text-left mb-12 md:mb-0">
-        <h1 className="text-5xl lg:text-6xl font-extrabold text-gray-800 mb-4">
-          Play & Learn
-        </h1>
-        <p className="text-lg text-gray-600 max-w-md mb-8">
-          Discover the best toys and activities to help your child grow and have
-          fun.
+    <section className="bg-primary text-primary-foreground py-20">
+      <div className="container mx-auto px-4 text-center">
+        <h1 className="text-4xl font-bold mb-4">Welcome to BabyChub</h1>
+
+        <p className="text-lg mb-6 max-w-xl mx-auto">
+          Your one-stop shop for adorable baby essentials — where comfort meets
+          cuteness.
         </p>
-        <button
-          onClick={handleClick}
-          className="bg-purple-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-purple-700 transition-transform transform hover:scale-105"
-        >
-          Explore Now
-        </button>
-      </div>
-      <div className="flex items-center justify-center w-64 h-64 bg-purple-100 rounded-full">
-        <div className="text-4xl font-bold text-purple-700">Baby Chub</div>
+
+        {/* CTA Buttons */}
+        <div className="flex justify-center gap-4">
+          <Link to="/products">
+            <Button className="bg-muted text-muted-foreground hover:bg-muted/80">
+              Shop Now
+            </Button>
+          </Link>
+          <Link to="/about">
+            <Button
+              variant="outline"
+              className="border-white text-white hover:bg-white hover:text-primary"
+            >
+              Learn More
+            </Button>
+          </Link>
+        </div>
       </div>
     </section>
   );

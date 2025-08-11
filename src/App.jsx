@@ -1,24 +1,20 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Layout } from "./views/Layout";
-import { Home } from "lucide-react";
-
-
+import { Home } from "./views/Home";
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       {
-        path: '/',
-        element: <Home />
+        path: "/",
+        element: <Home />,
       },
-    ]
-  }
+    ],
+  },
 ]);
 
-
-
 export default function App() {
-  return <RouterProvider router={router} />
+  return <RouterProvider router={router} />;
 }
