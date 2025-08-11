@@ -1,11 +1,8 @@
 // src/components/Nav.jsx
 import React, { useState } from "react";
 import { NAV_ITEMS, HEADER_ACTIONS, ICON_BUTTONS } from "./nav-helpers";
-
-// ปรับ path รูปตามโปรเจกต์ของปุ้ย (แนะนำวางไว้ใน src/assets/)
 import search from "/images/search.svg";
-import logoMark from "/images/logosvg.svg";
-import logoText from "/images/logosvg.svg";
+import logo from "/images/logotextverticalsvg.svg";
 import user from "/images/person.svg";
 import cart from "/images/cart.svg";
 import favorite from "/images/heart.svg";
@@ -20,22 +17,21 @@ export default function Nav({ onNavigate }) {
   };
 
   return (
-    <header className="bg-background text-foreground shadow-sm">
-      {/* Top thin bar (secondary color background) */}
-      <div className="w-full bg-variable-collection-secondary">
-        <div className="max-w-container mx-auto px-4 md:px-6 lg:px-8 h-10 flex items-center justify-end gap-4 text-sm text-[color:var(--secondary-foreground)]">
+    <header className="text-foreground shadow-sm">
+      {/* Top thin bar (#543285) */}
+      <div className="w-full bg-[#543285] text-slate-50">
+        <div className="max-w-container mx-auto px-4 md:px-6 lg:px-8 h-10 flex items-center justify-end gap-4 text-lg">
           {HEADER_ACTIONS.map((a) => (
             <a
               key={a.label}
               href={a.href}
-              className="relative top-0 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]"
+              className="relative top-0 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--variable-collection-primary)]"
             >
               {a.label}
             </a>
           ))}
         </div>
       </div>
-
       {/* Main nav row */}
       <div className="max-w-container mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 py-4 md:py-5">
@@ -46,14 +42,9 @@ export default function Nav({ onNavigate }) {
             aria-label="Go to home"
           >
             <img
-              src={logoMark}
+              src={logo}
               alt="Baby Chub Brand"
               className="w-[56px] h-[46px] object-contain"
-            />
-            <img
-              src={logoText}
-              alt="Baby Chub"
-              className="w-[120px] h-[28px] object-contain"
             />
           </div>
 
@@ -67,7 +58,7 @@ export default function Nav({ onNavigate }) {
                 key={item.label}
                 onClick={() => handleNavigate(item.view)}
                 aria-pressed={item.active}
-                className={`relative text-sm font-medium whitespace-nowrap
+                className={`relative text-lg font-bold whitespace-nowrap
                   ${
                     item.active
                       ? "text-[color:var(--variable-collection-primary)]"
