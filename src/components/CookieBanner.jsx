@@ -19,3 +19,5 @@ const CookieBanner = () => {
 
 export default CookieBanner;
 //onAccept and onDecline function not ready kub
+
+//Clear specific cookie -> first go to dev mode on browser then find >> Application -> find cookie on the left tab -> then delete babyChubCookie kub
