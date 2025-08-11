@@ -22,7 +22,7 @@ const Nav = () => {
   return (
     <div className="w-full max-w-[1922px] h-[118px]">
       <div className="relative w-full max-w-[1920px] h-[118px] mx-auto">
-        <div className="h-[106px] bg-backgrounf absolute w-full top-px left-0" />
+        <div className="h-[106px] bg-background absolute w-full top-px left-0" />
         <div className="h-10 bg-variable-collection-secondary absolute w-full top-px left-0" />
         <nav className="absolute w-[989px] h-[57px] top-[49px] left-[292px] bg-white">
           <NavigationMenu>
@@ -47,15 +47,15 @@ const Nav = () => {
         <div className="absolute w-[223px] h-6 top-[9px] right-0">
           <Button
             variant="ghost"
-            className="absolute h-8 top-[-5px] left-[22px] font-m3-headline-small-emphasized
-              font-[number:var(--m3-headline-small-emphasized-font-weight)] text-backgrounf text-[length:var(--m3-headline-small-emphasized-font-size)] text-center tracking-[var(--m3-headline-small-emphasized-letter-spacing)] leading-[var(--m3-headline-small-emphasized-line-height)] whitespace-nowrap
+            className="absolute h-auto top-[-5px] left-[22px] font-m3-headline-small-emphasized
+              font-[number:var(--m3-headline-small-emphasized-font-weight)] text-background text-[length:var(--m3-headline-small-emphasized-font-size)] text-center tracking-[var(--m3-headline-small-emphasized-letter-spacing)] leading-[var(--m3-headline-small-emphasized-line-height)] whitespace-nowrap
               [font-style:var(--m3-headline-small-emphasized-font-style)] h-auto p-0"
           >
             Help
           </Button>
           <Button
             variant="ghost"
-            className="absolute h-8 top-[-5px] left-[115px] font-m3-headline-small-emphasized font-[number:var(--m3-headline-small-emphasized-font-weight)] text-backgrounf text-[length:var(--m3-headline-small-emphasized-font-size)] text-center tracking-[var(--m3-headline-small-emphasized-letter-spacing)] leading-[var(--m3-headline-small-emphasized-line-height)] whitespace-nowrap [font-style:var(--m3-headline-small-emphasized-font-style)] h-auto p-0"
+            className="absolute h-auto top-[-5px] left-[115px] font-m3-headline-small-emphasized font-[number:var(--m3-headline-small-emphasized-font-weight)] text-background text-[length:var(--m3-headline-small-emphasized-font-size)] text-center tracking-[var(--m3-headline-small-emphasized-letter-spacing)] leading-[var(--m3-headline-small-emphasized-line-height)] whitespace-nowrap [font-style:var(--m3-headline-small-emphasized-font-style)] h-auto p-0"
           >
             Sign Up
           </Button>
@@ -63,8 +63,8 @@ const Nav = () => {
         <div className="w-[90px] h-[90px] top-7 left-[116px] absolute flex items-center justify-center">
           <img
             className="w-[142px] h-[37px] object-contain"
-            alt="Baby Club Logo"
-            src=""
+            alt="BabyChub Logo"
+            src="/images/logosvg.svg"
           />
         </div>
         <div className="absolute flex items-center gap-[25px] top-[59px] right-[70px]">
