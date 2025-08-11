@@ -8,7 +8,7 @@ export function Layout() {
       <header>
         <Nav />
       </header>
-      <main className="container mx-auto px-4 py-6">
+      <main>
         <Outlet />
       </main>
       <CookieBanner />

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { NAV_ITEMS, HEADER_ACTIONS, ICON_BUTTONS } from "./nav-helpers";
 import search from "/images/search.svg";
-import logo from "/images/logotextverticalsvg.svg";
+import logo from "/images/logotextvertical.svg.svg";
 import user from "/images/person.svg";
 import cart from "/images/cart.svg";
 import favorite from "/images/heart.svg";
