@@ -1,0 +1,138 @@
+export const products = [
+  {
+    id: 1,
+    name: "Code Explorers: A Python Adventure for Kids",
+    description:
+      "Interactive Python Coding Course: This course lays the foundation for programming with Python through easy-to-understand stories and games. It's fun and ideal for beginner kids.",
+    age: [{ min: 9, max: 12 }],
+    type: "course",
+    subjects: "coding",
+    prices: [
+      { type: "monthly", value: 99 },
+      { type: "yearly", value: 990 },
+      { type: "one-time", value: null },
+    ],
+    tags: ["Coding", "Python", "KidsLearning", "Adventure"],
+    image: "/images/programming-course-adventure.png",
+    quantity: 1,
+  },
+  {
+    id: 2,
+    name: "Code with Animal Friends: Learning Logic Through Games",
+    description:
+      "Cute Animal Character Coding Course: An online curriculum that uses adorable animal characters to teach fundamental coding concepts like logical thinking, problem-solving, and sequencing. It's done through age-appropriate games and exercises.",
+    age: [{ min: 6, max: 12 }],
+    type: "course",
+    subjects: "coding",
+    prices: [
+      { type: "monthly", value: 99 },
+      { type: "yearly", value: 790 },
+      { type: "one-time", value: null },
+    ],
+    tags: ["CodingLogic", "EducationalGames", "Animal", "ProblemSolving"],
+    image: "/images/programming-course-animal.png",
+    quantity: 1,
+  },
+  {
+    id: 3,
+    name: "Student Robots: Learning AI and Coding Fundamentals",
+    description:
+      "AI and Robotics Course for Kids: Open up the world of the future for your child with this course on AI and coding concepts. The easy-to-understand format and stage-based robot missions help build essential computer skills.",
+    age: [{ min: 9, max: 12 }],
+    type: "course",
+    subjects: "coding",
+    prices: [
+      { type: "monthly", value: 139 },
+      { type: "yearly", value: 1290 },
+      { type: "one-time", value: null },
+    ],
+    tags: ["AI", "Coding", "Robotics", "STEM"],
+    image: "/images/programming-course-robotics-and-ai.png",
+    quantity: 1,
+  },
+  {
+    id: 4,
+    name: "Learning Scratch: Create Your First Game",
+    description:
+      "Scratch Programming for Children: Learn the basics of Scratch, a platform designed specifically for kids. They will create simple games on their own, fostering creativity and understanding the fundamentals of visual programming.",
+    age: [{ min: 6, max: 12 }],
+    type: "course",
+    subjects: "coding",
+    prices: [
+      { type: "monthly", value: 99 },
+      { type: "yearly", value: 890 },
+      { type: "one-time", value: null },
+    ],
+    tags: ["Scratch", "GameDevelopment", "CodingForKids", "BeginnerCoding"],
+    image: "/images/programming-course-robotics-and-ai.png",
+    quantity: 1,
+  },
+  {
+    id: 5,
+    name: "Rocket Code: A Space Adventure",
+    description:
+      "Space Adventure Coding Course: In this space adventure course, children will use programming commands to guide a spaceship through various missions, which helps to develop executive function (EF) and systematic thinking.",
+    age: [{ min: 6, max: 9 }],
+    type: "course",
+    subjects: "coding",
+    prices: [
+      { type: "monthly", value: 99 },
+      { type: "yearly", value: 990 },
+      { type: "one-time", value: null },
+    ],
+    tags: ["Coding", "Space", "Adventure", "KidsEducation"],
+    image: "/images/programming-course-space-adventure.png",
+    quantity: 1,
+  },
+  {
+    id: 6,
+    name: "Dolly Code: Learning to Code Through Stories and Activities",
+    description:
+      "Interactive Storybook Coding for Young Children: Perfect for very young children who are not yet strong readers, this course teaches coding through interactive stories and simple games. It's fun, enjoyable, and helps them naturally grasp basic concepts.",
+    age: [{ min: 4, max: 6 }],
+    type: "course",
+    subjects: "coding",
+    prices: [
+      { type: "monthly", value: 129 },
+      { type: "yearly", value: 1190 },
+      { type: "one-time", value: null },
+    ],
+    tags: ["Coding", "Stories", "Activities", "EarlyLearning"],
+    image: "/images/programming-course-learn-through-drawing.png",
+    quantity: 1,
+  },
+  {
+    id: 7,
+    name: "Code with Art: Drawing Pictures with Programs",
+    description:
+      "Art and Code Integration Course: This course combines art with coding. Children will learn to use simple programming languages to create images, draw geometric shapes, and graphic patterns, making it perfect for kids who love art.",
+    age: [{ min: 9, max: 12 }],
+    type: "course",
+    subjects: "coding",
+    prices: [
+      { type: "monthly", value: 99 },
+      { type: "yearly", value: 790 },
+      { type: "one-time", value: null },
+    ],
+    tags: ["Coding", "Art", "Creativity", "Drawing"],
+    image: "/images/programming-course-forest-adventure.png",
+    quantity: 1,
+  },
+  {
+    id: 8,
+    name: "Wonders of Shapes: The Adventures of the Mischievous Square",
+    description:
+      '"Square" is a bright blue square full of curiosity. One day, he decides to set out on a journey to explore the world and make new friends who are all shapes. He meets "Circle" who is smooth and loves to roll, "Triangle" who has sharp corners, and "Star" who sparkles. They learn about the characteristics of each shape and have fun creating things together. This story will help children learn about basic geometric shapes in a fun and enjoyable way.',
+    age: [{ min: 9, max: 12 }],
+    type: "ebook",
+    subjects: "math",
+    prices: [
+      { type: "monthly", value: null },
+      { type: "yearly", value: null },
+      { type: "one-time", value: 89 },
+    ],
+    tags: ["Shapes", "Geometry", "Storybook", "Math"],
+    image: "/images/geometry-adventure.png",
+    quantity: 1,
+  },
+];
