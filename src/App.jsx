@@ -4,7 +4,6 @@ import { Home } from "./views/Home";
 import { Favorite } from "./views/Favorite";
 import { Cart } from "./views/Cart";
 import { Checkout } from "./views/Checkout";
-import { ProductProvider } from "./context/ProductContext";
 import Nav from "./components/Nav";
 
 const router = createBrowserRouter([
@@ -33,9 +32,5 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  return (
-    <ProductProvider>
-      <RouterProvider router={router} />
-    </ProductProvider>
-  );
+  return <RouterProvider router={router} />;
 }
