@@ -5,7 +5,7 @@ import { Favorite } from "./views/Favorite";
 import { Cart } from "./views/Cart";
 import { Checkout } from "./views/Checkout";
 import { Products } from "./views/Products";
-import { ProductDetail } from "./views/SingleDetail";
+import { ProductDetail } from "./views/ProductDetail";
 
 
 const router = createBrowserRouter([
