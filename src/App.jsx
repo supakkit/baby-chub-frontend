@@ -4,7 +4,9 @@ import { Home } from "./views/Home";
 import { Favorite } from "./views/Favorite";
 import { Cart } from "./views/Cart";
 import { Checkout } from "./views/Checkout";
-import Nav from "./components/Nav";
+import { Products } from "./views/Products";
+import { ProductDetail } from "./views/SingleDetail";
+
 
 const router = createBrowserRouter([
   {
@@ -14,6 +16,14 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <Home />,
+      },
+      {
+        path: "products",
+        element: <Products />,
+      },
+      {
+        path: "products/:productId",
+        element: <ProductDetail />,
       },
       {
         path: "favorite",
