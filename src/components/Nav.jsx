@@ -1,20 +1,35 @@
-// src/components/Nav.jsx
 import React, { useState } from "react";
-import { NAV_ITEMS, HEADER_ACTIONS, ICON_BUTTONS } from "./nav-helpers";
-import search from "/images/search.svg";
+import { Link } from "react-router-dom";
+import searchIcon from "/images/search.svg";
 import logo from "/images/logotextvertical.svg.svg";
-import user from "/images/person.svg";
-import cart from "/images/cart.svg";
-import favorite from "/images/heart.svg";
+import userIcon from "/images/person.svg";
+import cartIcon from "/images/cart.svg";
+import favoriteIcon from "/images/heart.svg";
 
-export default function Nav({ onNavigate }) {
+function Nav() {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  const handleNavigate = (view) => {
-    setMenuOpen(false);
-    if (onNavigate) onNavigate(view);
-  };
+  const NAV_ITEMS = [
+    {
+      label: "All",
+      path: "/all",
+      dropdown: [
+        { label: "Ages 3 - 4", path: "/all/ages-3-4" },
+        { label: "Ages 4 - 6", path: "/all/ages-4-6" },
+        { label: "Ages 6 - 9", path: "/all/ages-6-9" },
+        { label: "Ages 9 - 12", path: "/all/ages-9-12" },
+      ],
+    },
+    { label: "About", path: "/about" },
+    { label: "New Arrival", path: "/new" },
+  ];
+
+  const HEADER_ACTIONS = [
+    { label: "Help", path: "/help" },
+    { label: "Sign Up", path: "/sign-up" },
+  ];
 
   return (
     <header className="text-foreground shadow-sm">
@@ -22,204 +37,214 @@ export default function Nav({ onNavigate }) {
       <div className="w-full bg-[#543285] text-slate-50">
         <div className="max-w-container mx-auto px-4 md:px-6 lg:px-8 h-10 flex items-center justify-end gap-4 text-lg">
           {HEADER_ACTIONS.map((a) => (
-            <a
+            <Link
               key={a.label}
-              href={a.href}
+              to={a.path}
               className="relative top-0 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--variable-collection-primary)]"
             >
               {a.label}
-            </a>
+            </Link>
           ))}
         </div>
       </div>
+
       {/* Main nav row */}
       <div className="max-w-container mx-auto px-4 md:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-4 py-4 md:py-5">
+        <div className="flex items-center justify-between gap-1 py-4 md:py-5">
           {/* Left logos */}
-          <div
+          <Link
+            to="/"
             className="flex items-center gap-3 cursor-pointer"
-            onClick={() => handleNavigate("home")}
             aria-label="Go to home"
           >
-            <img
-              src={logo}
-              alt="Baby Chub Brand"
-              className="w-[56px] h-[46px] object-contain"
-            />
-          </div>
+            <img src={logo} alt="Baby Chub Brand" className="h-18 w-auto" />
+          </Link>
 
           {/* Desktop navigation items (center) */}
           <nav
             className="hidden lg:flex items-center gap-8"
             aria-label="Product categories"
+            onMouseLeave={() => setDropdownOpen(false)}
           >
-            {NAV_ITEMS.map((item, idx) => (
-              <button
+            {NAV_ITEMS.map((item) => (
+              <div
                 key={item.label}
-                onClick={() => handleNavigate(item.view)}
-                aria-pressed={item.active}
-                className={`relative text-lg font-bold whitespace-nowrap
-                  ${
-                    item.active
-                      ? "text-[color:var(--variable-collection-primary)]"
-                      : "text-[color:var(--foreground)]"
-                  }
-                  hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]`}
+                className="relative"
+                onMouseEnter={() => item.dropdown && setDropdownOpen(true)}
               >
-                {item.label}
-                {/* optional active underline to match Figma */}
-                {item.active && (
-                  <span className="absolute -bottom-4 left-0 w-full h-1 rounded bg-[color:var(--variable-collection-primary)]" />
+                <Link
+                  to={item.path}
+                  className="relative text-lg font-bold whitespace-nowrap text-[color:var(--foreground)] hover:text-[color:var(--variable-collection-primary)] transition"
+                >
+                  {item.label}
+                </Link>
+
+                {/* Dropdown */}
+                {item.dropdown && dropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                    <ul className="py-1">
+                      {item.dropdown.map((sub) => (
+                        <li key={sub.label}>
+                          <Link
+                            to={sub.path}
+                            className="block px-4 py-2 text-shadow-md : text-gray-700 hover:bg-gray-100"
+                            onClick={() => setDropdownOpen(false)}
+                          >
+                            {sub.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
-              </button>
+              </div>
             ))}
           </nav>
 
-          {/* Right side: Search (desktop), icons, mobile menu button */}
-          <div className="flex items-center gap-4">
-            {/* Search box - visible from md up (keeps Figma layout where search sits right side) */}
-            <div className="hidden md:flex items-center bg-white rounded-[20px] shadow-[0_2px_2px_rgba(0,0,0,0.25)] px-3 py-2">
-              <button type="submit" aria-label="Search" className="mr-2">
-                <img src={search} alt="search icon" className="w-8 h-8" />
+          {/* Right side: Search, favorite, profile, cart icons */}
+          <div className="hidden md:flex items-center gap-4">
+            {/* Search box */}
+            <div className="flex items-center bg-white rounded-[20px] shadow-[0_2px_2px_rgba(0,0,0,0.25)] px-3 py-2">
+              <button
+                type="submit"
+                aria-label="Search"
+                className="mr-2"
+                onClick={() => alert(`Searching for: ${searchValue}`)}
+              >
+                <img src={searchIcon} alt="search icon" className="w-8 h-8" />
               </button>
               <input
-                id="search-input"
                 type="search"
+                placeholder="Search"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
-                placeholder="Search"
                 className="w-44 md:w-60 lg:w-72 text-sm placeholder:opacity-60 outline-none bg-transparent"
               />
             </div>
 
-            {/* Icon buttons (desktop) */}
-            <div className="hidden md:flex items-center gap-3">
-              <button
-                type="button"
-                aria-label="favorite"
-                onClick={() => handleNavigate("notifications")}
-                className="w-9 h-9 rounded hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]"
-              >
-                <img
-                  src={favorite}
-                  alt="User Icon"
-                  className="w-full h-full object-contain"
-                />
-              </button>
-              <button
-                type="button"
-                aria-label="profile"
-                onClick={() => handleNavigate("profile")}
-                className="w-9 h-9 rounded hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]"
-              >
-                <img
-                  src={user}
-                  alt="profile"
-                  className="w-full h-full object-contain"
-                />
-              </button>
-              <button
-                type="button"
-                aria-label="cart"
-                onClick={() => handleNavigate("cart")}
-                className="w-9 h-9 rounded hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]"
-              >
-                <img
-                  src={cart}
-                  alt="cart"
-                  className="w-full h-full object-contain"
-                />
-              </button>
-            </div>
-
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden inline-flex items-center justify-center p-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]"
-              onClick={() => setMenuOpen((s) => !s)}
-              aria-expanded={menuOpen}
-              aria-label="Toggle menu"
+            {/* Icon buttons */}
+            <Link
+              to="/notifications"
+              aria-label="favorite"
+              className="w-9 h-9 rounded hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]"
             >
-              <svg
-                className="w-6 h-6"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                {menuOpen ? (
-                  <path
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
+              <img
+                src={favoriteIcon}
+                alt="favorite"
+                className="w-full h-full object-contain"
+              />
+            </Link>
+
+            <Link
+              to="/profile"
+              aria-label="profile"
+              className="w-9 h-9 rounded hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]"
+            >
+              <img
+                src={userIcon}
+                alt="profile"
+                className="w-full h-full object-contain"
+              />
+            </Link>
+
+            <Link
+              to="/cart"
+              aria-label="cart"
+              className="w-9 h-9 rounded hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)] relative"
+            >
+              <img
+                src={cartIcon}
+                alt="cart"
+                className="w-full h-full object-contain"
+              />
+              {/* Badge */}
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">
+                0
+              </span>
+            </Link>
           </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden inline-flex items-center justify-center p-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]"
+            onClick={() => setMenuOpen((s) => !s)}
+            aria-expanded={menuOpen}
+            aria-label="Toggle menu"
+          >
+            <svg
+              className="w-6 h-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+            >
+              {menuOpen ? (
+                <path
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
         </div>
-      </div>
 
-      {/* Mobile dropdown - slide down */}
-      <div
-        className={`md:hidden overflow-hidden transition-all duration-350 ease-in-out ${
-          menuOpen ? "max-h-[480px] opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="px-4 pb-6 pt-3 bg-background">
-          {/* Mobile search (on top of mobile menu) */}
-          <div className="flex items-center bg-white rounded-[12px] shadow px-3 py-2 mb-3">
-            <button className="mr-3" aria-label="search">
-              <img src={search} alt="search" className="w-7 h-7" />
-            </button>
-            <input
-              type="search"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              placeholder="Search"
-              className="w-full text-sm outline-none bg-transparent"
-            />
-          </div>
-
-          {/* Mobile nav items */}
-          <nav className="flex flex-col gap-2">
-            {NAV_ITEMS.map((it) => (
-              <button
-                key={it.label}
-                onClick={() => handleNavigate(it.view)}
-                className={`text-left py-2 px-2 rounded text-sm font-medium
-                   ${
-                     it.active
-                       ? "text-[color:var(--variable-collection-primary)]"
-                       : "text-[color:var(--foreground)]"
-                   }
-                   hover:bg-[color:var(--muted)] hover:text-[color:var(--foreground)] transition`}
-              >
-                {it.label}
-              </button>
-            ))}
+        {/* Mobile dropdown menu */}
+        {menuOpen && (
+          <nav className="md:hidden bg-background px-4 pb-6 pt-3 shadow-md rounded-b-md">
+            <ul className="flex flex-col gap-3">
+              {NAV_ITEMS.map((item) => (
+                <li key={item.label}>
+                  <Link
+                    to={item.path}
+                    className="block py-2 px-3 rounded hover:bg-[color:var(--variable-collection-primary)] hover:text-white transition"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                  {/* Mobile dropdown for All submenu */}
+                  {item.dropdown && (
+                    <ul className="ml-4 mt-1 flex flex-col gap-1">
+                      {item.dropdown.map((sub) => (
+                        <li key={sub.label}>
+                          <Link
+                            to={sub.path}
+                            className="block py-1 px-3 rounded hover:bg-[color:var(--variable-collection-primary)] hover:text-white transition text-sm"
+                            onClick={() => setMenuOpen(false)}
+                          >
+                            {sub.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+              {/* Header actions mobile */}
+              {HEADER_ACTIONS.map((a) => (
+                <li key={a.label}>
+                  <Link
+                    to={a.path}
+                    className="block py-2 px-3 rounded hover:bg-[color:var(--variable-collection-primary)] hover:text-white transition"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {a.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </nav>
-
-          {/* header actions in mobile */}
-          <div className="mt-4 border-t pt-3 flex flex-col gap-2">
-            {HEADER_ACTIONS.map((a) => (
-              <a
-                key={a.label}
-                href={a.href}
-                className="text-sm text-[color:var(--foreground)] hover:text-[color:var(--variable-collection-primary)]"
-              >
-                {a.label}
-              </a>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </header>
   );
 }
+
+export default Nav;
