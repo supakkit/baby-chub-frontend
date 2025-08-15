@@ -14,7 +14,7 @@ function Nav() {
   const NAV_ITEMS = [
     {
       label: "All",
-      path: "/all",
+      path: "/products",
       dropdown: [
         { label: "Ages 3 - 4", path: "/all/ages-3-4" },
         { label: "Ages 4 - 6", path: "/all/ages-4-6" },
@@ -124,7 +124,7 @@ function Nav() {
 
             {/* Icon buttons */}
             <Link
-              to="/notifications"
+              to="/favorite"
               aria-label="favorite"
               className="w-9 h-9 rounded hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--variable-collection-primary)]"
             >
