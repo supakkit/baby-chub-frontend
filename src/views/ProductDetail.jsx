@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { ProductContext } from "../context/ProductContext";
 import { useParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
+import { toast } from "sonner";
 
 export function ProductDetail() {
   const { products } = useContext(ProductContext);
@@ -42,7 +43,10 @@ export function ProductDetail() {
         <div className="flex gap-3 p-2 justify-center">
           <button
             className="bg-purple-300 rounded-2xl p-2"
-            onClick={() => addToCart(product)}
+            onClick={() => {
+              addToCart(product);
+              toast.success("Added product to cart");
+            }}
           >
             Add to cart
           </button>
