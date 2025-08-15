@@ -13,6 +13,9 @@ export function Cart() {
                         <h3>{product.name}</h3>
                         <p>{product.description}</p>
                         <p>{product.price}</p>
+                        <button
+                            onClick={() => removeFromCart(product)}
+                        >remove</button>
                     </div>
                 )) : <div>There are no products in your shopping cart.</div>
             }
