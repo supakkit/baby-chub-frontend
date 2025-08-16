@@ -7,10 +7,11 @@ import { Checkout } from "./views/Checkout";
 import { Products } from "./views/Products";
 import { ProductDetail } from "./views/ProductDetail";
 import { Dashboard } from "./views/DashBoard";
+import { SignIn } from "./views/SignIn";
 
 
 const router = createBrowserRouter([
-  {
+    {
     path: "/",
     element: <Layout />,
     children: [
@@ -41,6 +42,10 @@ const router = createBrowserRouter([
       {
         path: "dashboard",
         element: <Dashboard />,
+      },
+       {
+        path: "signin",
+        element: <SignIn />,
       },
     ],
   },
