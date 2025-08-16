@@ -8,6 +8,7 @@ import { Products } from "./views/Products";
 import { ProductDetail } from "./views/ProductDetail";
 import { Dashboard } from "./views/DashBoard";
 import { SignIn } from "./views/SignIn";
+import { SignUp } from "./views/SignUp";
 
 
 const router = createBrowserRouter([
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
        {
         path: "signin",
         element: <SignIn />,
+      },
+       {
+        path: "signup",
+        element: <SignUp />,
       },
     ],
   },

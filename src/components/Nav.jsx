@@ -276,13 +276,14 @@ function Nav() {
         { label: "Ages 9 - 12", path: "/all/ages-9-12" },
       ],
     },
-    { label: "About", path: "/about" },
+    { label: "About Us", path: "/about-us" },
     { label: "New Arrival", path: "/new" },
   ];
 
   const HEADER_ACTIONS = [
-    { label: "Help", path: "/help" },
     { label: "Sign In", path: "/signin" },
+    { label: "Sign Up", path: "/signup" },
+    { label: "Help", path: "/help" },
   ];
 
   return (
