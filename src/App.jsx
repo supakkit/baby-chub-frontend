@@ -6,7 +6,7 @@ import { Cart } from "./views/Cart";
 import { Checkout } from "./views/Checkout";
 import { Products } from "./views/Products";
 import { ProductDetail } from "./views/ProductDetail";
-import { Dashboard } from "./views/DashBoard";
+import { Dashboard } from "./views/Dashboard";
 import { SignIn } from "./views/SignIn";
 import { SignUp } from "./views/SignUp";
 
