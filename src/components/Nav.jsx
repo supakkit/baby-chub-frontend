@@ -273,8 +273,9 @@ function Nav({ cartCount = 0 }) {
         { label: "Ages 9 - 12", path: "/all/ages-9-12" },
       ],
     },
-    { label: "About Us", path: "/about-us" }, // ใช้ของคุณ
     { label: "New Arrival", path: "/new" },
+    { label: "About Us", path: "/about-us" },
+
   ];
 
   const HEADER_ACTIONS = [
