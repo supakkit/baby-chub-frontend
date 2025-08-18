@@ -249,7 +249,6 @@
 
 // export default Nav;
 
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -303,15 +302,30 @@ function Nav() {
       <div className="max-w-container mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-1 py-4 md:py-5">
           {/* Left logos */}
-          <Link to="/" className="flex items-center gap-3 cursor-pointer" aria-label="Go to home">
+          <Link
+            to="/"
+            className="flex items-center gap-3 cursor-pointer"
+            aria-label="Go to home"
+          >
             {/* ✅ เปลี่ยนเป็น src="/images/..." */}
-            <img src="/images/logotextvertical.svg" alt="Baby Chub Brand" className="h-18 w-auto" />
+            <img
+              src="/images/logotextvertical.svg"
+              alt="Baby Chub Brand"
+              className="h-18 w-auto"
+            />
           </Link>
 
           {/* Desktop navigation items */}
-          <nav className="hidden lg:flex items-center gap-8" onMouseLeave={() => setDropdownOpen(false)}>
+          <nav
+            className="hidden lg:flex items-center gap-8"
+            onMouseLeave={() => setDropdownOpen(false)}
+          >
             {NAV_ITEMS.map((item) => (
-              <div key={item.label} className="relative" onMouseEnter={() => item.dropdown && setDropdownOpen(true)}>
+              <div
+                key={item.label}
+                className="relative"
+                onMouseEnter={() => item.dropdown && setDropdownOpen(true)}
+              >
                 <Link
                   to={item.path}
                   className="text-lg font-bold whitespace-nowrap text-[color:var(--foreground)] hover:text-[color:var(--variable-collection-primary)]"
@@ -324,7 +338,11 @@ function Nav() {
                     <ul className="py-1">
                       {item.dropdown.map((sub) => (
                         <li key={sub.label}>
-                          <Link to={sub.path} className="block px-4 py-2 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>
+                          <Link
+                            to={sub.path}
+                            className="block px-4 py-2 hover:bg-gray-100"
+                            onClick={() => setDropdownOpen(false)}
+                          >
                             {sub.label}
                           </Link>
                         </li>
@@ -340,9 +358,17 @@ function Nav() {
           <div className="hidden md:flex items-center gap-4">
             {/* Search box */}
             <div className="flex items-center bg-white rounded-[20px] shadow px-3 py-2">
-              <button type="submit" className="mr-2" onClick={() => alert(`Searching for: ${searchValue}`)}>
+              <button
+                type="submit"
+                className="mr-2"
+                onClick={() => alert(`Searching for: ${searchValue}`)}
+              >
                 {/* ✅ เปลี่ยนเป็น src="/images/..." */}
-                <img src="/images/search.svg" alt="search icon" className="w-8 h-8" />
+                <img
+                  src="/images/search.svg"
+                  alt="search icon"
+                  className="w-8 h-8"
+                />
               </button>
               <input
                 type="search"
@@ -356,20 +382,34 @@ function Nav() {
             {/* Favorite */}
             <Link to="/favorite" className="w-9 h-9">
               {/* ✅ เปลี่ยนเป็น src="/images/..." */}
-              <img src="/images/heart.svg" alt="favorite" className="w-full h-full object-contain" />
+              <img
+                src="/images/heart.svg"
+                alt="favorite"
+                className="w-full h-full object-contain"
+              />
             </Link>
 
             {/* Profile */}
             <Link to="/profile" className="w-9 h-9">
               {/* ✅ เปลี่ยนเป็น src="/images/..." */}
-              <img src="/images/person.svg" alt="profile" className="w-full h-full object-contain" />
+              <img
+                src="/images/person.svg"
+                alt="profile"
+                className="w-full h-full object-contain"
+              />
             </Link>
 
             {/* Cart */}
             <Link to="/cart" className="w-9 h-9 relative">
               {/* ✅ เปลี่ยนเป็น src="/images/..." */}
-              <img src="/images/cart.svg" alt="cart" className="w-full h-full object-contain" />
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">0</span>
+              <img
+                src="/images/cart.svg"
+                alt="cart"
+                className="w-full h-full object-contain"
+              />
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">
+                0
+              </span>
             </Link>
           </div>
         </div>
