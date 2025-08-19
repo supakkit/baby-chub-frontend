@@ -8,6 +8,8 @@ import { Products } from "./views/Products";
 import { ProductDetail } from "./views/ProductDetail";
 import { Dashboard } from "./views/Dashboard";
 import { SignIn } from "./views/SignIn";
+import { SignUp } from "./views/SignUp";
+import { ForgotPassword } from "./views/ForgotPassword";
 
 
 const router = createBrowserRouter([
@@ -46,6 +48,14 @@ const router = createBrowserRouter([
        {
         path: "signin",
         element: <SignIn />,
+      },
+       {
+        path: "signup",
+        element: <SignUp />,
+      },
+       {
+        path: "forgot-password",
+        element: <ForgotPassword />,
       },
     ],
   },
