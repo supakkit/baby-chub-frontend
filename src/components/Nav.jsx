@@ -249,6 +249,7 @@ import { Link } from "react-router-dom";
 
 function Nav({ cartCount = 0 }) {
   // desktop dropdown: เปิดตาม index ของ NAV_ITEMS
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [openIndex, setOpenIndex] = useState(null); // number | null
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -373,7 +374,7 @@ function Nav({ cartCount = 0 }) {
                 onChange={(e) => setSearchValue(e.target.value)}
                 className="w-44 md:w-60 lg:w-72 text-sm placeholder:opacity-60 outline-none bg-transparent"
               />
-            </form>
+            </div>
 
             {/* Favorite */}
             <Link to="/favorite" className="w-9 h-9">
