@@ -1,10 +1,5 @@
 // import React, { useState } from "react";
 // import { Link } from "react-router-dom";
-// import searchIcon from "/images/search.svg";
-// import logo from "/images/logotextvertical.svg";
-// import userIcon from "/images/person.svg";
-// import cartIcon from "/images/cart.svg";
-// import favoriteIcon from "/images/heart.svg";
 
 // function Nav() {
 //   const [dropdownOpen, setDropdownOpen] = useState(false);
