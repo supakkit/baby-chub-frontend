@@ -16,7 +16,7 @@ export function Cart() {
                     <div className="lg:w-3/5 grid gap-4">
                         {
                             cartItems.map(product => (
-                                <ProductSummaryCard key={product.id} product={product} removeFromCart={removeFromCart} />
+                                <ProductSummaryCard key={product.id} product={product} selectedPlan={product.selectedPlan} removeFromCart={removeFromCart} />
                             )) 
                         }    
                     </div>

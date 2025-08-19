@@ -31,7 +31,7 @@ export function ProductSummaryCard({ product, removeFromCart }) {
                   ></div>
                   <p
                     className="text-sm"
-                  >{product.prices[0].value} THB</p>
+                  >{product.selectedPlan} THB</p>
               </div>
               <p
                 className="text-sm line-clamp-2"

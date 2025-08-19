@@ -13,16 +13,17 @@ import { useParams } from "react-router-dom";
 import { useContext } from "react";
 import { ProductContext } from "../context/ProductContext";
 
-export function PlanSelectionCard() {
+export function PlanSelectionCard({onPlanChange, defaultValue}) {
   const { products } = useContext(ProductContext);
   const { productId } = useParams();
 
   const product = products.find((product) => product.id === productId);
-  const availablePrices = product.prices.filter((p) => p.value !== null);
-  const defaultValue = availablePrices[0]?.value ?? "";
   if (!product) {
     return <div>Product not found.</div>;
   }
+
+  const availablePrices = product.prices.filter((p) => p.value !== null);
+
   return (
     <div className="pb-4">
       <Card className="max-w-xs shadow-sm">
@@ -31,7 +32,10 @@ export function PlanSelectionCard() {
           <CardDescription>Select your preferred plan</CardDescription>
         </CardHeader>
         <CardContent>
-          <RadioGroup defaultValue={defaultValue}>
+          <RadioGroup
+            defaultValue={defaultValue}
+            onValueChange={(value) => onPlanChange(value)}
+          >
             {availablePrices.map((price, index) => {
               const id = `price-${index}`;
               return (

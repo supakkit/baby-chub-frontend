@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
 import { useParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
@@ -11,6 +11,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { PlanSelectionCard } from "../components/PlanSelectionCard";
+import { Button } from "@/components/ui/button";
 
 export function ProductDetail() {
   const { products } = useContext(ProductContext);
@@ -18,6 +19,11 @@ export function ProductDetail() {
   const { addToCart } = useContext(CartContext);
 
   const product = products.find((product) => product.id === productId);
+
+  const availablePrices = product.prices.filter((p) => p.value !== null);
+  const defaultPlan = availablePrices[0]?.value || null;
+  const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
+
   if (!product) {
     return <div>Product not found.</div>;
   }
@@ -71,7 +77,12 @@ export function ProductDetail() {
           <p className="pb-4">Type: {product.type}</p>
           <p className="pb-4">Subject: {product.subjects}</p>
           <p className="pb-4">Tag: {product.tags.join(", ")}</p>
-          <PlanSelectionCard />
+          {/* Select Plan */}
+          <PlanSelectionCard
+            onPlanChange={setSelectedPlan}
+            defaultValue={defaultPlan}
+          />
+          <p>{selectedPlan} Baht</p>
         </div>
         <div className="flex gap-12 p-4 justify-end">
           <img
@@ -87,12 +98,15 @@ export function ProductDetail() {
             src="/images/addToCart.svg"
             alt=""
             onClick={() => {
-              addToCart(product);
+              addToCart({...product, selectedPlan});
             }}
           />
-          <button className="bg-[#543285] rounded-2xl p-2 px-36 text-white cursor-pointer">
+          <Button
+            variant="default"
+            className="w-xs justify-self-end cursor-pointer"
+          >
             Checkout
-          </button>
+          </Button>
         </div>
       </div>
     </div>
