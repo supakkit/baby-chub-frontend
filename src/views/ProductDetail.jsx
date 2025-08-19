@@ -88,7 +88,6 @@ export function ProductDetail() {
             alt=""
             onClick={() => {
               addToCart(product);
-              toast.success("Added product to cart");
             }}
           />
           <button className="bg-[#543285] rounded-2xl p-2 px-36 text-white cursor-pointer">

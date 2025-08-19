@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CartContext } from "./CartContext";
-
+import { toast } from "sonner";
 
 export function CartProvider({ children }) {
     const [cartItems, setCartItems] = useState( getItemFromLocalStorage() );
@@ -10,8 +10,10 @@ export function CartProvider({ children }) {
 
         if (!isItemInCart) {
             setCartItems([...cartItems, item]);
+            toast.success("Added product to cart");
         } else {
-            console.log("this product is already in your cart")
+            // console.log("this product is already in your cart");
+            toast.success("Already in cart");
         }
     }
 
