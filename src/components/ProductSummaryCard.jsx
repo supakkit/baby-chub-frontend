@@ -1,8 +1,26 @@
-import { Badge } from "@/components/ui/badge"
+import { useContext, useState } from "react";
+import { CartContext } from "../context/CartContext";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
+export function ProductSummaryCard({ product }) {
+  const [selectedOption, setSelectedOption] = useState('monthly');
+  const { selectPlanInCart, removeFromCart } = useContext(CartContext);
 
-export function ProductSummaryCard({ product, removeFromCart }) {
-
+  const handlePlan = (value) => {
+    setSelectedOption(value);
+    selectPlanInCart(product, {
+      [value]: product.prices[value]
+    });
+  }
 
   return (
       <div className="flex gap-6 rounded-lg h-36 hover:bg-neutral-50 relative pr-4">
@@ -31,7 +49,24 @@ export function ProductSummaryCard({ product, removeFromCart }) {
                   ></div>
                   <p
                     className="text-sm"
-                  >{product.prices[0].value} THB</p>
+                  >
+                    {product.selectPlan?.[selectedOption] || product.prices.oneTime || product.prices.monthly} THB
+                  </p>
+                  <p
+                    className="text-sm"
+                  >{product.prices.oneTime ? null :
+                    <Select defaultValue={selectedOption} onValueChange={handlePlan}>
+                      <SelectTrigger className="">
+                        <SelectValue placeholder="Select your plan" />
+                      </SelectTrigger>
+                      <SelectContent >
+                        <SelectGroup >
+                          <SelectItem value="monthly" selected>Monthly</SelectItem>
+                          <SelectItem value="yearly">Yearly</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  }</p>
               </div>
               <p
                 className="text-sm line-clamp-2"

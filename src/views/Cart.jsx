@@ -4,10 +4,10 @@ import { ProductSummaryCard } from "../components/ProductSummaryCard";
 import { TotalPriceCard } from "../components/TotalPriceCard";
 
 export function Cart() {
-    const { cartItems, removeFromCart, clearCart } = useContext(CartContext);
+    const { cartItems, clearCart } = useContext(CartContext);
 
     return (
-        <div className="p-8">
+        <div className="">
             <div
                 className="text-5xl font-bold text-center text-primary pb-4"
             >Cart</div>
@@ -16,7 +16,7 @@ export function Cart() {
                     <div className="lg:w-3/5 grid gap-4">
                         {
                             cartItems.map(product => (
-                                <ProductSummaryCard key={product.id} product={product} removeFromCart={removeFromCart} />
+                                <ProductSummaryCard key={product.id} product={product} />
                             )) 
                         }    
                     </div>

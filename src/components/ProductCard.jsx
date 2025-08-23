@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "./ui/button";
-
+import { Badge } from "@/components/ui/badge";
 
 
 export function ProductCard({ product }) {
@@ -22,24 +22,11 @@ export function ProductCard({ product }) {
         navigate(`/products/${productId}`);
     }
 
-    function productPrice(product) {
-        let price;
-        let unit;
+    const productPrice = (product) => {
+        const minPrice = product.prices.oneTime || product.prices.monthly;
+        const maxPrice = product.prices.oneTime ? null : product.prices.yearly;
 
-        if (product.prices[0].value) {
-            price = product.prices[0].value;
-            unit = 'bath/month';
-        } else {
-            price = product.prices[2].value;
-            unit = 'bath';
-        }
-
-        return (
-            <>
-                <p>{price}</p>
-                <p>{unit}</p>
-            </>
-        );
+        return <>{minPrice}฿{maxPrice ? ` - ${maxPrice}฿` : null}</>
     }
 
     return (
@@ -47,21 +34,26 @@ export function ProductCard({ product }) {
             onClick={() => handleViewProducts(product.id)}
             className="justify-between"
         >
-            <CardContent className="">
+            <CardContent className="grid gap-2">
                 <img
                     src={product.image}
                     alt=""
                     className="rounded-lg"
                 />
-                <h3>{product.name}</h3>
-                <p>{product.type}</p>
+                <h3
+                    className="text-lg md:text-xl font-semibold line-clamp-2"
+                >{product.name}</h3>
+                <Badge 
+                    variant="default"
+                    className=""
+                  >{product.type}</Badge>
                 <p
-                    className="line-clamp-3"
+                    className="text-sm line-clamp-3"
                 >{product.description}</p>
             </CardContent>
             <CardContent className="flex justify-between">
                 <div>
-                    {productPrice(product)}
+                    <p>{productPrice(product)}</p>
                 </div>
                 <Button
                     onClick={(event) => {
