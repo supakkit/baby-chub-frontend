@@ -32,7 +32,7 @@ export function ProductCard({ product }) {
     return (
         <Card 
             onClick={() => handleViewProducts(product.id)}
-            className="justify-between"
+            className="justify-between h-fit"
         >
             <CardContent className="grid gap-2">
                 <img
