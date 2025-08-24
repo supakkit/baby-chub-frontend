@@ -9,7 +9,8 @@ export function Products() {
     
 
     return (
-        <div>
+        <div className="layout"> 
+        {/* ขออนุญาตลองเพิ่ม layout class ดูนะคะ */}
             <div
                 className="text-5xl font-bold text-center text-primary pb-4"
             >Products</div>
