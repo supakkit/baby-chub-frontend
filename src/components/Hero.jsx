@@ -48,7 +48,7 @@ export default function Hero() {
           <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl font-bold mb-4 leading-tight text-foreground">
             Turning screen time,
             <br />
-            Into learning time.
+            into learning time.
           </motion.h1>
           <motion.p variants={itemVariants} className="text-lg text-muted-foreground mb-8">
             Curated educational toys for every age, every milestone.
