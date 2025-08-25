@@ -13,7 +13,7 @@ import { useParams } from "react-router-dom";
 import { useContext } from "react";
 import { ProductContext } from "../context/ProductContext";
 
-export function PlanSelectionCard({onPlanChange, defaultValue}) {
+export function PlanSelectionCard({ onPlanChange, defaultValue }) {
   const { products } = useContext(ProductContext);
   const { productId } = useParams();
 
@@ -21,8 +21,13 @@ export function PlanSelectionCard({onPlanChange, defaultValue}) {
   if (!product) {
     return <div>Product not found.</div>;
   }
+  // First version when "prices" data uses an array of objects kub (keep it for learning code reason)
+  // const availablePrices = product.prices.filter((p) => p.value !== null);
 
-  const availablePrices = product.prices.filter((p) => p.value !== null);
+  //use entries method to
+  const availablePrices = Object.entries(product.prices).filter(
+    ([, value]) => value !== null
+  );
 
   return (
     <div className="pb-4">
@@ -33,18 +38,18 @@ export function PlanSelectionCard({onPlanChange, defaultValue}) {
         </CardHeader>
         <CardContent>
           <RadioGroup
-            defaultValue={defaultValue}
-            onValueChange={(value) => onPlanChange(value)}
+            defaultValue={defaultValue ? JSON.stringify(defaultValue) : ""}
+            onValueChange={(value) => onPlanChange(JSON.parse(value))}
           >
-            {availablePrices.map((price, index) => {
+            {availablePrices.map(([type, value], index) => {
               const id = `price-${index}`;
               return (
                 <div className="flex items-center space-x-2 mb-4" key={index}>
-                  <RadioGroupItem value={price.value} id={id} />
+                  <RadioGroupItem value={JSON.stringify({ type, value })} id={id} />
                   <Label htmlFor={id} className="flex flex-col">
-                    <span className="font-semibold">{price.type} plan</span>
+                    <span className="font-semibold">{type} plan</span>
                     <span className="text-sm text-muted-foreground">
-                      {price.value} Baht
+                      {value} Baht
                     </span>
                   </Label>
                 </div>

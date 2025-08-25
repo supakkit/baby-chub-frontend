@@ -20,8 +20,12 @@ export function ProductDetail() {
 
   const product = products.find((product) => product.id === productId);
 
-  const availablePrices = product.prices.filter((p) => p.value !== null);
-  const defaultPlan = availablePrices[0]?.value || null;
+  const availablePrices = Object.entries(product.prices).filter(
+    ([, value]) => value !== null
+  );
+  const defaultPlan = availablePrices.length
+    ? { type: availablePrices[0][0], value: availablePrices[0][1] }
+    : null;
   const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
 
   if (!product) {
@@ -82,7 +86,7 @@ export function ProductDetail() {
             onPlanChange={setSelectedPlan}
             defaultValue={defaultPlan}
           />
-          <p>{selectedPlan} Baht</p>
+          <p>{selectedPlan?.value} Baht ({selectedPlan?.type})</p>
         </div>
         <div className="flex gap-12 p-4 justify-end">
           <img
@@ -98,7 +102,7 @@ export function ProductDetail() {
             src="/images/addToCart.svg"
             alt=""
             onClick={() => {
-              addToCart({...product, selectedPlan});
+              addToCart({ ...product, selectedPlan });
             }}
           />
           <Button
