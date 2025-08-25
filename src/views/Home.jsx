@@ -10,7 +10,6 @@ export function Home() {
       <Hero />
       <BestSellers />
       <Partners />
-      <Footer />
     </>
   );
 }
