@@ -11,7 +11,7 @@ export function Cart() {
             <div
                 className="text-5xl font-bold text-center text-primary pb-4"
             >Cart</div>
-            {cartItems[0] ? 
+            {cartItems.length > 0 ? 
                 <div className="flex flex-col lg:flex-row h-full gap-12">
                     <div className="lg:w-3/5 grid gap-4">
                         {
@@ -28,7 +28,6 @@ export function Cart() {
                     className="text-2xl font-semibold text-center text-primary/80 pt-24"
                 >There are no products in your shopping cart.</div>
             }
-            
         </div>
     );
 }
