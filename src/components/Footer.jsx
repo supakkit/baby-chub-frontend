@@ -87,7 +87,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="/help#faq"
+                  href="/help#help-top"
                   className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
                 >
                   Help Center
@@ -125,20 +125,21 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="/help#terms"
-                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
-                >
-                  Terms of Service
-                </a>
-              </li>
-              <li>
-                <a
                   href="/help#privacy"
                   className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
                 >
                   Privacy Policy
                 </a>
               </li>
+              <li>
+                <a
+                  href="/help#terms"
+                  className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
+                >
+                  Terms of Service
+                </a>
+              </li>
+              
             </ul>
           </div>
           <div className="space-y-4">

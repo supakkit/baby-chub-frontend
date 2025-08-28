@@ -215,7 +215,7 @@ export function Help() {
   return (
     <div className="bg-[color:var(--background)] text-[color:var(--foreground)]">
       {/* ------------------------------- HERO -------------------------------- */}
-      <section className="layout mx-auto px-4 pt-10 pb-6 md:pt-14 md:pb-10">
+      <section id="help-top" className="layout mx-auto px-4 pt-10 pb-6 md:pt-14 md:pb-10 scroll-mt-24">
         <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
           Help & Support
         </h1>
@@ -226,7 +226,6 @@ export function Help() {
       </section>
 
       {/* ---------------------------- QUICK LINKS ---------------------------- */}
-      {/* ถ้าอยาก “เต็มจอจริงๆ” ให้เปลี่ยน section นี้เป็น w-screen + bleed ตามที่คุยก่อนหน้า */}
       <section className="layout mx-auto px-4 pb-6 md:pb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
           {[
