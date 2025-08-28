@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Nav from "../components/Nav";
 import CookieBanner from "../components/CookieBanner";
+import Footer from "../components/Footer";
 
 export function Layout() {
   return (
@@ -11,6 +12,10 @@ export function Layout() {
       <main>
         <Outlet />
       </main>
+      <footer>
+        <Footer />
+      </footer>
+      
       <CookieBanner />
     </>
   );

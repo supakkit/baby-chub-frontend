@@ -1,8 +1,17 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
 import { useParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { toast } from "sonner";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { PlanSelectionCard } from "../components/PlanSelectionCard";
+import { Button } from "@/components/ui/button";
 
 export function ProductDetail() {
   const { products } = useContext(ProductContext);
@@ -10,47 +19,98 @@ export function ProductDetail() {
   const { addToCart } = useContext(CartContext);
 
   const product = products.find((product) => product.id === productId);
-  console.log("id", productId);
+
+  const availablePrices = Object.entries(product.prices).filter(
+    ([, value]) => value !== null
+  );
+  const defaultPlan = availablePrices.length
+    ? { type: availablePrices[0][0], value: availablePrices[0][1] }
+    : null;
+  const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
+
   if (!product) {
     return <div>Product not found.</div>;
   }
 
   return (
-    <div className="flex">
-      <div className="flex w-1/2">
-        <img src="" alt="" />
+    <div className="flex p-20">
+      <div className="flex flex-col items-center w-4/10 p-10">
+        <div className="pb-10">
+          <Carousel className="w-full max-w-xs cursor-pointer">
+            <CarouselContent>
+              <CarouselItem>
+                <div className="p-1">
+                  <img src={product.image} alt="" className="" />
+                </div>
+              </CarouselItem>
+              <CarouselItem>
+                <div className="p-1">
+                  <img src={product.image} alt="" className="" />
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselPrevious className="cursor-pointer" />
+            <CarouselNext className="cursor-pointer" />
+          </Carousel>
+        </div>
+        <div className="">
+          <Carousel>
+            <CarouselContent className="gap-1">
+              <CarouselItem className="md:basis-1/2 lg:basis-1/3 cursor-pointer">
+                <img src={product.image} alt="" />
+              </CarouselItem>
+              <CarouselItem className="md:basis-1/2 lg:basis-1/3 cursor-pointer">
+                <img src="/images/programming-course-animal.png" alt="" />
+              </CarouselItem>
+              <CarouselItem className="md:basis-1/2 lg:basis-1/3 cursor-pointer">
+                <img src="/images/LearningTime.png" alt="" />
+              </CarouselItem>
+              <CarouselItem className="md:basis-1/2 lg:basis-1/3 cursor-pointer">
+                <img src="/images/money2.jpg" alt="" />
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselPrevious className="cursor-pointer" />
+            <CarouselNext className="cursor-pointer" />
+          </Carousel>
+        </div>
       </div>
-      <div className="flex flex-col w-1/2 p-4">
-        <h1 className="flex justify-center p-4">{product.name}</h1>
-        <p className="flex text-justify">&nbsp;{product.description}</p>
-        <p>Type: {product.type}</p>
-        <p>Subject: {product.subjects}</p>
-        <p>Tag: {product.tags.join(", ")}</p>
-
-        {/* Use filter to sort out unavailable price and use .map with => func to return p.price as a new paragraph kub*/}
-        <p>
-          {product.prices
-            .filter((p) => p.value !== null)
-            .map((price, index) => {
-              return (
-                <p key={index}>
-                  {price.type} plan: {price.value} Baht
-                </p>
-              );
-            })}
-        </p>
-
-        <div className="flex gap-3 p-2 justify-center">
-          <button
-            className="bg-purple-300 rounded-2xl p-2"
+      <div className="flex flex-col w-6/10 text-[#543285] p-10">
+        <div className="flex flex-col pr-40">
+          <h1 className="font-bold pb-4 text-5xl">{product.name}</h1>
+          <p className="text text-justify pb-8">{product.description}</p>
+          <p className="pb-4">Type: {product.type}</p>
+          <p className="pb-4">Subject: {product.subjects}</p>
+          <p className="pb-4">Tag: {product.tags.join(", ")}</p>
+          {/* Select Plan */}
+          <PlanSelectionCard
+            onPlanChange={setSelectedPlan}
+            defaultValue={defaultPlan}
+          />
+          <p>{selectedPlan?.value} Baht ({selectedPlan?.type})</p>
+        </div>
+        <div className="flex gap-12 p-4 justify-end">
+          <img
+            className="h-10 cursor-pointer"
+            src="/images/heart.svg"
+            alt=""
             onClick={() => {
-              addToCart(product);
-              toast.success("Added product to cart");
+              toast.success("Added product to favorite");
             }}
+          />
+          <img
+            className="h-10 cursor-pointer"
+            src="/images/addToCart.svg"
+            alt=""
+            onClick={() => {
+              addToCart({ ...product, selectedPlan });
+            }}
+          />
+          <Button
+            variant="default"
+            className="w-xs justify-self-end cursor-pointer"
           >
-            Add to cart
-          </button>
-          <button className="bg-red-300 rounded-2xl p-2">Checkout</button>
+            Checkout
+          </Button>
         </div>
       </div>
     </div>
