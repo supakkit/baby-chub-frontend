@@ -33,10 +33,7 @@ export default function Nav() {
     { label: "New Arrival", path: "/new" },
   ];
 
-  const HEADER_ACTIONS = [
-    { label: "Log In", path: "/signin" },
-    { label: "Sign Up", path: "/signup" },
-  ];
+  const HEADER_ACTIONS = [{ label: "Sign Up", path: "/signup" }];
 
   return (
     <header className="sticky top-0 z-50 shadow-sm bg-white">
