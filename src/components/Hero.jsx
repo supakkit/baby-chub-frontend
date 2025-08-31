@@ -23,13 +23,13 @@ export default function Hero() {
         <div className="relative group mb-6">
 
           <img
-            src="public\images\logosvg.svg" 
+            src="\images\logosvg.svg" 
             alt="Baby Chub Mascot Sleeping"
             className="w-48 h-48 md:w-56 md:h-56 object-contain group-hover:opacity-0"
           />
 
           <img
-            src="public\images\logo-wow.svg"
+            src="\images\logo-wow.svg"
             alt="Baby Chub Mascot Awake"
             className="absolute top-0 left-0 w-48 h-48 md:w-56 md:h-56 object-contain opacity-0 group-hover:opacity-100"
           />
