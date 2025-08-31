@@ -3,12 +3,37 @@ import { CartContext } from "./CartContext";
 import { toast } from "sonner";
 
 export function CartProvider({ children }) {
-    const [cartItems, setCartItems] = useState( getItemFromLocalStorage() );
-    
-    const addToCart = (item, selectPlan) => {
-        selectPlan = selectPlan ? selectPlan :
-                        item.prices.oneTime ? { 'oneTime': item.prices.oneTime } :
-                        { 'monthly': item.prices.monthly }
+    const [cartItems, setCartItems] = useState( getCartItemsFromLocalStorage() );
+
+    const ONETIME = 'oneTime';
+    const MONTHLY = 'monthly';
+    const YEARLY = 'yearly';
+   
+   const selectPlanInCart = (item, selectPlan = null) => {
+        const plan = selectPlan
+            ? { [selectPlan]: item.prices[selectPlan] }
+            : item.prices.oneTime
+            ? { 'oneTime': item.prices.oneTime }
+            : { 'monthly': item.prices.monthly }
+
+        const indexOfItem = cartItems.findIndex(cartItem => cartItem.id === item.id);
+        
+        if (indexOfItem !== -1) {
+            cartItems[indexOfItem] = {
+                ...cartItems[indexOfItem],
+                selectPlan: plan
+            }
+
+            setCartItems([...cartItems]);
+        }
+    }
+
+    const addToCart = (item, selectPlan = null) => {
+        const plan = selectPlan
+            ? { [selectPlan]: item.prices[selectPlan] }
+            : item.prices.oneTime
+            ? { 'oneTime': item.prices.oneTime }
+            : { 'monthly': item.prices.monthly }
 
         const indexOfItem = cartItems.findIndex(cartItem => cartItem.id === item.id);
 
@@ -20,25 +45,12 @@ export function CartProvider({ children }) {
                 type: item.type, 
                 image: item.image,
                 prices: item.prices,
-                selectPlan: selectPlan
+                selectPlan: plan
             }]);
 
             toast.success("Added product to cart");
         } else {
             toast.success("Already in cart");
-        }
-    }
-
-    const selectPlanInCart = (item, selectPlan) => {
-        const indexOfItem = cartItems.findIndex(cartItem => cartItem.id === item.id);
-        
-        if (indexOfItem !== -1) {
-            cartItems[indexOfItem] = {
-                ...cartItems[indexOfItem],
-                selectPlan: selectPlan
-            }
-
-            setCartItems([...cartItems]);
         }
     }
 
@@ -53,21 +65,10 @@ export function CartProvider({ children }) {
         setCartItems([]);
     }
 
-    const getCartTotal = () => {
-        return cartItems.reduce((total, item) => total + Object.values(item.selectPlan)[0], 0);
-    }
-
-    function getItemFromLocalStorage() {
+    function getCartItemsFromLocalStorage() {
         return localStorage.getItem("cartItems") ? 
             JSON.parse(localStorage.getItem("cartItems")) : [];
     }
-
-    // useEffect(() => {
-    //     const cartItems = localStorage.getItem("cartItems");
-    //     if (cartItems) {
-    //         setCartItems(JSON.parse(cartItems));
-    //     }
-    // }, [])
 
     useEffect(() => {
         localStorage.setItem("cartItems", JSON.stringify(cartItems));
@@ -76,11 +77,14 @@ export function CartProvider({ children }) {
     return (
         <CartContext.Provider
             value={{
-                cartItems, 
+                ONETIME,
+                MONTHLY,
+                YEARLY,
+                cartItems,
+                setCartItems,
                 addToCart,
                 removeFromCart,
                 clearCart,
-                getCartTotal,
                 selectPlanInCart,
             }}
         >

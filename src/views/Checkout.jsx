@@ -1,28 +1,25 @@
 import { useContext } from "react";
-import { CartContext } from "../context/CartContext";
 import { ProductSummaryCard } from "../components/ProductSummaryCard";
 import { CheckoutCard } from "../components/CheckoutCard";
-
+import { CheckoutContext } from "../context/CheckoutContext";
 
 
 export function Checkout() {
-    const { cartItems } = useContext(CartContext);
+    const { checkoutItems } = useContext(CheckoutContext);
 
     return (
-        <div className="">
+        <div className="min-h-screen">
             <div
                 className="text-5xl font-bold text-center text-primary pb-4"
             >Checkout</div>
-            {cartItems.length > 0 ? 
-                <div className="flex flex-col lg:flex-row h-full gap-12">
-                    <div className="lg:w-3/5 flex flex-col gap-4">
-                        {
-                            cartItems.map(product => (
-                                <ProductSummaryCard key={product.id} product={product} />
-                            )) 
-                        }    
+            {checkoutItems.length > 0 ? 
+                <div className="flex flex-col items-center lg:flex-row lg:items-start gap-12">
+                    <div className="flex flex-col gap-4">
+                        {checkoutItems.map(product => (
+                            <ProductSummaryCard key={product.id} isEdit={false} product={product} />
+                        ))}
                     </div>
-                    <div className="md:w-2/3 md:self-end lg:w-2/5 lg:self-end lg:sticky bottom-8">
+                    <div className="md:w-1/2 md:self-end lg:w-xl lg:self-end lg:sticky bottom-8">
                         <CheckoutCard />
                     </div>
                 </div> : 

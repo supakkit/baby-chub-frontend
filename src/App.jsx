@@ -10,6 +10,7 @@ import { Dashboard } from "./views/Dashboard";
 import { SignIn } from "./views/SignIn";
 import { SignUp } from "./views/SignUp";
 import { ForgotPassword } from "./views/ForgotPassword";
+import { PendingPayment } from "./views/PendingPayment";
 
 
 const router = createBrowserRouter([
@@ -56,6 +57,10 @@ const router = createBrowserRouter([
        {
         path: "forgot-password",
         element: <ForgotPassword />,
+      },
+      {
+        path: "pending-payment",
+        element: <PendingPayment />,
       },
     ],
   },

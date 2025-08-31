@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { toast } from "sonner";
 import {
@@ -12,11 +12,13 @@ import {
 } from "@/components/ui/carousel";
 import { PlanSelectionCard } from "../components/PlanSelectionCard";
 import { Button } from "@/components/ui/button";
+import { CheckoutContext } from "../context/CheckoutContext";
 
 export function ProductDetail() {
   const { products } = useContext(ProductContext);
   const { productId } = useParams();
   const { addToCart } = useContext(CartContext);
+  const { addToCheckout } = useContext(CheckoutContext);
 
   const product = products.find((product) => product.id === productId);
 
@@ -106,10 +108,11 @@ export function ProductDetail() {
             }}
           />
           <Button
+            asChild
             variant="default"
             className="w-xs justify-self-end cursor-pointer"
           >
-            Checkout
+            <Link to='/checkout' onClick={() => addToCheckout(product, selectedPlan.type)}>Checkout</Link>
           </Button>
         </div>
       </div>

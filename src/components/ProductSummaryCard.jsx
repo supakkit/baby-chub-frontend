@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { CartContext } from "../context/CartContext";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,25 +11,19 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export function ProductSummaryCard({ product }) {
-  const [selectedOption, setSelectedOption] = useState('monthly');
-  const { selectPlanInCart, removeFromCart } = useContext(CartContext);
-
-  const handlePlan = (value) => {
-    setSelectedOption(value);
-    selectPlanInCart(product, {
-      [value]: product.prices[value]
-    });
-  }
+export function ProductSummaryCard({ product, isEdit }) {
+  const { ONETIME, MONTHLY, YEARLY, selectPlanInCart, removeFromCart } = useContext(CartContext);
 
   return (
       <div className="flex gap-6 rounded-lg h-36 hover:bg-neutral-50 relative pr-4">
+        {!isEdit ? null :
           <div
             onClick={() => removeFromCart(product)}
             className="text-center absolute top-2 right-2 w-6 h-6 rounded-full hover:transition-opacity duration-500 ease-in-out hover:bg-primary/30 cursor-pointer"
           >
             X
           </div>
+        }
           <img
             src={product.image}
             alt=""
@@ -50,12 +44,12 @@ export function ProductSummaryCard({ product }) {
                   <p
                     className="text-sm"
                   >
-                    {product.selectPlan?.[selectedOption] || product.prices.oneTime || product.prices.monthly} THB
+                    {Object.values(product.selectPlan)[0]} THB 
+                    {Object.keys(product.selectPlan)[0] === MONTHLY ? '/MONTH' : 
+                    Object.keys(product.selectPlan)[0] === YEARLY ?  '/YEAR' : null}
                   </p>
-                  <p
-                    className="text-sm"
-                  >{product.prices.oneTime ? null :
-                    <Select defaultValue={selectedOption} onValueChange={handlePlan}>
+                  {!isEdit ? null : product.prices.oneTime ? null :
+                    <Select onValueChange={(value) => selectPlanInCart(product, value)}>
                       <SelectTrigger className="">
                         <SelectValue placeholder="Select your plan" />
                       </SelectTrigger>
@@ -66,7 +60,7 @@ export function ProductSummaryCard({ product }) {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                  }</p>
+                  }
               </div>
               <p
                 className="text-sm line-clamp-2"
