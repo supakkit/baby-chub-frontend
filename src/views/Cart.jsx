@@ -34,9 +34,15 @@ export function Cart() {
                         </TotalPriceCard>
                     </div>
                 </div> : 
-                <div
-                    className="text-2xl font-semibold text-center text-primary/80 pt-24"
-                >There are no products in your shopping cart.</div>
+                <div className="flex flex-col items-center gap-6">
+                    <div
+                        className="text-2xl font-semibold text-center text-primary/80 pt-24"
+                    >There are no products in your shopping cart.</div>
+                    <Button asChild variant="default" className="w-xs text-lg rounded-4xl">
+                        <Link to="/products">Products</Link>
+                    </Button>    
+                </div>
+                
             }
         </div>
     );
