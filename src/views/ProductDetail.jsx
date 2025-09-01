@@ -2,6 +2,8 @@ import { useContext, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
 import { Link, useParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
+import UserReview from "../components/UserReview";
+import { RecommendProducts } from "../components/RecommendProducts";
 import { toast } from "sonner";
 import {
   Carousel,
@@ -14,8 +16,6 @@ import { PlanSelectionCard } from "../components/PlanSelectionCard";
 import { Button } from "@/components/ui/button";
 import { CheckoutContext } from "../context/CheckoutContext";
 import { Badge } from "@/components/ui/badge";
-import UserReview from "../components/UserReview";
-import { RecommendProducts } from "../components/RecommendProducts";
 
 export function ProductDetail() {
   const { products } = useContext(ProductContext);
@@ -23,15 +23,17 @@ export function ProductDetail() {
   const { addToCart } = useContext(CartContext);
   const { addToCheckout } = useContext(CheckoutContext);
 
-  const product = products.find((product) => product.id === productId);
+  const product = products?.find((product) => product.id === productId);
 
-  const availablePrices = Object.entries(product.prices).filter(
+  const availablePrices = Object.entries(product.prices || {}).filter(
     ([, value]) => value !== null
   );
+
   const defaultPlan = availablePrices.length
     ? { type: availablePrices[0][0], value: availablePrices[0][1] }
     : null;
-  const [selectedPlan, setSelectedPlan] = useState(defaultPlan);
+
+  const [selectPlan, setSelectPlan] = useState(defaultPlan);
 
   const [mainImage, setMainImage] = useState(product.image);
 
@@ -50,20 +52,13 @@ export function ProductDetail() {
     <>
       <div className="flex pt-20 pl-20 pr-20">
         <div className="flex flex-col items-center basis-[40%] p-10">
-          {/* Carousel ด้านบน */}
-          <div className="pb-10">
-            <Carousel className="w-full max-w-xs cursor-pointer">
-              <CarouselContent>
-                <CarouselItem>
-                  <div className="p-1">
-                    <img src={mainImage} alt="" className="" />
-                  </div>
-                </CarouselItem>
-              </CarouselContent>
-            </Carousel>
+          <div className="pb-10 w-full max-w-full">
+            <img
+              src={mainImage}
+              alt=""
+              className="w-full h-auto object-cover rounded-md"
+            />
           </div>
-
-          {/* Carousel ด้านล่าง */}
           <div className="pb-10">
             <Carousel>
               <CarouselContent className="gap-1">
@@ -88,7 +83,7 @@ export function ProductDetail() {
         <div className="flex flex-col basis-[60%] text-[#543285] p-10">
           <div className="flex flex-col pr-40">
             <h1 className="font-bold pb-4 text-5xl">{product.name}</h1>
-            <p className="text text-justify pb-8">{product.description}</p>
+            <p className="text text-justify pb-4">{product.description}</p>
             <p className="pb-4">Type: {product.type}</p>
             <p className="pb-4">Subject: {product.subjects}</p>
             <div className="flex items-center gap-2 pb-4">
@@ -101,11 +96,11 @@ export function ProductDetail() {
             </div>
             {/* Select Plan */}
             <PlanSelectionCard
-              onPlanChange={setSelectedPlan}
+              onPlanChange={setSelectPlan}
               defaultValue={defaultPlan}
             />
             <p className="h-11 font-semibold text-3xl xl:text-4xl ml-auto">
-              {selectedPlan?.value} Baht
+              {selectPlan?.value} Baht
             </p>
           </div>
           <div className="flex gap-12 p-4 justify-end">
@@ -122,7 +117,7 @@ export function ProductDetail() {
               src="/images/addToCart.svg"
               alt=""
               onClick={() => {
-                addToCart({ ...product, selectedPlan });
+                addToCart({ ...product, selectPlan });
               }}
             />
             <Button
@@ -132,7 +127,7 @@ export function ProductDetail() {
             >
               <Link
                 to="/checkout"
-                onClick={() => addToCheckout(product, selectedPlan.type)}
+                onClick={() => addToCheckout(product, selectPlan.type)}
               >
                 Checkout
               </Link>

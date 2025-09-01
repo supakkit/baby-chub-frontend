@@ -25,7 +25,7 @@ export function PlanSelectionCard({ onPlanChange, defaultValue }) {
   // const availablePrices = product.prices.filter((p) => p.value !== null);
 
   //use entries method to
-  const availablePrices = Object.entries(product.prices).filter(
+  const availablePrices = Object.entries(product.prices || {}).filter(
     ([, value]) => value !== null
   );
 
@@ -45,7 +45,10 @@ export function PlanSelectionCard({ onPlanChange, defaultValue }) {
               const id = `price-${index}`;
               return (
                 <div className="flex items-center space-x-2 mb-4" key={index}>
-                  <RadioGroupItem value={JSON.stringify({ type, value })} id={id} />
+                  <RadioGroupItem
+                    value={JSON.stringify({ type, value })}
+                    id={id}
+                  />
                   <Label htmlFor={id} className="flex flex-col">
                     <span className="font-semibold">{type} plan</span>
                     <span className="text-sm text-muted-foreground">
