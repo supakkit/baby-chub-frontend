@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
-import { Link, Link, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { toast } from "sonner";
 import {
