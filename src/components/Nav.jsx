@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import { useCart } from "@/context/CartProvider"; // << ปุ้ยเตรียม context สำหรับ counting product in cart
 import { SearchAutocomplete } from "./SearchAutocomplete";
+import { CartContext } from "../context/CartContext";
 
 export default function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
-  const { cartCount } = useCart();
+  const { cartItems } = useContext(CartContext);
+  const cartCount = cartItems.length;
 
   const NAV_ITEMS = [
     {

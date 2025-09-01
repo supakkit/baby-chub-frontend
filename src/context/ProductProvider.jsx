@@ -44,7 +44,6 @@ export function ProductProvider({ children }) {
 
     const applyFilter = () => {
         let productsCopy = products.slice();
-        console.log('original product:', products)
         if (filterList.age.length > 0) {
             productsCopy = productsCopy.filter(item => (
                 filterList.age.some(ageRange => item.age.min >= ageRange.min && item.age.min <= ageRange.max)
@@ -72,7 +71,6 @@ export function ProductProvider({ children }) {
                 filterList.subject.includes(...item.subjects)
             ));
         }
-        console.log('product:', productsCopy);
 
         setFilterProducts(productsCopy);
     };
@@ -80,13 +78,11 @@ export function ProductProvider({ children }) {
     const handleProductFilter = (filterTopic, filterOption) => {
             
         if (JSON.stringify(filterList[filterTopic]).includes(JSON.stringify(filterOption))) {
-            console.log('remove')
             setFilterList({
                 ...filterList,
                 [filterTopic]: filterList[filterTopic].filter(item => JSON.stringify(item) !== JSON.stringify(filterOption))
             });
         } else {
-            console.log('add')
             setFilterList({
                 ...filterList,
                 [filterTopic]: [
@@ -97,18 +93,24 @@ export function ProductProvider({ children }) {
         }
     }
 
+    const displayPriceRange = (product) => {
+        const minPrice = product.prices.oneTime || product.prices.monthly;
+        const maxPrice = product.prices.oneTime ? null : product.prices.yearly;
+
+        return <>{minPrice}฿{maxPrice ? ` - ${maxPrice}฿` : null}</>
+    }
+
     useEffect(() => {
         getProducts();
     }, [])
 
     useEffect(() => {
         applyFilter();
-        console.log('apply filter')
     }, [filterList]);
 
     return (
         <ProductContext.Provider
-            value={{products, loading, filters, filterProducts, handleProductFilter}}
+            value={{products, loading, filters, filterProducts, handleProductFilter, displayPriceRange}}
         >
             {children}
         </ProductContext.Provider>

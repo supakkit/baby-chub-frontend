@@ -1,33 +1,60 @@
-import { useContext } from "react";
-import { CartContext } from "../context/CartContext";
+import { useContext, useEffect } from "react";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ApplyDiscountContext } from "../context/ApplyDiscountContext";
 
-export function TotalPriceCard() {
-    const { getCartTotal } = useContext(CartContext);
+export function TotalPriceCard({ children, products }) {
+    const {
+        promotionForm, 
+        setPromotionForm, 
+        discount, promoApplyStatus, 
+        subTotalPrice, 
+        totalPrice, 
+        applyPromotionCode, 
+        calSubTotalPrice
+    } = useContext(ApplyDiscountContext);
+
+    useEffect(() => {
+        calSubTotalPrice(products);
+    }, []);
 
     return (
-        <div className="grid gap-8 text-primary">
-            <div className="flex justify-between w-full items-center gap-2">
-                <Input type="text" placeholder="Input promotion code" className="w-3/5" />
-                <Button type="submit" variant="outline" className="w-1/5">
-                    Apply
-                </Button>    
-            </div>
+        <div className="w-full grid gap-4 text-primary">
+            <form onSubmit={(event) => { applyPromotionCode(event, promotionForm, subTotalPrice) }}>
+                <div className="flex justify-between items-start w-full gap-4">
+                    <div className="w-full grid gap-1">
+                        <Input 
+                            type="text" 
+                            placeholder="Input promotion code" 
+                            name="promotionCode"
+                            value={promotionForm}
+                            onChange={(e) => setPromotionForm(e.target.value)}
+                        />
+                        {promoApplyStatus.length === 0 ? null 
+                        : promoApplyStatus === 'applied' ? <p className="pl-2 text-sm text-lime-500">{promotionForm} applied</p> 
+                        : promoApplyStatus === 'wrong' ? <p className="pl-2 text-sm text-red-300">The promo code is wrong</p>
+                        : null}
+                    </div>
+                    
+                    <Button type="submit" variant="outline" className="">
+                        Apply
+                    </Button>     
+                </div>
+            </form>
             <div className="flex justify-between items-center h-11 ">
                 <p>Subtotal</p>
-                <p>{getCartTotal()} THB</p>   
+                <p>{subTotalPrice} THB</p>   
             </div>
-            <div className="flex justify-between items-center h-11 border-t-2">
-                <p>DIscount</p>
-                <p>- {0} THB</p>    
+            <div className="flex justify-between items-center h-11 border-secondary border-t-2">
+                <p>Discount</p>
+                <p>- {discount} THB</p>    
             </div>
-            <div className="flex justify-between h-11 font-semibold text-3xl xl:text-4xl">
-                <p>4 Items</p>
-                <p>Total {getCartTotal()} THB</p>    
+            <div className="flex justify-between h-11 font-semibold text-xl xl:text-2xl">
+                <p>{products.length} Items</p>
+                <p>Total {totalPrice} THB</p>    
             </div>
-            <Button variant="default" className="w-xs justify-self-end">
-                Checkout
+            <Button asChild variant="default" className="w-xs justify-self-end">
+                {children}
             </Button>
         </div>
     );
