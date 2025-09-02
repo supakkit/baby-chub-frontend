@@ -7,6 +7,7 @@ import { CartProvider } from "./context/CartProvider";
 import { Toaster } from "sonner";
 import { CheckoutProvider } from "./context/CheckoutProvider.jsx";
 import { ApplyDiscountProvider } from "./context/ApplyDiscountProvider.jsx";
+import { UserProvider } from "./context/UserContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -14,8 +15,10 @@ createRoot(document.getElementById("root")).render(
       <CartProvider>
         <ApplyDiscountProvider>
           <CheckoutProvider>
-            <App />
-            <Toaster />  
+            <UserProvider>
+              <App />
+            </UserProvider>
+            <Toaster />
           </CheckoutProvider>
         </ApplyDiscountProvider>
       </CartProvider>

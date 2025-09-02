@@ -11,12 +11,16 @@ import { SignIn } from "./views/SignIn";
 import { SignUp } from "./views/SignUp";
 import { ForgotPassword } from "./views/ForgotPassword";
 import { PendingPayment } from "./views/PendingPayment";
-import { Help } from "./views/Help"; 
+import { Help } from "./views/Help";
+import { UserProfile } from "./views/UserProfile";
+import { ProtectedRoute } from "./views/ProtectedRoute";
+import About from "./views/About";
+import { OrderDetail } from "./views/OrderDetail";
 
 
-
+const NewArrival = () => <div className="p-6">New Arrival – coming soon</div>;
 const router = createBrowserRouter([
-    {
+  {
     path: "/",
     element: <Layout />,
     children: [
@@ -48,15 +52,15 @@ const router = createBrowserRouter([
         path: "dashboard",
         element: <Dashboard />,
       },
-       {
+      {
         path: "signin",
         element: <SignIn />,
       },
-       {
+      {
         path: "signup",
         element: <SignUp />,
       },
-       {
+      {
         path: "forgot-password",
         element: <ForgotPassword />,
       },
@@ -67,6 +71,30 @@ const router = createBrowserRouter([
       {
         path: "help",
         element: <Help />,
+      },
+      {
+        path: "about",
+        element: <About />,
+      },
+      {
+        path: "new",
+        element: <NewArrival />,
+      },
+      {
+        path: "profile",
+        element: (
+          <ProtectedRoute>
+            <UserProfile />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/orders/:orderId",
+        element: (
+          <ProtectedRoute>
+            <OrderDetail />
+          </ProtectedRoute>
+        ),
       },
     ],
   },

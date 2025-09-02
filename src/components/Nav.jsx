@@ -12,12 +12,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { SearchAutocomplete } from "./SearchAutocomplete";
 import { CartContext } from "../context/CartContext";
+import { useUser } from "@/context/UserContext"; // hook ผู้ใช้
+import { toast } from "sonner"; // ใช้ sonner แสดง toast
+
 
 export default function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const { cartItems } = useContext(CartContext);
   const cartCount = cartItems.length;
+  const { user, logout } = useUser();
+  const isAuthed = !!user?.id;
 
   const NAV_ITEMS = [
     {
@@ -89,7 +94,9 @@ export default function Nav() {
           <Link to="/favorite">
             <img src="/images/heart.svg" alt="Favorite" className="w-6 h-6" />
           </Link>
-          <Link to="/profile">
+          <Link
+            to={isAuthed ? "/profile" : "/signin"}
+            title={isAuthed ? "My Account" : "Sign in"}          >
             <img src="/images/person.svg" alt="Profile" className="w-6 h-6" />
           </Link>
           <Link to="/cart" className="relative">
@@ -100,11 +107,20 @@ export default function Nav() {
               </span>
             )}
           </Link>
-          {HEADER_ACTIONS.map((a) => (
-            <Button key={a.label} asChild>
-              <Link to={a.path}>{a.label}</Link>
+          {isAuthed ? (
+            <Button
+              onClick={() => {
+                logout();
+                toast.success("Logged out successfully");
+              }}
+            >
+              Log out
             </Button>
-          ))}
+          ) : (
+            <Button asChild>
+              <Link to="/signup">Sign Up</Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -164,11 +180,20 @@ export default function Nav() {
             </nav>
 
             <div className="mt-6 flex flex-col gap-3">
-              {HEADER_ACTIONS.map((a) => (
-                <Button key={a.label} asChild>
-                  <Link to={a.path}>{a.label}</Link>
+              {isAuthed ? (
+                <Button
+                  onClick={() => {
+                    logout();
+                    toast.success("Logged out successfully");
+                  }}
+                >
+                  Log out
                 </Button>
-              ))}
+              ) : (
+                <Button asChild>
+                  <Link to="/signup">Sign Up</Link>
+                </Button>
+              )}
             </div>
           </SheetContent>
         </Sheet>

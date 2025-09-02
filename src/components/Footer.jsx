@@ -4,7 +4,7 @@ const SocialIcons = {
   Facebook: (props) => (
     <svg
       {...props}
-      xmlns="http://www.w.org/2000/svg"
+      xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -20,7 +20,7 @@ const SocialIcons = {
   Instagram: (props) => (
     <svg
       {...props}
-      xmlns="http://www.w.org/2000/svg"
+      xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -38,7 +38,7 @@ const SocialIcons = {
   Twitter: (props) => (
     <svg
       {...props}
-      xmlns="http://www.w.org/2000/svg"
+      xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -69,12 +69,16 @@ export default function Footer() {
             <div className="flex items-center space-x-4">
               <a
                 href="#"
+                aria-label="Visit our Facebook"
+                rel="noopener noreferrer"
                 className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
               >
                 <SocialIcons.Facebook />
               </a>
               <a
                 href="#"
+                aria-label="Visit our Instagram"
+                rel="noopener noreferrer"
                 className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
               >
                 <SocialIcons.Instagram />
@@ -117,7 +121,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="#"
+                  href="/about"
                   className="text-primary-foreground/80 hover:text-primary-foreground transition-colors"
                 >
                   About Us
@@ -139,7 +143,6 @@ export default function Footer() {
                   Terms of Service
                 </a>
               </li>
-              
             </ul>
           </div>
           <div className="space-y-4">
@@ -151,7 +154,12 @@ export default function Footer() {
               <br />
               Generation, Thailand 10110
               <br />
-              contact@babychub.com
+              <a
+                href="mailto:contact@babychub.com"
+                className="hover:opacity-80 underline-offset-2"
+              >
+                contact@babychub.com
+              </a>
               <br />
               <a
                 href="https://www.google.com/maps/search/?api=1&query=Generation%20Thailand"

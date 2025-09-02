@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Nav from "../components/Nav";
 import CookieBanner from "../components/CookieBanner";
 import Footer from "../components/Footer";
+import { Toaster } from "@/components/ui/sonner";
 
 export function Layout() {
   return (
@@ -15,8 +16,8 @@ export function Layout() {
       <footer>
         <Footer />
       </footer>
-      
       <CookieBanner />
+      <Toaster richColors position="top-right" /> {/* ตัวรับ toast */}
     </>
   );
 }
