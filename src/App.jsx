@@ -17,6 +17,7 @@ import { ProtectedRoute } from "./views/ProtectedRoute";
 import About from "./views/About";
 import { OrderDetail } from "./views/OrderDetail";
 import { Library } from "./views/Library";
+import HowItWorks from "./views/HowItWorks";
 
 const NewArrival = () => <div className="p-6">New Arrival – coming soon</div>;
 const router = createBrowserRouter([
@@ -83,6 +84,9 @@ const router = createBrowserRouter([
       {
         path: "library",
         element: <Library />,
+      },
+      { path: "how-it-works",
+        element: <HowItWorks />
       },
       {
         path: "profile",

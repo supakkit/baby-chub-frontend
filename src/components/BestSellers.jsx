@@ -1,6 +1,5 @@
 import React, { useMemo /*, useContext */ } from "react";
-import { Card, CardContent } from "@/components/ui/card"; // คงไว้ตามเดิม แม้ไม่ได้ใช้ เพื่อลดความเสี่ยงโค้ดแตก
-// import { ProductContext } from "../context/ProductContext";
+import { Card, CardContent } from "@/components/ui/card"; 
 
 export default function BestSellers() {
   // TODO: ภายหลังสลับมาใช้ context ที่เดียวกับ Product
