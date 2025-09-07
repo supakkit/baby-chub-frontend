@@ -84,26 +84,6 @@ export default function Hero() {
   </div>
 </motion.div>
 
-              {/* compact value chips for a cleaner look */}
-              <motion.ul
-                variants={itemVariants}
-                className="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mb-5"
-              >
-                {[
-                  "Curated by moms & early-years teachers",
-                  "Instant access—download & play",
-                  "Mobile • Tablet • Desktop",
-                  "Kid-safe, screen-smart design",
-                ].map((t) => (
-                  <li
-                    key={t}
-                    className="text-xs px-3 py-1.5 rounded-full bg-secondary/20 text-foreground/90 border border-secondary/30"
-                  >
-                    {t}
-                  </li>
-                ))}
-              </motion.ul>
-
               <motion.div
                 variants={itemVariants}
                 className="flex flex-col sm:flex-row gap-3 sm:gap-4"

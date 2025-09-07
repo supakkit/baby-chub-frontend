@@ -1,60 +1,44 @@
-import React from 'react';
+// components/BrowseByAge.jsx
+import React from "react";
 
-// ✨ 1. ข้อมูลแต่ละช่วงอายุ: แก้ไขข้อความ, ลิงก์, และสี ได้ง่ายๆ ที่นี่
 const ageRanges = [
-  { 
-    label: '3-4 Years', 
-    href: '/products?age=3-4', 
-    bgColor: 'bg-sky-100', 
-    textColor: 'text-sky-800',
-    hoverColor: 'hover:bg-sky-200'
-  },
-  { 
-    label: '4-6 Years', 
-    href: '/products?age=4-6', 
-    bgColor: 'bg-lime-100', 
-    textColor: 'text-lime-800',
-    hoverColor: 'hover:bg-lime-200'
-  },
-  { 
-    label: '6-9 Years', 
-    href: '/products?age=6-9', 
-    bgColor: 'bg-amber-100', 
-    textColor: 'text-amber-800',
-    hoverColor: 'hover:bg-amber-200'
-  },
-  { 
-    label: '9-12 Years', 
-    href: '/products?age=9-12', 
-    bgColor: 'bg-violet-100', 
-    textColor: 'text-violet-800',
-    hoverColor: 'hover:bg-violet-200'
-  },
+  { id: "3-4", label: "3-4 Years", image: "/images/age_1a.png", hoverImage: "/images/age_1b.png" },
+  { id: "4-6", label: "4-6 Years", image: "/images/age_2a.png", hoverImage: "/images/age_2b.png" },
+  { id: "6-9", label: "6-9 Years", image: "/images/age_3a.png", hoverImage: "/images/age_3b.png" },
+  { id: "9-12", label: "9-12 Years", image: "/images/age_4a.png", hoverImage: "/images/age_4b.png" },
 ];
 
-export default function BrowseByAge() {
+export default function BrowseByAge({ onSelect }) {
   return (
     <section className="bg-background py-16 md:py-24">
       <div className="layout">
-        
-        {/* หัวข้อ */}
         <h2 className="text-3xl font-bold text-center text-foreground mb-12">
           Browse by age
         </h2>
 
-        {/* ✨ 2. Grid สำหรับวางกล่องแต่ละช่วงอายุ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 place-items-center">
           {ageRanges.map((age) => (
-            <a 
-              key={age.label} 
-              href={age.href} 
-              // ✨ 3. สไตล์ของแต่ละกล่อง: ทำให้เป็นสี่เหลี่ยมจัตุรัส, มีสีพื้นหลัง, และมี Hover Effect
-              className={`group flex items-center justify-center aspect-square rounded-2xl p-4 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg ${age.bgColor} ${age.hoverColor}`}
+            <button
+              key={age.id}
+              onClick={() => onSelect?.(age.id)}
+              aria-label={age.label}
+              className="group relative w-48 h-48 md:w-56 md:h-56 rounded-full shadow-md overflow-hidden transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg"
             >
-              <span className={`text-2xl md:text-3xl font-bold transition-transform duration-300 ease-in-out group-hover:scale-110 ${age.textColor}`}>
-                {age.label}
-              </span>
-            </a>
+              {/* ภาพปกติ */}
+              <img
+                src={age.image}
+                alt={age.label}
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-0"
+                draggable={false}
+              />
+              {/* ภาพ hover */}
+              <img
+                src={age.hoverImage}
+                alt={`${age.label} hover`}
+                className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                draggable={false}
+              />
+            </button>
           ))}
         </div>
       </div>

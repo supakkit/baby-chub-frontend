@@ -1,5 +1,5 @@
 import React, { useMemo /*, useContext */ } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card"; // คงไว้ตามเดิม แม้ไม่ได้ใช้ เพื่อลดความเสี่ยงโค้ดแตก
 // import { ProductContext } from "../context/ProductContext";
 
 export default function BestSellers() {
@@ -50,7 +50,7 @@ export default function BestSellers() {
               item={second}
               rank={2}
               size="sm"
-              className="translate-y-4 md:translate-y-6"
+              className="translate-y-4 md:translate-y-6 -rotate-[0.5deg]"
               badgeBg="bg-secondary"
             />
           )}
@@ -63,6 +63,7 @@ export default function BestSellers() {
               size="lg"
               className="z-10 -translate-y-2 md:-translate-y-4"
               badgeBg="bg-accent"
+              highlight
             />
           )}
 
@@ -72,7 +73,7 @@ export default function BestSellers() {
               item={third}
               rank={3}
               size="sm"
-              className="translate-y-4 md:translate-y-6"
+              className="translate-y-4 md:translate-y-6 rotate-[0.5deg]"
               badgeBg="bg-muted"
             />
           )}
@@ -82,8 +83,15 @@ export default function BestSellers() {
   );
 }
 
-/* ===== การ์ดโพเดียมพร้อมป้ายอันดับที่จัดกลางวงรีเนียน ๆ ===== */
-function PodiumCard({ item, rank, size = "sm", className = "", badgeBg = "bg-secondary" }) {
+/* ===== สี่เหลี่ยมจัตุรัสล้วน + เงา (ไม่ใช้การ์ด/ไม่มีกรอบ) ===== */
+function PodiumCard({
+  item,
+  rank,
+  size = "sm",
+  className = "",
+  badgeBg = "bg-secondary",
+  highlight = false,
+}) {
   const isGold = rank === 1;
   const isSilver = rank === 2;
   const isBronze = rank === 3;
@@ -98,12 +106,12 @@ function PodiumCard({ item, rank, size = "sm", className = "", badgeBg = "bg-sec
 
   return (
     <div className={`relative ${sizes[size]} ${className}`}>
-      {/* ป้ายอันดับ (วงรี) — จัดให้อยู่กึ่งกลางแนวตั้ง/แนวนอนแบบเป๊ะ */}
+      {/* ป้ายอันดับ (วงรี) */}
       <div className="absolute -top-3 -left-3 z-20">
         <div
           className={[
             "inline-flex items-center justify-center h-9 min-w-[88px] px-3 rounded-full",
-            "border border-border/50 shadow-sm leading-none",
+            "border border-border/20 shadow-sm leading-none",
             badgeBg,
             "text-foreground",
           ].join(" ")}
@@ -115,30 +123,37 @@ function PodiumCard({ item, rank, size = "sm", className = "", badgeBg = "bg-sec
         </div>
       </div>
 
-      <Card
+      {/* รูปสี่เหลี่ยมจัตุรัส + เงา */}
+      <figure
         className={[
-          "overflow-hidden transition-all duration-300",
-          isGold ? "ring-2 ring-primary shadow-2xl hover:-translate-y-1" : "hover:shadow-xl hover:-translate-y-1",
+          "relative overflow-hidden aspect-square",
+          // เงานุ่ม + ลอยนิด ๆ
+          "shadow-[0_10px_25px_rgba(0,0,0,0.12)] hover:shadow-[0_18px_40px_rgba(0,0,0,0.16)]",
+          "transition-transform duration-300 will-change-transform hover:-translate-y-1",
+          "rounded-none bg-transparent",
+          highlight ? "ring-1 ring-primary/30" : "",
         ].join(" ")}
       >
-        <CardContent className="p-0">
-          <div className="relative">
-            <img src={item.image} alt={item.title} className="w-full aspect-square object-cover" />
-            {isGold && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-primary/20 to-transparent" />
-            )}
-          </div>
-          <div className="p-3 text-center">
-            <p className="font-semibold text-card-foreground truncate">{item.title}</p>
-          </div>
-        </CardContent>
-      </Card>
+        <img
+          src={item.image}
+          alt={item.title}
+          className="w-full h-full object-cover select-none pointer-events-none"
+          draggable={false}
+        />
+      </figure>
+
+      {/* ชื่อสินค้า (แคปซูลใส ๆ ไม่เป็นบล็อก) */}
+      <div className="flex justify-center">
+        <span className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs md:text-sm font-medium text-card-foreground bg-white/80 backdrop-blur border border-border/20 shadow-sm">
+          {item.title}
+        </span>
+      </div>
 
       {/* ฐานโพเดียม */}
       <div
         className={[
           "mx-auto mt-2 h-2 rounded-full",
-          isGold ? "w-3/4 bg-primary/50" : isSilver ? "w-2/3 bg-secondary/40" : "w-2/3 bg-muted/60",
+          isGold ? "w-3/4 bg-primary/40" : isSilver ? "w-2/3 bg-secondary/30" : "w-2/3 bg-muted/50",
         ].join(" ")}
       />
     </div>
