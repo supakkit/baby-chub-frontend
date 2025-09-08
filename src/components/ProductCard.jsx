@@ -3,22 +3,23 @@ import { CartContext } from "../context/CartContext";
 import { useContext } from "react";
 import {
   Card,
-  CardAction,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { Button } from "./ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ProductContext } from "../context/ProductContext";
 
 
 export function ProductCard({ product }) {
     const { addToCart, addToFavorite } = useContext(CartContext);
-    const { displayPriceRange } = useContext(ProductContext);
     const navigate = useNavigate();
+
+    const displayPriceRange = (product) => {
+        const minPrice = product.prices.oneTime || product.prices.monthly;
+        const maxPrice = product.prices.oneTime ? null : product.prices.yearly;
+
+        return <>{minPrice}฿{maxPrice ? ` - ${maxPrice}฿` : null}</>
+    }
 
     const handleViewProducts = productId => {
         navigate(`/products/${productId}`);
@@ -26,32 +27,16 @@ export function ProductCard({ product }) {
 
     return (
         <Card 
-            onClick={() => handleViewProducts(product.id)}
-            className="justify-between h-fit gap-2 p-0 rounded-lg overflow-clip"
+            onClick={() => handleViewProducts(product._id)}
+            className="flex justify-between h-fit gap-0 p-0 rounded-3xl overflow-clip md:hover:scale-105 duration-300 hover:shadow-primary"
         >
-            <CardHeader className="p-0">
+            <CardHeader className="p-0 pt-4 gap-0 hover:relative">
                 <img
                     src={product.image}
                     alt=""
-                    className="overflow-clip aspect-square object-contain"
+                    className="overflow-clip aspect-5/4 object-cover border-y border-secondary/50"
                 />
-            </CardHeader>
-            <CardContent className="grid gap-2 px-2 pb-2">
-                
-                <h3
-                    className="text-lg md:text-xl font-semibold line-clamp-2"
-                >{product.name}</h3>
-                <Badge 
-                    variant="outline"
-                    className=""
-                  >{product.type}</Badge>
-                <p
-                    className="text-sm line-clamp-2"
-                >{product.description}</p>
-                <div className="flex justify-end">
-                    <p className="text-lg font-medium">{displayPriceRange(product)}</p>
-                </div>
-                <div className="flex justify-between items-center pl-2">
+                <button className="absolute top-3 right-3 bg-white p-2 rounded-full shadow hover:scale-110 transition">
                     <svg 
                         xmlns="http://www.w3.org/2000/svg" 
                         viewBox="0 0 24 24" 
@@ -65,19 +50,28 @@ export function ProductCard({ product }) {
                     >
                         <path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>
                     </svg>
-                    <Button
-                        onClick={(event) => {
-                            addToCart(product);
-                            event.stopPropagation();
-                        }}
-                        variant="default"
-                        className="cursor-pointer"
-                    >
-                        Add to Cart
-                    </Button>    
+                </button>
+            </CardHeader>
+            <CardContent className="grid gap-3 px-3 pt-2 pb-3 flex-wrap">
+                <h3
+                    className="text-lg font-semibold line-clamp-2 leading-snug"
+                >{product.name}</h3>
+                <div className="flex justify-between px-1">
+                <Badge 
+                    variant="outline"
+                    className="bg-purple-100 text-purple-700 border-0"
+                  >{product.type}</Badge>
+                <p className="font-bold text-lg">{displayPriceRange(product)}</p>    
                 </div>
+                <p className="text-sm line-clamp-2 px-1">{product.description}</p>
+                <Button
+                    onClick={(event) => {addToCart(product);event.stopPropagation();}}
+                    variant="default"
+                    className="cursor-pointer w-full rounded-xl mt-2"
+                >
+                    Add to Cart
+                </Button>    
             </CardContent>
         </Card>
     );
 }
-

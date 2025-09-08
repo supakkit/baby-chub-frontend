@@ -22,7 +22,7 @@ export function Favorite() {
                     </div>
                     {
                         favoriteItems.map(product => (
-                            <ProductSummaryCard key={product.id} isEdit={true} product={product} isFavorite={true} />
+                            <ProductSummaryCard key={product._id} isEdit={true} product={product} isFavorite={true} />
                         )) 
                     }
                     <div className="grid md:justify-end pt-4 pb-8 bg-white sticky bottom-0">

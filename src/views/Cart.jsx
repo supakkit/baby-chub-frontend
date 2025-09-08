@@ -24,7 +24,7 @@ export function Cart() {
                         </div>
                         {
                             cartItems.map(product => (
-                                <ProductSummaryCard key={product.id} isEdit={true} product={product} />
+                                <ProductSummaryCard key={product._id} isEdit={true} product={product} />
                             )) 
                         }    
                     </div>
