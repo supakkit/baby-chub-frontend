@@ -17,7 +17,7 @@ export function Layout() {
         <Footer />
       </footer>
       <CookieBanner />
-      <Toaster richColors position="top-right" /> {/* ตัวรับ toast */}
+      <Toaster richColors position="top-right" /> ตัวรับ toast
     </>
   );
 }

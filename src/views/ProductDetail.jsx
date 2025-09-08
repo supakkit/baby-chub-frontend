@@ -106,7 +106,7 @@ export function ProductDetail() {
           <div className="flex gap-12 p-4 justify-end">
             <img
               className="h-10 cursor-pointer"
-              src="/images/heart (2).svg"
+              src="/images/heart(2).svg"
               alt=""
               onClick={() => {
                 toast.success("Added product to favorite");

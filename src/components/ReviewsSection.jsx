@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const mockReviews = [
   {
@@ -92,8 +93,19 @@ export default function ReviewsSection({
       ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10
       : 0;
 
+  const trackRef = useRef(null);
+
+  const scrollByCard = (dir = 1) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const card = el.querySelector("[data-review-card]");
+    const gap = 16;
+    const delta = card ? card.getBoundingClientRect().width + gap : 320;
+    el.scrollBy({ left: dir * delta, behavior: "smooth" });
+  };
+
   return (
-    <section className="mx-auto max-w-7xl px-4 md:px-6 py-10 md:py-12">
+    <section className="relative mx-auto max-w-7xl px-4 md:px-6 py-10 md:py-12">
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <div className="flex items-center gap-2">
@@ -109,17 +121,50 @@ export default function ReviewsSection({
         </p>
       </div>
 
-      {/* Review grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      {/* Controls ขวาบน */}
+      <div className="absolute top-8 right-4 flex gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Previous reviews"
+          className="rounded-full h-12 w-12"
+          onClick={() => scrollByCard(-1)}
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Next reviews"
+          className="rounded-full h-12 w-12"
+          onClick={() => scrollByCard(1)}
+        >
+          <ChevronRight className="h-6 w-6" />
+        </Button>
+      </div>
+
+      {/* One-row carousel */}
+      <div
+        ref={trackRef}
+        className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2
+        [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {reviews.map((r) => (
-          <Card key={r.id} className="border rounded-2xl overflow-hidden">
+          <Card
+            key={r.id}
+            data-review-card
+            className="
+              snap-start flex-shrink-0
+              w-[280px] sm:w-[320px] md:w-[360px]
+              border-0 rounded-none
+              shadow-[0_8px_24px_rgba(0,0,0,0.08)]
+              hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]
+              transition-shadow
+            "
+          >
             <CardHeader className="flex flex-row items-center gap-3">
               <div className="h-10 w-10 rounded-full overflow-hidden bg-muted border">
-                <img
-                  src={r.avatar}
-                  alt={`${r.name} avatar`}
-                  className="h-full w-full object-cover"
-                />
+                <img src={r.avatar} alt={`${r.name} avatar`} className="h-full w-full object-cover" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -135,9 +180,7 @@ export default function ReviewsSection({
             </CardHeader>
 
             <CardContent className="pt-0">
-              <div className="flex items-center justify-between">
-                <Stars rating={r.rating} />
-              </div>
+              <Stars rating={r.rating} />
               <h3 className="mt-2 text-sm font-semibold text-foreground">{r.title}</h3>
               <p className="mt-1 text-sm text-foreground/90">{r.body}</p>
             </CardContent>
@@ -151,12 +194,9 @@ export default function ReviewsSection({
         ))}
       </div>
 
-      {/* CTA row */}
+      {/* CTA */}
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <Button className="rounded-full px-6 py-5">See all reviews</Button>
-        <Button variant="outline" className="rounded-full px-6 py-5">
-          Write a review
-        </Button>
       </div>
     </section>
   );
