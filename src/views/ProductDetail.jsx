@@ -4,7 +4,6 @@ import { Link, useParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import UserReview from "../components/UserReview";
 import { RecommendProducts } from "../components/RecommendProducts";
-import { toast } from "sonner";
 import {
   Carousel,
   CarouselContent,
@@ -20,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 export function ProductDetail() {
   const { products } = useContext(ProductContext);
   const { productId } = useParams();
+  const { addToFavorite } = useContext(CartContext);
   const { addToCart } = useContext(CartContext);
   const { addToCheckout } = useContext(CheckoutContext);
 
@@ -51,6 +51,7 @@ export function ProductDetail() {
   return (
     <>
       <div className="flex pt-20 pl-20 pr-20">
+        {/* Product Picture */}
         <div className="flex flex-col items-center basis-[40%] p-10">
           <div className="pb-10 w-full max-w-full">
             <img
@@ -80,6 +81,7 @@ export function ProductDetail() {
             </Carousel>
           </div>
         </div>
+        {/* Product Detail */}
         <div className="flex flex-col basis-[60%] text-primary p-10">
           <div className="flex flex-col pr-40">
             <h1 className="font-bold pb-4 text-5xl">{product.name}</h1>
@@ -109,7 +111,7 @@ export function ProductDetail() {
               src="/images/heart(2).svg"
               alt=""
               onClick={() => {
-                toast.success("Added product to favorite");
+                addToFavorite(product, selectPlan.type);
               }}
             />
             <img
