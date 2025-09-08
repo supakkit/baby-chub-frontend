@@ -87,15 +87,14 @@ export default function Hero() {
                 className="flex flex-col sm:flex-row gap-3 sm:gap-4"
               >
                 <Button
-                  size="lg"
-                  className="
-                    bg-primary text-primary-foreground
-                    text-base px-6 py-4 rounded-full
-                    hover:bg-primary/90 transition-transform hover:scale-[1.02] shadow-md
-                  "
-                >
-                  Explore Products
-                </Button>
+                size="lg"
+                className="
+                bg-primary text-primary-foreground
+                text-base px-6 py-4 rounded-full
+                hover:bg-primary/90 transition-transform hover:scale-[1.02] shadow-md"
+                asChild>
+                  <Link to="/this-page-does-not-exist">Explore Products</Link>
+                  </Button>
                 <Button
                   size="lg"
                   variant="outline"
