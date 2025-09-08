@@ -18,6 +18,7 @@ import About from "./views/About";
 import { OrderDetail } from "./views/OrderDetail";
 import { Library } from "./views/Library";
 import HowItWorks from "./views/HowItWorks";
+import NotFound from "./views/NotFound";
 
 const NewArrival = () => <div className="p-6">New Arrival – coming soon</div>;
 const router = createBrowserRouter([
@@ -86,7 +87,11 @@ const router = createBrowserRouter([
         element: <Library />,
       },
       { path: "how-it-works",
-        element: <HowItWorks />
+        element: <HowItWorks />,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
       },
       {
         path: "profile",
