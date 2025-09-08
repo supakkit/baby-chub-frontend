@@ -28,7 +28,7 @@ export function ProductCard({ product }) {
     return (
         <Card 
             onClick={() => handleViewProducts(product._id)}
-            className="flex justify-between h-fit gap-0 p-0 rounded-3xl overflow-clip md:hover:scale-105 duration-300 hover:shadow-primary"
+            className="md:max-w-3xs flex justify-between h-fit gap-0 p-0 rounded-3xl overflow-clip md:hover:scale-105 duration-300 hover:shadow-primary"
         >
             <CardHeader className="p-0 pt-4 gap-0 hover:relative">
                 <img
