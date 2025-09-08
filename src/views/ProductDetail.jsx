@@ -80,7 +80,7 @@ export function ProductDetail() {
             </Carousel>
           </div>
         </div>
-        <div className="flex flex-col basis-[60%] text-[#543285] p-10">
+        <div className="flex flex-col basis-[60%] text-primary p-10">
           <div className="flex flex-col pr-40">
             <h1 className="font-bold pb-4 text-5xl">{product.name}</h1>
             <p className="text text-justify pb-4">{product.description}</p>
@@ -117,7 +117,7 @@ export function ProductDetail() {
               src="/images/addToCart.svg"
               alt=""
               onClick={() => {
-                addToCart({ ...product, selectPlan });
+                addToCart(product, selectPlan.type);
               }}
             />
             <Button
