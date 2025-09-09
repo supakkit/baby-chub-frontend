@@ -1,62 +1,112 @@
 // src/context/UserContext.jsx
 // User state (mock) with localStorage persistence
-// - Named exports only (useUser, UserProvider) to match app-wide import style
-// - Order mock aligned with UI: uses `quantity`, has `billingAddress`, downloadUrl null
-// - Password policy: >= 8 characters
+// - Starts UNAUTHENTICATED (no user) until login()
+// - Backward-compatible API: login, logout, updateProfile, updatePreferences,
+//   toggleNewsletter, changePassword, deleteAccount
+// - Demo mode: call login() with no args to use DEFAULT_USER
+// - Exposes: isAuthenticated, ordersCount, addOrder, updateOrderItem
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 
 const STORAGE_KEY = "babychub:user";
 
-// ------------------------------------------------------
-// Mock user snapshot (safe to tweak for demo)
-// ------------------------------------------------------
 const DEFAULT_USER = {
-  id: "u_1001",
-  firstName: "Baby",
-  lastName: "Chub",
-  email: "baby@example.com",
+  id: "u_demo",
+  firstName: "Demo",
+  lastName: "User",
+  email: "demo@babychub.app",
   phone: "",
   avatarUrl: "",
   address: {
     line1: "",
     line2: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "",
+    city: "Bangkok",
+    state: "TH",
+    postalCode: "10200",
+    country: "Thailand",
   },
   preferences: { ageRange: "4-6", interests: ["STEM", "Art"] },
-  notifications: {
-    orderUpdates: true,
-    productTips: true,
-    promotions: true,
-  },
+  notifications: { orderUpdates: true, productTips: true, promotions: true },
   newsletter: true,
-  // --- Orders snapshot: quantity, billingAddress, downloadUrl null ---
+  // --- Orders: 4 cases for realistic Library ---
   orders: [
+    // 1) Subscription (active) — Continue + Renew
     {
-      id: "ORD-24001",
-      date: "2025-05-20T07:00:00.000Z",
-      total: 19.99,
+      id: "ord-9001",
+      date: new Date().toISOString(),
       status: "paid",
-      billingAddress: {
-        line1: "123 Main St",
-        line2: "",
-        city: "Bangkok",
-        state: "TH",
-        postalCode: "10200",
-        country: "Thailand",
-      },
+      total: 99,
       items: [
         {
-          id: "p1",
-          name: "Phonics Starter Pack",
-          price: 19.99,
-          quantity: 1, // NOTE: preferred shape
+          id: "i-1",
+          productId: "course-python-adventure",
+          name: "Code Explorers: Python Adventure (Course)",
+          downloadable: false,
+          accessUrl: "/learn/python-demo",
+          expireDate: new Date(
+            Date.now() + 15 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+          progress: 42,
+        },
+      ],
+    },
+    // 2) Digital (ready) — Download enabled
+    {
+      id: "ord-9002",
+      date: new Date().toISOString(),
+      status: "paid",
+      total: 89,
+      items: [
+        {
+          id: "i-2",
+          productId: "ebook-adventures-of-square",
+          name: "Wonders of Shapes (Ebook • PDF)",
           downloadable: true,
-          downloadUrl: null, // placeholder -> disabled in UI
-          productId: "p1", // optional: enables "View product" button
+          // UI จะขอ signed URL ผ่าน API ก่อนดาวน์โหลดจริง
+          downloadUrl: null,
+        },
+      ],
+    },
+    // 3) Digital (not ready) — Download disabled (API ควรตอบ 403)
+    {
+      id: "ord-9003",
+      date: new Date().toISOString(),
+      status: "paid",
+      total: 199,
+      items: [
+        {
+          id: "i-3",
+          productId: "audiobook-little-kitty-bedtime",
+          name: "Little Kitty’s Bedtime (Audiobook • MP3)",
+          downloadable: true,
+          downloadUrl: "#", // ถือว่ายังไม่พร้อม → UI แสดง disabled + toast
+        },
+      ],
+    },
+    // 4) Subscription (expired) — Expired tab only
+    {
+      id: "ord-9004",
+      date: new Date().toISOString(),
+      status: "paid",
+      total: 149,
+      items: [
+        {
+          id: "i-4",
+          productId: "app-kidverse",
+          name: "KidVerse – Learning World (App)",
+          downloadable: false,
+          accessUrl: "/learn/kidverse-demo",
+          expireDate: new Date(
+            Date.now() - 1 * 24 * 60 * 60 * 1000
+          ).toISOString(),
+          progress: 80,
         },
       ],
     },
@@ -73,30 +123,26 @@ const DEFAULT_USER = {
 
 const Ctx = createContext(null);
 
-// ------------------------------------------------------
-// Hook: useUser()
-// ------------------------------------------------------
 export function useUser() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("useUser must be used within <UserProvider>");
   return ctx;
 }
 
-// ------------------------------------------------------
-// Provider: UserProvider
-// ------------------------------------------------------
 export function UserProvider({ children }) {
-  // Load from localStorage on first mount
+  // start not logged-in
   const [user, setUser] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
+      return raw ? JSON.parse(raw) : null;
     } catch {
-      return {};
+      return null;
     }
   });
 
-  // Persist to localStorage whenever user changes
+  const isAuthenticated = !!(user && user.id);
+  const ordersCount = user?.orders?.length ?? 0;
+
   useEffect(() => {
     try {
       if (user && Object.keys(user).length > 0) {
@@ -104,75 +150,106 @@ export function UserProvider({ children }) {
       } else {
         localStorage.removeItem(STORAGE_KEY);
       }
-    } catch {
-      // ignore storage errors in demo
-    }
+    } catch {}
   }, [user]);
 
-  // ---------------------- Actions ----------------------
-
-  // Mock login: merge DEFAULT_USER with payload and ensure an id
-  function login(payload = {}) {
+  // ----- Auth -----
+  const login = useCallback((payload = {}) => {
     const next = {
       ...DEFAULT_USER,
       ...payload,
-      id: payload?.id || `u_${Date.now()}`,
+      id: payload?.id || payload?.userId || DEFAULT_USER.id,
     };
     setUser(next);
     return true;
-  }
+  }, []);
 
-  // Logout: clear state + storage
-  function logout() {
+  const logout = useCallback(() => {
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {}
-    setUser({});
-  }
-
-  // Update top-level profile fields
-  function updateProfile(partial) {
-    setUser((u) => ({ ...u, ...partial }));
+    setUser(null);
     return true;
-  }
+  }, []);
 
-  // Update nested preferences
-  function updatePreferences(partial) {
+  // ----- Profile/Prefs -----
+  const updateProfile = useCallback((partial) => {
+    setUser((u) => ({ ...(u || {}), ...partial }));
+    return true;
+  }, []);
+
+  const updatePreferences = useCallback((partial) => {
     setUser((u) => ({
-      ...u,
-      preferences: { ...u.preferences, ...partial },
+      ...(u || {}),
+      preferences: { ...(u?.preferences || {}), ...partial },
     }));
     return true;
-  }
+  }, []);
 
-  // Toggle newsletter flag
-  function toggleNewsletter(on) {
-    setUser((u) => ({ ...u, newsletter: !!on }));
+  const toggleNewsletter = useCallback((on) => {
+    setUser((u) => ({ ...(u || {}), newsletter: !!on }));
     return true;
-  }
+  }, []);
 
-  // Change password (mock policy: >= 8 chars)
-  async function changePassword(current, next) {
+  const changePassword = useCallback(async (current, next) => {
     if (!current || !next || next.length < 8) {
       throw new Error("Password must be at least 8 characters.");
     }
-    // In real app: verify current, call backend, etc.
     return true;
-  }
+  }, []);
 
-  // Delete account (demo): clear storage and state
-  async function deleteAccount() {
+  const deleteAccount = useCallback(async () => {
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {}
-    setUser({});
+    setUser(null);
     return true;
-  }
+  }, []);
 
-  // Provide stable value to consumers
+  // ----- Orders helpers (used by Library after API calls) -----
+  const addOrder = useCallback((order) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const orders = [order, ...(prev.orders || [])];
+      return { ...prev, orders };
+    });
+  }, []);
+
+  const updateOrderItem = useCallback((orderId, itemId, patch = {}) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const clone = structuredClone(prev);
+      const ord = clone.orders?.find((o) => o.id === orderId);
+      if (!ord) return prev;
+      const it = ord.items?.find((i) => i.id === itemId);
+      if (!it) return prev;
+      Object.assign(it, patch);
+      return clone;
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
+      isAuthenticated,
+      ordersCount,
+
+      login,
+      logout,
+
+      updateProfile,
+      updatePreferences,
+      toggleNewsletter,
+      changePassword,
+      deleteAccount,
+
+      addOrder,
+      updateOrderItem,
+    }),
+    [
+      user,
+      isAuthenticated,
+      ordersCount,
       login,
       logout,
       updateProfile,
@@ -180,8 +257,9 @@ export function UserProvider({ children }) {
       toggleNewsletter,
       changePassword,
       deleteAccount,
-    }),
-    [user]
+      addOrder,
+      updateOrderItem,
+    ]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
