@@ -22,7 +22,7 @@ import { useUser } from "@/context/UserContext";
 import { toast } from "sonner";
 import { SignIn } from "@/views/SignIn";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { Library } from "@/views/Library";
+
 
 export default function Nav() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);

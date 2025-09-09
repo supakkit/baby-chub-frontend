@@ -20,6 +20,7 @@ import { Library } from "./views/Library";
 import HowItWorks from "./views/HowItWorks";
 import NotFound from "./views/NotFound";
 
+
 const NewArrival = () => <div className="p-6">New Arrival – coming soon</div>;
 const router = createBrowserRouter([
   {
