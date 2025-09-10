@@ -22,13 +22,13 @@ import { useUser } from "@/context/UserContext";
 import { toast } from "sonner";
 import { SignIn } from "@/views/SignIn";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-
+import { motion } from "framer-motion";
 
 export default function Nav() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
   const { cartItems } = useContext(CartContext);
-  const cartCount = cartItems.length;
+  const cartCount = cartItems?.length || 0;
   const { user, logout } = useUser();
   const navigate = useNavigate();
   const isAuthed = !!user?.id;
@@ -36,7 +36,7 @@ export default function Nav() {
   const requireAuth = (action) => {
     if (!isAuthed) {
       toast.error("Please Sign In / Sign Up to continue");
-      setSignInOpen(true); // เด้ง Dialog Sign In
+      setSignInOpen(true); // เปิด Dialog Sign In
       return;
     }
     action(); // ทำ action ถ้า login แล้ว
@@ -74,23 +74,41 @@ export default function Nav() {
 
       {/* Desktop Nav */}
       <div className="hidden md:grid grid-cols-3 items-center px-6 py-3">
-        <Link to="/" className="flex items-center">
-          <img
-            src="/images/logowithtext.svg"
-            alt="Baby Chub Brand"
-            className="h-12 w-auto"
-          />
-        </Link>
+        {/* Logo (left) */}
+        <motion.div
+          whileHover={{ x: 5, scale: 1.05 }}
+          whileTap={{ x: 6, scale: 1.1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 10 }}
+        >
+          <Link to="/" className="flex items-center">
+            <img
+              src="/images/logowithtext.svg"
+              alt="Baby Chub Brand"
+              className="h-12 w-auto"
+            />
+          </Link>
+        </motion.div>
 
+        {/* Center menu */}
         <nav className="flex justify-center gap-12 relative">
           {NAV_ITEMS.map((item) => (
             <div key={item.path} className="group relative">
-              <Link
-                to={item.path}
-                className="text-gray-600 hover:text-[#543285] font-bold"
-              >
-                {item.label}
+              <Link to={item.path}>
+                <motion.span
+                  whileHover={{ scale: 1.1, color: "#7d52ba" }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 10,
+                    duration: 0.2,
+                  }}
+                  className="text-purple-900 font-bold cursor-pointer inline-block"
+                >
+                  {item.label}
+                </motion.span>
               </Link>
+
               {item.dropdown && (
                 <div className="absolute left-2 mt-2 w-40 bg-white shadow-lg rounded-md opacity-0 group-hover:opacity-100 transition-all pointer-events-auto group-hover:pointer-events-auto z-50">
                   {item.dropdown.map((sub) => (
@@ -108,45 +126,63 @@ export default function Nav() {
           ))}
         </nav>
 
+        {/* Right controls (search, favorite, cart, sign in/profile) */}
         <div className="flex items-center justify-end gap-4">
           {/* Desktop Search */}
           <SearchAutocomplete />
 
           {/* Favorite */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1, color: "#7d52ba" }}
+            whileTap={{ scale: 0.95 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 10,
+              duration: 0.2,
+            }}
             onClick={() => requireAuth(() => navigate("/favorite"))}
             title="Favorite"
+            className="cursor-pointer"
           >
-            <img
-              src="/images/heart.svg"
-              alt="Favorite"
-              className="w-12 h-12 cursor-pointer"
-            />
-          </button>
+            <img src="/images/heart.svg" alt="Favorite" className="w-14 h-14" />
+          </motion.button>
 
           {/* Cart */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1, color: "#7d52ba" }}
+            whileTap={{ scale: 0.95 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 10,
+              duration: 0.2,
+            }}
             onClick={() => requireAuth(() => navigate("/cart"))}
             title="Cart"
-            className="relative"
+            className="relative cursor-pointer"
           >
             <img
               src="/images/cart.svg"
               alt="Cart"
-              className="w-14 h-14 cursor-pointer"
+              className="w-14 h-14 items-center justify-center"
             />
             {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">
+              <span className="absolute -right-0 -top-0 bg-red-500 text-white text-xs rounded-full px-1">
                 {cartCount}
               </span>
             )}
-          </button>
+          </motion.button>
 
           {/* Sign In / Profile + Library */}
-          <div className="flex items-center justify-end gap-4">
-            {isAuthed ? (
-              <>
-                {/* Avatar */}
+          {isAuthed ? (
+            <>
+              {/* Avatar */}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
                 <Link to="/profile" title="My Account">
                   <Avatar className="w-10 h-10">
                     <AvatarImage
@@ -158,56 +194,77 @@ export default function Nav() {
                     </AvatarFallback>
                   </Avatar>
                 </Link>
+              </motion.div>
 
-                {/* Library / My Orders */}
-                <button
-                  onClick={() => navigate("/library")}
-                  title="My Library"
-                  className="relative w-6 h-6 flex items-center justify-center"
-                >
-                  <img
-                    src="/images/librarybook.svg"
-                    alt="Library"
-                    className=" w- h-6 cursor-pointer"
-                  />
-                  {user?.ordersCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
-                      {user.ordersCount}
-                    </span>
-                  )}
-                </button>
-              </>
-            ) : (
-              <Dialog open={signInOpen} onOpenChange={setSignInOpen}>
-                <DialogTrigger asChild>
-                  <button title="Sign In">
-                    <img
-                      src="/images/person.svg"
-                      alt="Sign In"
-                      className="w-10 h-10 cursor-pointer"
-                    />
-                  </button>
-                </DialogTrigger>
+              {/* Library / My Orders */}
+              <motion.button
+                whileHover={{ scale: 1.3 }}
+                whileTap={{ scale: 1.3 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                onClick={() => navigate("/library")}
+                title="My Library"
+                className="relative w-12 h-12 flex items-center justify-center"
+              >
+                <img
+                  src="/images/librarybook.svg"
+                  alt="Library"
+                  className="cursor-pointer"
+                />
+              </motion.button>
 
-                <DialogContent className="sm:max-w-md cursor-pointer">
-                  <DialogTitle>
-                    <VisuallyHidden>Sign In</VisuallyHidden>
-                  </DialogTitle>
-                  <SignIn onSuccess={() => setSignInOpen(false)} />
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
+              {/* Log out */}
 
-          {/* Sign Up / Log Out */}
-          {isAuthed ? (
-            <Button asChild className="cursor-pointer">
-              <button onClick={handleLogout}>Log out</button>
-            </Button>
+              <motion.div
+                whileHover={{
+                  scale: 1.05,
+                }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Button asChild className="cursor-pointer">
+                  <button onClick={handleLogout}>Log out</button>
+                </Button>
+              </motion.div>
+            </>
           ) : (
-            <Button asChild>
-              <Link to="/signup">Sign Up</Link>
-            </Button>
+            <>
+              {/* Sign In (Dialog) */}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Dialog open={signInOpen} onOpenChange={setSignInOpen}>
+                  <DialogTrigger asChild>
+                    <button title="Sign In" className="w-8 h-8">
+                      <img
+                        src="/images/person.svg"
+                        alt="Sign In"
+                        className="items-center w-8 h-8 cursor-pointer"
+                      />
+                    </button>
+                  </DialogTrigger>
+
+                  <DialogContent className="sm:max-w-md cursor-pointer">
+                    <DialogTitle>
+                      <VisuallyHidden>Sign In</VisuallyHidden>
+                    </DialogTitle>
+                    <SignIn onSuccess={() => setSignInOpen(false)} />
+                  </DialogContent>
+                </Dialog>
+              </motion.div>
+
+              {/* Sign Up */}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Button asChild>
+                  <Link to="/signup">Sign Up</Link>
+                </Button>
+              </motion.div>
+            </>
           )}
         </div>
       </div>
