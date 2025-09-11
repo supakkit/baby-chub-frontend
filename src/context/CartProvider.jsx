@@ -3,8 +3,8 @@ import { CartContext } from "./CartContext";
 import { toast } from "sonner";
 
 export function CartProvider({ children }) {
-    const [cartItems, setCartItems] = useState( getCartItemsFromLocalStorage() );
-    const [favoriteItems, setFavoriteItems] = useState( getFavoriteItemsFromLocalStorage() );
+    const [cartItems, setCartItems] = useState([]);
+    const [favoriteItems, setFavoriteItems] = useState([]);
 
     const ONETIME = 'oneTime';
     const MONTHLY = 'monthly';
@@ -44,7 +44,7 @@ export function CartProvider({ children }) {
                 name: item.name, 
                 description: item.description, 
                 type: item.type, 
-                image: item.image,
+                images: item.images,
                 prices: item.prices,
                 selectPlan: plan
             }]);
@@ -81,7 +81,7 @@ export function CartProvider({ children }) {
                 name: item.name, 
                 description: item.description, 
                 type: item.type, 
-                image: item.image,
+                images: item.images,
                 prices: item.prices,
                 selectPlan: plan
             }]);
@@ -103,23 +103,23 @@ export function CartProvider({ children }) {
         setFavoriteItems([]);
     }
 
-    function getCartItemsFromLocalStorage() {
-        return localStorage.getItem("cartItems") ? 
-            JSON.parse(localStorage.getItem("cartItems")) : [];
-    }
+    // function getCartItemsFromLocalStorage() {
+    //     return localStorage.getItem("cartItems") ? 
+    //         JSON.parse(localStorage.getItem("cartItems")) : [];
+    // }
 
-    function getFavoriteItemsFromLocalStorage() {
-        return localStorage.getItem("favoriteItems") ? 
-            JSON.parse(localStorage.getItem("favoriteItems")) : [];
-    }
+    // function getFavoriteItemsFromLocalStorage() {
+    //     return localStorage.getItem("favoriteItems") ? 
+    //         JSON.parse(localStorage.getItem("favoriteItems")) : [];
+    // }
 
-    useEffect(() => {
-        localStorage.setItem("cartItems", JSON.stringify(cartItems));
-    }, [cartItems])
+    // useEffect(() => {
+    //     localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    // }, [cartItems])
 
-    useEffect(() => {
-        localStorage.setItem("favoriteItems", JSON.stringify(favoriteItems));
-    }, [favoriteItems])
+    // useEffect(() => {
+    //     localStorage.setItem("favoriteItems", JSON.stringify(favoriteItems));
+    // }, [favoriteItems])
 
     return (
         <CartContext.Provider
