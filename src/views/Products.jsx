@@ -1,22 +1,20 @@
-import { useCallback, useContext, useEffect, useState } from "react";
-import { ProductContext } from "../context/ProductContext";
+import { useCallback, useEffect, useState } from "react";
 import { ProductCard } from "../components/ProductCard";
 import { ProductFilter } from "../components/ProductFilter";
 import { useSearchParams } from "react-router-dom";
-import { getProducts } from "../services/productsService";
 import { Button } from "@/components/ui/button";
+import { useProduct } from "../context/ProductProvider";
 
 
 export function Products() {
+    const { pageSize, loadingProducts, error, getProductsByQuery } = useProduct();
     const [filteredProducts, setFilteredProducts] = useState([]);
-    const [loadingProducts, setLoadingProducts] = useState(true);
-    const [error, setError] = useState("");
 
     const defaultFilters = { age: [], type: [], subject: [], price: [] };
     const [selectedFilters, setSelectedFilters] = useState(defaultFilters);
     
     const [searchParams, setSearchParams] = useSearchParams();
-    const pageSize = 4;
+    
     const [page, setPage] = useState(() => Math.max(1, parseInt(searchParams.get("page") || "1", 10)));
     const [total, setTotal] = useState(0);
     const totalPages = Math.max(1, Math.ceil((total || 0) / pageSize));
@@ -37,40 +35,18 @@ export function Products() {
         setSearchParams(params, { replace: true });
     }, [setSearchParams]);
 
-    const fetchProducts = useCallback(
-        async ({ age = [], price = [], type = [], subject = [], page = 1, limit = pageSize, q = '' } = {}) => {
-            setLoadingProducts(true);
-            const paramsObj = {
-                page: String(page),
-                limit: String(limit),
-            };
+    const fetchProducts = async (query) => {
+            const data = await getProductsByQuery(query);
+            // console.log('data:', data)
+            setFilteredProducts(data.products || []);
+            
+            if (typeof data.total === "number") setTotal(data.total);
+            if (typeof data.page === "number") setPage(data.page);
+            // console.log('total:', data.total)
 
-            if (age.length > 0) paramsObj.age = JSON.stringify(age);
-            if (price.length > 0) paramsObj.price = JSON.stringify(price);
-            if (type.length > 0) paramsObj.type = JSON.stringify(type);
-            if (subject.length > 0) paramsObj.subject = JSON.stringify(subject);
-            if (q.trim().length > 0) paramsObj.q = String(q).trim();
-
-            try {
-                console.log('paramsObj:', paramsObj);
-                const data = await getProducts( paramsObj );
-                setFilteredProducts(data.products || []);
-                // console.log('data:', data)
-                if (typeof data.total === "number") setTotal(data.total);
-                if (typeof data.page === "number") setPage(data.page);
-                // console.log('total:', data.total)
-
-                // reflect current state in URL
-                setURLParams({ ...selectedFilters, page, limit: pageSize });
-            } catch (err) {
-                console.error(err);
-                setError("Failed to load products.");
-            } finally {
-                setLoadingProducts(false);
-            }
-        },
-        [page, setURLParams]
-    );
+            // reflect current state in URL
+            setURLParams({ ...selectedFilters, page, limit: pageSize });    
+    };
 
     const handlePrev = () => {
         fetchProducts({ ...selectedFilters, page: page-1 });
@@ -81,7 +57,7 @@ export function Products() {
     };
 
     const handleApplyFilter = () => {
-        console.log('apply selectedFilters:', selectedFilters);
+        // console.log('apply selectedFilters:', selectedFilters);
         fetchProducts(selectedFilters);
     };
 
@@ -91,7 +67,7 @@ export function Products() {
     };
 
     useEffect(() => {
-        fetchProducts({q: 'logic'});
+        fetchProducts();
     }, []);
 
     if (loadingProducts)
@@ -108,7 +84,7 @@ export function Products() {
                 className="text-4xl font-bold text-center text-primary pb-8"
             >Products</div>
             {filteredProducts?.length === 0 ? 
-            <div className="text-center text-xl text-primary py-4">Sorry, no products matched your selection...</div> : null}
+            <div className="text-center text-xl text-primary py-4">Sorry, no products found!</div> : null}
             <div className="flex flex-col md:flex-row gap-8">
                 <div className="">
                     <ProductFilter
@@ -122,7 +98,7 @@ export function Products() {
                     />
                 </div>
                 {filteredProducts?.length === 0 ? null :
-                    <div className="grid content-start grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+                    <div className="grid content-start grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredProducts.map(product => (
                             <ProductCard key={product._id} product={product} />
                         ))}

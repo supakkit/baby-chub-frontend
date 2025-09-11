@@ -42,7 +42,7 @@ export function ProductSummaryCard({ product, isEdit, isFavorite = false }) {
           </div>
         }
           <img
-            src={product.image}
+            src={product.images[0]}
             alt=""
             className="rounded-lg max-w-36 object-cover"
           />

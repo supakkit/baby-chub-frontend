@@ -28,11 +28,11 @@ export function ProductCard({ product }) {
     return (
         <Card 
             onClick={() => handleViewProducts(product._id)}
-            className="md:max-w-3xs flex justify-between h-fit gap-0 p-0 rounded-3xl overflow-clip md:hover:scale-105 duration-300 hover:shadow-primary"
+            className="md:max-w-56 flex justify-between h-fit gap-0 p-0 rounded-3xl overflow-clip md:hover:scale-105 duration-300 hover:shadow-primary"
         >
             <CardHeader className="p-0 pt-4 gap-0 hover:relative">
                 <img
-                    src={product.image}
+                    src={product.images[0]}
                     alt=""
                     className="overflow-clip aspect-5/4 object-cover border-y border-secondary/50"
                 />
@@ -52,22 +52,22 @@ export function ProductCard({ product }) {
                     </svg>
                 </button>
             </CardHeader>
-            <CardContent className="grid gap-3 px-3 pt-2 pb-3 flex-wrap">
+            <CardContent className="grid gap-2 px-3 pt-2 pb-3 flex-wrap">
                 <h3
-                    className="text-lg font-semibold line-clamp-2 leading-snug"
+                    className="text-md font-semibold line-clamp-2 leading-snug"
                 >{product.name}</h3>
                 <div className="flex justify-between px-1">
                 <Badge 
                     variant="outline"
                     className="bg-purple-100 text-purple-700 border-0"
                   >{product.type}</Badge>
-                <p className="font-bold text-lg">{displayPriceRange(product)}</p>    
+                <p className="font-bold text-md">{displayPriceRange(product)}</p>    
                 </div>
-                <p className="text-sm line-clamp-2 px-1">{product.description}</p>
+                <p className="text-xs line-clamp-2 px-1">{product.description}</p>
                 <Button
                     onClick={(event) => {addToCart(product);event.stopPropagation();}}
                     variant="default"
-                    className="cursor-pointer w-full rounded-xl mt-2"
+                    className="cursor-pointer w-full rounded-xl mt-1"
                 >
                     Add to Cart
                 </Button>    

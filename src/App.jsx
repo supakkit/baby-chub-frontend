@@ -16,6 +16,7 @@ import { UserProfile } from "./views/UserProfile";
 import { ProtectedRoute } from "./views/ProtectedRoute";
 import About from "./views/About";
 import { OrderDetail } from "./views/OrderDetail";
+import { ProductForm } from "./views/ProductForm";
 
 
 const NewArrival = () => <div className="p-6">New Arrival – coming soon</div>;
@@ -94,6 +95,12 @@ const router = createBrowserRouter([
           <ProtectedRoute>
             <OrderDetail />
           </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/product-form",
+        element: (
+          <ProductForm />
         ),
       },
     ],
