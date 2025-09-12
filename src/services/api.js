@@ -7,7 +7,7 @@ const baseURL = import.meta.env.DEV
 
 const api = axios.create({
   baseURL,
-  // withCredentials: true, // critical for sending cookies!
+  withCredentials: true, // critical for sending cookies!
 });
 
 export default api;

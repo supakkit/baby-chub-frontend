@@ -1,19 +1,17 @@
 // src/views/SignUp.jsx
 // -------------------------------------------------------------
-// ✅ เปลี่ยนช่วงอายุจาก 1–20 → เป็น 3–15 (เท่านั้น)
-//    - กำหนด AGE_MIN/AGE_MAX = 3/15
-//    - เปลี่ยน <input number> ให้ min/max = 3/15
-//    - ปรับ validation และ helper text ให้สอดคล้อง
-// ⚠️ ส่วนอื่น (ฟิลด์/โครง UI/flow modal/payload) คงเดิม
+// ✅ เชื่อม backend จริงผ่าน service: signup(payload)
+// ✅ ปุ่ม Resend verification ใน success banner
+// ✅ ช่วงอายุ 3–15 และ from ≤ to (ตรงกับ backend)
+// ✅ แสดง error จาก server (409, validation ฯลฯ) ชัดเจน
+// ✅ Modal ข้อความ Privacy Policy & Terms of Service ตามต้นฉบับ
 // -------------------------------------------------------------
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { signup, resendVerification } from "../services/userServices";
 
-// (ทางเลือก) ตั้งค่าฐาน API จาก .env เมื่อเชื่อมจริง
-const API_BASE = import.meta.env?.VITE_API_BASE_URL;
-
-// ✅ ค่าคงที่ช่วงอายุใหม่
+// ✅ ค่าคงที่ช่วงอายุ (ต้องตรงกับ backend)
 const AGE_MIN = 3;
 const AGE_MAX = 15;
 
@@ -119,7 +117,8 @@ export function SignUp() {
     ) {
       next.age = `Please enter a number between ${AGE_MIN} and ${AGE_MAX} only`;
     } else if (aFrom > aTo) {
-      next.age = "The starting age must be less than or equal to the ending age";
+      next.age =
+        "The starting age must be less than or equal to the ending age";
     }
 
     // ต้องยอมรับนโยบาย
@@ -145,7 +144,7 @@ export function SignUp() {
   };
 
   // -----------------------------
-  // 📨 Submit
+  // 📨 Submit (เรียก service จริง)
   // -----------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -156,9 +155,6 @@ export function SignUp() {
     if (!validate()) return;
 
     setSubmitting(true);
-    const ac = new AbortController();
-    const timeoutId = setTimeout(() => ac.abort(), 12000);
-
     try {
       const payload = {
         fullName: fullName.trim(),
@@ -169,38 +165,28 @@ export function SignUp() {
         agreeToPolicy: agree,
       };
 
-      // TODO: ใช้ API จริงเมื่อพร้อม
-      // const res = await fetch(`${API_BASE}/auth/signup`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(payload),
-      //   signal: ac.signal,
-      //   credentials: "include",
-      // });
-      // clearTimeout(timeoutId);
-      // if (!res.ok) { ...handle errors... }
-
-      // MOCK ชั่วคราว
-      await new Promise((r) => setTimeout(r, 800));
-      clearTimeout(timeoutId);
+      // 🔗 เรียก backend จริง
+      await signup(payload);
 
       setSuccessEmail(email.trim());
       setBannerOpen(true);
-    } catch (err0) {
-      if (err0?.name === "AbortError") {
-        setErr((o) => ({ ...o, submit: "Request timed out. Please try again." }));
-      } else {
-        setErr((o) => ({ ...o, submit: "Sign up failed. Please try again." }));
-      }
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Sign up failed. Please try again.";
+      setErr((o) => ({ ...o, submit: msg }));
     } finally {
-      clearTimeout(timeoutId);
       setSubmitting(false);
     }
   };
 
-  // รับพารามิเตอร์ redirect จาก query (ถ้ามี)
+  // รับพารามิเตอร์ redirect จาก query (เผื่อคุณใช้ที่อื่น)
   const [searchParams] = useSearchParams();
-  const nextPath = useMemo(() => searchParams.get("next") || "", [searchParams]);
+  const nextPath = useMemo(
+    () => searchParams.get("next") || "",
+    [searchParams]
+  );
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-[color:var(--background)] text-[color:var(--foreground)] flex items-start md:items-center justify-center px-4 py-8">
@@ -213,13 +199,31 @@ export function SignUp() {
               We’ve sent a verification link to <strong>{successEmail}</strong>.
             </p>
             <p className="text-sm">Please check your inbox (and spam).</p>
-            <button
-              type="button"
-              className="mt-2 text-sm underline hover:opacity-80"
-              onClick={() => setBannerOpen(false)}
-            >
-              Dismiss
-            </button>
+            <div className="flex items-center gap-4 mt-2">
+              <button
+                type="button"
+                className="text-sm underline hover:opacity-80"
+                onClick={() => setBannerOpen(false)}
+              >
+                Dismiss
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await resendVerification(successEmail);
+                    alert(
+                      "Verification email resent. Please check your inbox/spam."
+                    );
+                  } catch {
+                    alert("Could not resend verification email.");
+                  }
+                }}
+                className="text-sm underline hover:opacity-80"
+              >
+                Resend
+              </button>
+            </div>
           </div>
         )}
 
@@ -231,7 +235,10 @@ export function SignUp() {
             </h1>
 
             {/* Full Name */}
-            <label htmlFor="fullName" className="block text-sm font-medium mb-2">
+            <label
+              htmlFor="fullName"
+              className="block text-sm font-medium mb-2"
+            >
               First Name / Last Name
             </label>
             <input
@@ -249,13 +256,19 @@ export function SignUp() {
               required
             />
             {err.fullName && (
-              <p className="mt-1 text-sm text-[color:var(--destructive)]" role="alert">
+              <p
+                className="mt-1 text-sm text-[color:var(--destructive)]"
+                role="alert"
+              >
                 {err.fullName}
               </p>
             )}
 
             {/* Mobile */}
-            <label htmlFor="mobile" className="block text-sm font-medium mt-5 mb-2">
+            <label
+              htmlFor="mobile"
+              className="block text-sm font-medium mt-5 mb-2"
+            >
               Mobile number
             </label>
             <input
@@ -273,13 +286,19 @@ export function SignUp() {
               required
             />
             {err.mobile && (
-              <p className="mt-1 text-sm text-[color:var(--destructive)]" role="alert">
+              <p
+                className="mt-1 text-sm text-[color:var(--destructive)]"
+                role="alert"
+              >
                 {err.mobile}
               </p>
             )}
 
             {/* Email */}
-            <label htmlFor="email" className="block text-sm font-medium mt-5 mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium mt-5 mb-2"
+            >
               Email address
             </label>
             <input
@@ -297,13 +316,19 @@ export function SignUp() {
               required
             />
             {err.email && (
-              <p className="mt-1 text-sm text-[color:var(--destructive)]" role="alert">
+              <p
+                className="mt-1 text-sm text-[color:var(--destructive)]"
+                role="alert"
+              >
                 {err.email}
               </p>
             )}
 
             {/* Password */}
-            <label htmlFor="password" className="block text-sm font-medium mt-5 mb-2">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium mt-5 mb-2"
+            >
               Password
             </label>
             <div className="relative">
@@ -332,7 +357,10 @@ export function SignUp() {
               </button>
             </div>
             {err.password && (
-              <p className="mt-1 text-sm text-[color:var(--destructive)]" role="alert">
+              <p
+                className="mt-1 text-sm text-[color:var(--destructive)]"
+                role="alert"
+              >
                 {err.password}
               </p>
             )}
@@ -379,7 +407,10 @@ export function SignUp() {
               />
             </div>
             {err.age && (
-              <p className="mt-1 text-sm text-[color:var(--destructive)]" role="alert">
+              <p
+                className="mt-1 text-sm text-[color:var(--destructive)]"
+                role="alert"
+              >
                 {err.age}
               </p>
             )}
@@ -419,14 +450,17 @@ export function SignUp() {
               </label>
             </div>
             {err.agree && (
-              <p className="mt-1 text-sm text-[color:var(--destructive)]" role="alert">
+              <p
+                className="mt-1 text-sm text-[color:var(--destructive)]"
+                role="alert"
+              >
                 {err.agree}
               </p>
             )}
 
             <p className="mt-3 text-xs text-[color:var(--muted-foreground)]">
-              After creating an account, we will send a verification link to your
-              email. Please verify before signing in.
+              After creating an account, we will send a verification link to
+              your email. Please verify before signing in.
             </p>
 
             {/* Submit */}
@@ -452,14 +486,17 @@ export function SignUp() {
 
             {/* Error ระดับ submit */}
             {err.submit && (
-              <p className="mt-3 text-sm text-[color:var(--destructive)] text-center" role="alert">
+              <p
+                className="mt-3 text-sm text-[color:var(--destructive)] text-center"
+                role="alert"
+              >
                 {err.submit}
               </p>
             )}
           </form>
         </div>
 
-        {/* =================== MODAL (อ่านนโยบาย) =================== */}
+        {/* =================== MODAL (Privacy Policy & Terms) =================== */}
         {showPolicy && (
           <div
             className="fixed inset-0 z-[999] flex items-center justify-center px-4"
@@ -474,7 +511,7 @@ export function SignUp() {
             <div className="relative w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--popover)] text-[color:var(--popover-foreground)] shadow-lg">
               <div className="px-5 py-4 border-b border-[color:var(--border)] flex items-center justify-between">
                 <h2 id="policy-title" className="text-lg font-semibold">
-                  Privacy Policy & Terms of Service
+                  Privacy Policy &amp; Terms of Service
                 </h2>
                 <button
                   type="button"
@@ -486,13 +523,59 @@ export function SignUp() {
                 </button>
               </div>
 
+              {/* DO NOT EDIT – original policy text */}
               <div className="px-5 py-4 overflow-y-auto max-h-[65vh] text-sm leading-6">
-                {/* … เนื้อหาเดียวกับเดิม … */}
                 <p className="mb-3">
                   We value your privacy and security. By creating an account and
-                  using our services, you agree to the following policy and terms.
+                  using our services, you agree to the following policy and
+                  terms.
                 </p>
-                {/* (ย่อเนื้อหา นโยบายตามไฟล์เดิม) */}
+
+                <h3 className="font-semibold mt-4 mb-2">Privacy Policy</h3>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>
+                    We collect and use your personal information (e.g., name,
+                    contact details, shipping address, and payment info) to
+                    process orders, deliver products, prevent fraud, and improve
+                    your shopping experience.
+                  </li>
+                  <li>
+                    Your data is stored securely and is never sold. We may share
+                    it with trusted third-party providers only when necessary
+                    for payment processing, delivery, analytics, or customer
+                    support—subject to appropriate safeguards.
+                  </li>
+                  <li>
+                    You may contact us to access, update, or request deletion of
+                    your personal data, subject to legal and operational
+                    requirements.
+                  </li>
+                </ul>
+
+                <h3 className="font-semibold mt-5 mb-2">Terms of Service</h3>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>
+                    You agree to use the service lawfully and respectfully.
+                    Product availability, pricing, taxes, shipping fees, and
+                    delivery estimates are shown at checkout.
+                  </li>
+                  <li>
+                    Returns and refunds follow our return policy. We are not
+                    liable for indirect or consequential losses caused by
+                    delays, outages, or events beyond our control.
+                  </li>
+                  <li>
+                    By creating an account, you confirm that you are authorized
+                    to use the provided payment method and that all information
+                    is accurate and up to date.
+                  </li>
+                </ul>
+
+                <p className="mt-5">
+                  By selecting <strong>I agree</strong> on the sign-up form and
+                  creating an account, you acknowledge that you have read and
+                  accepted this Privacy Policy and these Terms of Service.
+                </p>
               </div>
 
               <div className="px-5 py-3 border-t border-[color:var(--border)] flex items-center justify-end gap-3">

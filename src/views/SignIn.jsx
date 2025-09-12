@@ -1,15 +1,13 @@
 // src/views/SignIn.jsx
-// Sign in (mock): Calls login() from UserContext then navigates to /profile
-// In production: Replace TODO with real API calls
+// ✅ Login จริงผ่าน UserContext (เรียก /auth/login + cookie)
+// ✅ แสดงข้อความ error แบบ generic มาตรฐาน: "Email or password is incorrect."
+// ✅ จัดการกรณี 403 (not verified), 429/423 (rate limited/locked), 5xx, network
 
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useUser } from "../context/UserContext"; // ✅ Uses login() to set user.id for ProtectedRoute
+import { useUser } from "../context/UserContext";
 
 export function SignIn() {
-  // ------------------------------
-  // 📌 Form state
-  // ------------------------------
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -18,44 +16,67 @@ export function SignIn() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useUser(); // ✅ from context
+  const { login } = useUser(); // login({ email, password })
 
-  // ------------------------------
-  // 📌 Submit handler
-  // ------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const emailValue = email.trim();
     const passwordValue = password;
 
-    // Simple client-side validation
+    // basic client-side validation
+    const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailValue || !passwordValue) {
       setError("Please fill in both email and password.");
+      return;
+    }
+    if (!emailLike.test(emailValue)) {
+      setError("Please enter a valid email address.");
       return;
     }
     if (passwordValue.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
     }
-    const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailLike.test(emailValue)) {
-      setError("Please enter a valid email address.");
-      return;
-    }
 
     setError("");
     setSubmitting(true);
     try {
-      // TODO (prod): POST /auth/login -> httpOnly cookie -> GET /auth/me
-      // For now, use context mock: ensures user.id exists
-      await new Promise((r) => setTimeout(r, 400)); // small mock delay
-      await login({ email: emailValue }); // ✅ creates user.id
-
-      // ✅ After successful sign-in, redirect back to the originally intended route (if any); otherwise go to /profile
+      await login({ email: emailValue, password: passwordValue });
       navigate(location.state?.from?.pathname ?? "/profile", { replace: true });
     } catch (err) {
-      setError(err?.message || "Sign in failed. Please try again.");
+      // ---- Error mapping (industry-standard generic) ----
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.message;
+
+      let msg =
+        serverMsg || err?.message || "Sign in failed. Please try again.";
+
+      // 401 Unauthorized → generic ไม่เปิดเผยว่าเมลหรือพาสผิด
+      if (status === 401) {
+        msg = "Email or password is incorrect.";
+      }
+      // 403 Forbidden → โดยทั่วไปคือยังไม่ยืนยันอีเมล (ถ้าหลังบ้านตั้งไว้)
+      else if (status === 403) {
+        msg =
+          serverMsg ||
+          "Your account isn’t verified yet. Please check your email for a verification link.";
+      }
+      // 429/423 → พยายามมากเกินไป/ถูกล็อกชั่วคราว
+      else if (status === 429 || status === 423) {
+        msg = "Too many attempts. Please try again later.";
+      }
+      // Network error (ไม่มี response เลย)
+      else if (!err?.response) {
+        msg =
+          "Can’t reach the server. Please check your connection and try again.";
+      }
+      // 5xx → ปัญหาที่ฝั่งเรา
+      else if (status >= 500) {
+        msg = "Something went wrong on our side. Please try again.";
+      }
+
+      setError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -70,7 +91,7 @@ export function SignIn() {
               Sign In
             </h1>
 
-            {/* Email field */}
+            {/* Email */}
             <label htmlFor="email" className="block text-sm font-medium mb-2">
               Email
             </label>
@@ -81,15 +102,17 @@ export function SignIn() {
               autoComplete="email"
               placeholder="e.g. name@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              aria-invalid={!!error}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(""); // เคลียร์ error เมื่อผู้ใช้แก้ฟิลด์
+              }}
               className="w-full h-11 px-4 rounded-md border border-[color:var(--input)] bg-white
                          text-[color:var(--foreground)] placeholder:text-[color:var(--muted-foreground)]
                          focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)] focus:border-[color:var(--ring)]"
               required
             />
 
-            {/* Password field */}
+            {/* Password */}
             <label
               htmlFor="password"
               className="block text-sm font-medium mt-5 mb-2"
@@ -102,9 +125,12 @@ export function SignIn() {
                 name="password"
                 type={showPw ? "text" : "password"}
                 autoComplete="current-password"
-                placeholder="Enter Your Password "
+                placeholder="Enter Your Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError("");
+                }}
                 minLength={8}
                 className="w-full h-11 pr-12 px-4 rounded-md border border-[color:var(--input)] bg-white
                            text-[color:var(--foreground)] placeholder:text-[color:var(--muted-foreground)]
@@ -123,12 +149,15 @@ export function SignIn() {
 
             {/* Error message */}
             {error && (
-              <p className="mt-3 text-sm text-red-600" role="alert">
+              <p
+                className="mt-3 text-sm text-[color:var(--destructive)]"
+                role="alert"
+              >
                 {error}
               </p>
             )}
 
-            {/* Submit button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={submitting}
