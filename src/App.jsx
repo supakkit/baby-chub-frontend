@@ -19,6 +19,12 @@ import { OrderDetail } from "./views/OrderDetail";
 import { Library } from "./views/Library";
 import HowItWorks from "./views/HowItWorks";
 import NotFound from "./views/NotFound";
+import AdminRoute from "./views/admin/AdminRoute";
+import AdminLayout from "./views/admin/AdminLayout";
+import AdminDashboard from "./views/admin/AdminDashboard";
+import AdminUsers from "./views/admin/AdminUsers";
+import AdminOrders from "./views/admin/AdminOrders";
+
 
 
 const NewArrival = () => <div className="p-6">New Arrival – coming soon</div>;
@@ -87,9 +93,7 @@ const router = createBrowserRouter([
         path: "library",
         element: <Library />,
       },
-      { path: "how-it-works",
-        element: <HowItWorks />,
-      },
+      { path: "how-it-works", element: <HowItWorks /> },
       {
         path: "*",
         element: <NotFound />,
@@ -109,6 +113,21 @@ const router = createBrowserRouter([
             <OrderDetail />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: "/admin",
+        element: (
+          <ProtectedRoute>
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          </ProtectedRoute>
+        ),
+        children: [
+          { path: "dashboard", element: <AdminDashboard /> },
+          { path: "users", element: <AdminUsers /> },
+          { path: "orders", element: <AdminOrders /> },
+        ],
       },
     ],
   },

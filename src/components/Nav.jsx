@@ -24,6 +24,7 @@ import { SignIn } from "@/views/SignIn";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { motion } from "framer-motion";
 
+
 export default function Nav() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
@@ -32,6 +33,8 @@ export default function Nav() {
   const { user, logout } = useUser();
   const navigate = useNavigate();
   const isAuthed = !!user?.id;
+
+  const isAdmin = user?.role === "admin";
 
   const requireAuth = (action) => {
     if (!isAuthed) {
@@ -130,6 +133,12 @@ export default function Nav() {
         <div className="flex items-center justify-end gap-4">
           {/* Desktop Search */}
           <SearchAutocomplete />
+
+          {isAdmin && (
+            <Link className="font-bold hover:opacity-80" to="/admin/dashboard">
+              Admin
+            </Link>
+          )}
 
           {/* Favorite */}
           <motion.button

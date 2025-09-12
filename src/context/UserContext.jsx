@@ -22,6 +22,7 @@ const DEFAULT_USER = {
   firstName: "Demo",
   lastName: "User",
   email: "demo@babychub.app",
+  role: "admin",
   phone: "",
   avatarUrl: "",
   address: {
