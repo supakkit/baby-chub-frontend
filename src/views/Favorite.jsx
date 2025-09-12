@@ -1,13 +1,36 @@
-import { useContext } from "react";
+import { useCallback, useContext, useState } from "react";
 import { CartContext } from "../context/CartContext";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ProductSummaryCard } from "../components/ProductSummaryCard";
+import { getProductsInFavorite } from "../services/favoriteService.js";
 
 
 
 export function Favorite() {
-    const { favoriteItems, clearFavorite } = useContext(CartContext);
+    // const { favoriteItems, clearFavorite } = useContext(CartContext);
+
+    const [favoriteItems, setFavoriteItems] = useState([]);
+    const [loadingProducts, setLoadingProducts] = useState(true);
+    const [error, setError] = useState("");
+
+    // const fetchProductFromFavorite = useCallback(
+    //     async () => {
+    //         try {
+    //             const data = await getProductsInFavorite();
+    //             setFavoriteItems(data.products);
+    //         } catch {
+    //             setError("Failed to load products from your favorite")
+    //         } finally {
+    //             setLoadingProducts(false);
+    //         }
+    //     },[]
+    // );
+    
+    const clearFavorite = () => {
+
+    };
+
 
     return (
         <div className="min-h-screen">
