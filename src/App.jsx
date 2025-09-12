@@ -19,6 +19,8 @@ import { OrderDetail } from "./views/OrderDetail";
 import { Library } from "./views/Library";
 import HowItWorks from "./views/HowItWorks";
 import NotFound from "./views/NotFound";
+import { ProductForm } from "./views/ProductForm";
+
 
 
 const NewArrival = () => <div className="p-6">New Arrival – coming soon</div>;
@@ -108,6 +110,12 @@ const router = createBrowserRouter([
           <ProtectedRoute>
             <OrderDetail />
           </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/product-form",
+        element: (
+          <ProductForm />
         ),
       },
     ],
