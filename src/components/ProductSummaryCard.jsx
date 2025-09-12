@@ -10,12 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ProductContext } from "../context/ProductContext";
 import { Button } from "./ui/button";
 
 export function ProductSummaryCard({ product, isEdit, isFavorite = false }) {
   const { ONETIME, MONTHLY, YEARLY, selectPlanInCart, addToCart, removeFromCart, removeFromFavorite } = useContext(CartContext);
-  const { displayPriceRange } = useContext(ProductContext);
+
+  const displayPriceRange = (product) => {
+      const minPrice = product.prices.oneTime || product.prices.monthly;
+      const maxPrice = product.prices.oneTime ? null : product.prices.yearly;
+
+      return <>{minPrice}฿{maxPrice ? ` - ${maxPrice}฿` : null}</>
+  }
 
   return (
       <div className="flex gap-6 rounded-lg h-36 hover:bg-neutral-50 relative pr-4">
@@ -37,7 +42,7 @@ export function ProductSummaryCard({ product, isEdit, isFavorite = false }) {
           </div>
         }
           <img
-            src={product.image}
+            src={product.images[0]}
             alt=""
             className="rounded-lg max-w-36 object-cover"
           />

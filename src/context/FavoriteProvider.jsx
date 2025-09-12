@@ -1,40 +1,23 @@
 import { useEffect, useState } from "react";
-import { CartContext } from "./CartContext";
+import { FavoriteContext } from "./FavoriteContext";
 import { toast } from "sonner";
+import { getProductsInFavorite } from "../services/favoriteService.js";
 
-export function CartProvider({ children }) {
-    const [cartItems, setCartItems] = useState([]);
-    const [favoriteItems, setFavoriteItems] = useState([]);
 
-    const ONETIME = 'oneTime';
-    const MONTHLY = 'monthly';
-    const YEARLY = 'yearly';
-   
-   const selectPlanInCart = (item, selectPlan = null) => {
-        const plan = selectPlan
-            ? { [selectPlan]: item.prices[selectPlan] }
-            : item.prices.oneTime
-            ? { 'oneTime': item.prices.oneTime }
-            : { 'monthly': item.prices.monthly }
+export function FavoriteProvider({ children }) {
+    // const [favoriteItems, setFavoriteItems] = useState([]);
+    // const [loadingProducts, setLoadingProducts] = useState(true);
+    // const [error, setError] = useState("");
 
-        const indexOfItem = cartItems.findIndex(cartItem => cartItem.id === item.id);
-        
-        if (indexOfItem !== -1) {
-            cartItems[indexOfItem] = {
-                ...cartItems[indexOfItem],
-                selectPlan: plan
-            }
+    // const fetchProductFromFavorite = async () => {
+    //     try {
+    //         const data = await getProductsInFavorite();
+    //     } catch (err) {
+            
+    //     }
+    // };
 
-            setCartItems([...cartItems]);
-        }
-    }
-
-    const addToCart = (item, selectPlan = null) => {
-        const plan = selectPlan
-            ? { [selectPlan]: item.prices[selectPlan] }
-            : item.prices.oneTime
-            ? { 'oneTime': item.prices.oneTime }
-            : { 'monthly': item.prices.monthly }
+    const addToFavorite = async (item) => {
 
         const indexOfItem = cartItems.findIndex(cartItem => cartItem.id === item.id);
 
@@ -122,24 +105,12 @@ export function CartProvider({ children }) {
     // }, [favoriteItems])
 
     return (
-        <CartContext.Provider
+        <FavoriteContext.Provider
             value={{
-                ONETIME,
-                MONTHLY,
-                YEARLY,
-                cartItems,
-                setCartItems,
-                addToCart,
-                removeFromCart,
-                clearCart,
-                selectPlanInCart,
-                favoriteItems,
-                addToFavorite,
-                removeFromFavorite,
-                clearFavorite,
+                
             }}
         >
             {children}
-        </CartContext.Provider>
+        </FavoriteContext.Provider>
     );
 }

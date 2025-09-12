@@ -24,6 +24,7 @@ import AdminLayout from "./views/admin/AdminLayout";
 import AdminDashboard from "./views/admin/AdminDashboard";
 import AdminUsers from "./views/admin/AdminUsers";
 import AdminOrders from "./views/admin/AdminOrders";
+import { ProductForm } from "./views/ProductForm";
 
 
 
@@ -128,6 +129,10 @@ const router = createBrowserRouter([
           { path: "users", element: <AdminUsers /> },
           { path: "orders", element: <AdminOrders /> },
         ],
+        path: "/product-form",
+        element: (
+          <ProductForm />
+        ),
       },
     ],
   },

@@ -16,7 +16,7 @@ export function Checkout() {
                 <div className="flex flex-col items-center lg:flex-row lg:items-start gap-12">
                     <div className="flex flex-col gap-4">
                         {checkoutItems.map(product => (
-                            <ProductSummaryCard key={product.id} isEdit={false} product={product} />
+                            <ProductSummaryCard key={product._id} isEdit={false} product={product} />
                         ))}
                     </div>
                     <div className="md:w-1/2 md:self-end lg:w-xl lg:self-end lg:sticky bottom-8">
