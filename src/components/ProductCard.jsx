@@ -1,6 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { CartContext } from "../context/CartContext";
-import { useContext } from "react";
 import {
   Card,
   CardContent,
@@ -8,10 +6,11 @@ import {
 } from "@/components/ui/card"
 import { Button } from "./ui/button";
 import { Badge } from "@/components/ui/badge";
+import { addToFavorite } from "../services/favoriteService";
+import { addToCart, planOptions } from "../services/cartService";
 
 
 export function ProductCard({ product }) {
-    const { addToCart, addToFavorite } = useContext(CartContext);
     const navigate = useNavigate();
 
     const displayPriceRange = (product) => {
@@ -44,7 +43,7 @@ export function ProductCard({ product }) {
                         strokeLinejoin="round" 
                         className="h-6 stroke-primary stroke-2 fill-none hover:fill-primary cursor-pointer"
                         onClick={(event) => {
-                            addToFavorite(product);
+                            addToFavorite(product._id);
                             event.stopPropagation();
                         }}
                     >
@@ -65,7 +64,10 @@ export function ProductCard({ product }) {
                 </div>
                 <p className="text-xs line-clamp-2 px-1">{product.description}</p>
                 <Button
-                    onClick={(event) => {addToCart(product);event.stopPropagation();}}
+                    onClick={(event) => {
+                        addToCart(product._id, product.prices.oneTime ? planOptions.ONETIME : product.prices.monthly ? planOptions.MONTHLY : planOptions.YEARLY);
+                        event.stopPropagation();
+                    }}
                     variant="default"
                     className="cursor-pointer w-full rounded-xl mt-1"
                 >

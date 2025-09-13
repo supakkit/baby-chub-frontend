@@ -7,20 +7,27 @@ export function TotalPriceCard({ children, products }) {
     const {
         promotionForm, 
         setPromotionForm, 
-        discount, promoApplyStatus, 
+        discount,
+        promoApplyStatus, 
+        setPromoApplyStatus,
         subTotalPrice, 
         totalPrice, 
         applyPromotionCode, 
         calSubTotalPrice
     } = useContext(ApplyDiscountContext);
-
+    
     useEffect(() => {
-        calSubTotalPrice(products);
-    }, []);
+        applyPromotionCode(promotionForm, calSubTotalPrice(products));
+    }, [products]);
 
     return (
         <div className="w-full grid gap-4 text-primary">
-            <form onSubmit={(event) => { applyPromotionCode(event, promotionForm, subTotalPrice) }}>
+            <form
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    applyPromotionCode(promotionForm, subTotalPrice);
+                }}
+            >
                 <div className="flex justify-between items-start w-full gap-4">
                     <div className="w-full grid gap-1">
                         <Input 
@@ -28,12 +35,12 @@ export function TotalPriceCard({ children, products }) {
                             placeholder="Input promotion code" 
                             name="promotionCode"
                             value={promotionForm}
-                            onChange={(e) => setPromotionForm(e.target.value)}
+                            onChange={(e) => {setPromotionForm(e.target.value);setPromoApplyStatus('') }}
                         />
-                        {promoApplyStatus.length === 0 ? null 
-                        : promoApplyStatus === 'applied' ? <p className="pl-2 text-sm text-lime-500">{promotionForm} applied</p> 
-                        : promoApplyStatus === 'wrong' ? <p className="pl-2 text-sm text-red-300">The promo code is wrong</p>
-                        : null}
+                        {!(promotionForm?.length > 0) ? null
+                            : discount > 0 ? <p className="pl-2 text-sm text-lime-500">{promoApplyStatus}</p>
+                            : <p className="pl-2 text-sm text-red-300">{promoApplyStatus}</p>
+                        }
                     </div>
                     
                     <Button type="submit" variant="outline" className="">

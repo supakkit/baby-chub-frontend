@@ -8,11 +8,11 @@ export function Checkout() {
     const { checkoutItems } = useContext(CheckoutContext);
 
     return (
-        <div className="min-h-screen">
+        <div className="layout py-8 min-h-screen">
             <div
-                className="text-5xl font-bold text-center text-primary pb-4"
+                className="text-4xl font-bold text-center text-primary pb-8"
             >Checkout</div>
-            {checkoutItems.length > 0 ? 
+            {checkoutItems?.length > 0 ? 
                 <div className="flex flex-col items-center lg:flex-row lg:items-start gap-12">
                     <div className="flex flex-col gap-4">
                         {checkoutItems.map(product => (

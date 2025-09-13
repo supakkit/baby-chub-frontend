@@ -33,19 +33,19 @@ export function Products() {
 
         const params = new URLSearchParams(paramsObj);
         setSearchParams(params, { replace: true });
-    }, [setSearchParams]);
+    }, [setSearchParams, pageSize]);
 
     const fetchProducts = async (query) => {
-            const data = await getProductsByQuery(query);
-            // console.log('data:', data)
-            setFilteredProducts(data.products || []);
-            
-            if (typeof data.total === "number") setTotal(data.total);
-            if (typeof data.page === "number") setPage(data.page);
-            // console.log('total:', data.total)
+        const data = await getProductsByQuery(query);
+        // console.log('data:', data)
+        setFilteredProducts(data.products || []);
+        
+        if (typeof data.total === "number") setTotal(data.total);
+        if (typeof data.page === "number") setPage(data.page);
+        // console.log('total:', data.total)
 
-            // reflect current state in URL
-            setURLParams({ ...selectedFilters, page, limit: pageSize });    
+        // reflect current state in URL
+        setURLParams({ ...selectedFilters, page, limit: pageSize });    
     };
 
     const handlePrev = () => {
@@ -70,22 +70,24 @@ export function Products() {
         fetchProducts();
     }, []);
 
-    if (loadingProducts)
-        return (
-        <div className="min-h-screen text-center mt-10 text-xl text-primary">Loading products...</div>
-    );
+    // if (loadingProducts)
+    //     return (
+    //     <div className="min-h-screen text-center mt-10 text-xl text-primary">Loading products...</div>
+    // );
 
     if (error)
         return <div className="min-h-screen text-center mt-10 text-red-500">{error}</div>;
 
     return (
-        <div className="layout py-8 min-h-screen"> 
+        <div className="layout py-8 min-h-screen relative"> 
             <div
-                className="text-4xl font-bold text-center text-primary pb-8"
+                className="text-3xl font-bold text-center text-primary pb-8"
             >Products</div>
-            {filteredProducts?.length === 0 ? 
-            <div className="text-center text-xl text-primary py-4">Sorry, no products found!</div> : null}
-            <div className="flex flex-col md:flex-row gap-8">
+            {/* {loadingProducts
+            ? <div className="min-h-screen text-center mt-10 text-xl text-primary">Loading products...</div>
+            : filteredProducts?.length > 0 ? null :
+            <div className="text-center text-xl text-primary">Sorry, no products found!</div>} */}
+            <div className="flex flex-col md:flex-row gap-8 mb-8 relative">
                 <div className="">
                     <ProductFilter
                         products={filteredProducts}
@@ -97,15 +99,18 @@ export function Products() {
                         clearFilter={clearFilter}
                     />
                 </div>
-                {filteredProducts?.length === 0 ? null :
+                {loadingProducts
+                ? <div className="md:absolute w-full text-center mt-10 text-xl text-primary">Loading products...</div>
+                : filteredProducts?.length > 0 ?
                     <div className="grid content-start grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredProducts.map(product => (
                             <ProductCard key={product._id} product={product} />
                         ))}
-                    </div>    
+                    </div> 
+                : <div className="md:absolute w-full text-center mt-10 text-xl text-primary">Sorry, no products found!</div>
                 }
             </div>
-            <div className="flex justify-center items-center pt-8">
+            <div className="absolute w-full bottom-0 flex justify-center items-center py-4">
                 <Button
                     variant="link"
                     onClick={handlePrev}

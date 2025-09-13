@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApplyDiscountContext } from "./ApplyDiscountContext";
+import { applyDiscount } from "../services/discountService";
 
 
 export function ApplyDiscountProvider({ children }) {
@@ -11,29 +12,37 @@ export function ApplyDiscountProvider({ children }) {
 
     // let totalPrice = subTotalPrice - discount;
 
-    const applyPromotionCode = (event, code = '', subTotalPrice ) => {
-        event.preventDefault(); 
-        if (code.length > 0) {
-            // mock data before connecting with backend
-            if (code === 'BABYCHUB') {
-                const percentageDiscount = 30;
-                const discount = Math.floor(subTotalPrice * percentageDiscount * 0.01);
-                setDiscount(discount);
-                setPromoApplyStatus('applied');
+    const applyPromotionCode = async (promoCode = '', subTotalPrice) => {
+        try {
+            const code = promoCode.toString().trim();
+            const data = await applyDiscount(code);
+            const discount = data.discount;
+            let totalAmount = subTotalPrice;
+            
+            if (!discount) {
+                setPromoApplyStatus("The promotion code may have expired");
+            } else if (subTotalPrice < discount.minimumPurchaseAmount) {
+                setPromoApplyStatus(`Buy at least ${discount.minimumPurchaseAmount} baht to use this discount code`);
             } else {
-                setDiscount(0);
-                setPromoApplyStatus('wrong');
+                totalAmount = discount.isPercent
+                    ? Math.round(subTotalPrice * (1 - (discount.amount * 0.01)))
+                    : Math.round(subTotalPrice - discount.amount);
+                setPromoApplyStatus(data.message);
             }
-        } else {
-            setDiscount(0);
-            console.log('code:', code)
-            setPromoApplyStatus('');
+            
+            setDiscount(subTotalPrice - totalAmount);
+            setTotalPrice(totalAmount);
+        } catch (error) {
+            console.error("Failed to apply discount:",error);
         }
+        
     };
 
     const calSubTotalPrice = (products) => {
-        const subTotalPrice = products.reduce((total, item) => total + Object.values(item.selectPlan)[0], 0);
+        const subTotalPrice = products.reduce((total, item) => total + item.prices[item.plan], 0);
+        // console.log('subTotal:', subTotalPrice)
         setSubTotalPrice(subTotalPrice);
+        return subTotalPrice;
     };
 
     useEffect(() => {
@@ -47,6 +56,7 @@ export function ApplyDiscountProvider({ children }) {
                 setPromotionForm,
                 discount,
                 promoApplyStatus,
+                setPromoApplyStatus,
                 subTotalPrice,
                 totalPrice,
                 applyPromotionCode,

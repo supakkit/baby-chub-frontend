@@ -3,7 +3,6 @@ import {
   Card,
   CardAction,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -18,19 +17,57 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { TotalPriceCard } from "./TotalPriceCard"
 import { Link } from "react-router-dom"
 import { useContext, useState } from "react"
-import { CartContext } from "../context/CartContext"
 import { CheckoutContext } from "../context/CheckoutContext"
-import { ApplyDiscountContext } from "../context/ApplyDiscountContext"
+import { useCallback } from "react"
 
+function isValidLuhn(cardNumber) {
+  if (!cardNumber || /[^\d]/.test(cardNumber) || cardNumber.length < 13 || cardNumber.length > 19) {
+    return false;
+  }
+  let sum = 0;
+  let isSecondDigit = false;
+  for (let i = cardNumber.length - 1; i >= 0; i--) {
+    let digit = parseInt(cardNumber.charAt(i), 10);
+    if (isSecondDigit) {
+      digit *= 2;
+      if (digit > 9) {
+        digit -= 9;
+      }
+    }
+    sum += digit;
+    isSecondDigit = !isSecondDigit;
+  }
+  return (sum % 10) === 0;
+}
 
+function isValidExpirationDate(expirationDate) {
+  if (!expirationDate) return false;
+  const [year, month] = expirationDate.split('/').map(Number);
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+
+  if (year < currentYear) {
+    return false;
+  }
+  if (year === currentYear && month < currentMonth) {
+    return false;
+  }
+  return true;
+}
 
 export function CheckoutCard() {
-  const [selectedValue, setSelectedValue] = useState('creditCard');
-
+  const [selectedValue, setSelectedValue] = useState('credit_card');
   const { checkoutItems, handlePayNow } = useContext(CheckoutContext);
 
+  const handlePay = useCallback(
+    () => {
+      handlePayNow(selectedValue);
+    }, [handlePayNow, selectedValue]
+  );
+
   return (
-    <Card className="w-md gap-4">
+    <Card className="gap-4 min-w-sm">
       <CardHeader>
         <CardTitle>Payment</CardTitle>
         <RadioGroup 
@@ -39,11 +76,11 @@ export function CheckoutCard() {
             onValueChange={setSelectedValue}
         >
             <Label
-                htmlFor="creditCard"
+                htmlFor="credit_card"
                 className="flex justify-between items-center gap-3 p-3 border-1 border-accent rounded-sm hover:bg-primary/10"
             >
                 Credit Card
-                <RadioGroupItem value="creditCard" id="creditCard" />
+                <RadioGroupItem value="credit_card" id="credit_card" />
             </Label>
             <Label
                 htmlFor="payPal"
@@ -65,47 +102,61 @@ export function CheckoutCard() {
         <hr className="border-secondary border-0.5"></hr>
       </CardContent>
       <CardContent>
-        {selectedValue === 'creditCard' ? <CreditCardForm /> : <RedirectMessageBox paymentMethod={selectedValue} />}
+        {selectedValue === 'credit_card' ? <CreditCardForm /> : <RedirectMessageBox paymentMethod={selectedValue} />}
       </CardContent>
       <CardContent>
         <hr className="border-secondary border-0.5"></hr>
       </CardContent>
       <CardFooter className="flex-col gap-2">
         <TotalPriceCard products={checkoutItems}>
-          <Link to='/pending-payment' onClick={handlePayNow}>Pay now</Link>
+          <Link to='/pending-payment' onclick={handlePay}>Pay now</Link>
         </TotalPriceCard>
       </CardFooter>
     </Card>
   )
 }
 
-
 function CreditCardForm() {
   const defaultCreditCardForm = {cardHolderName: '', cardNumber: '', expirationDate: '', CVV: '', checkedSaveCard: false};
   const [creditCardForm, setCreditCardForm] = useState(defaultCreditCardForm);
+  const [validationErrors, setValidationErrors] = useState({});
 
-  const handleCreditCardFormChange = (event) => {
-    setCreditCardForm({
-      ...creditCardForm,
-      [event.target.name]: String(event.target.value)
-    });
-  };
+  const handleCreditCardFormChange = useCallback(
+    (event) => {
+      const { name, value, type, checked } = event.target;
+      setCreditCardForm(prevForm => ({
+        ...prevForm,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }, []
+  );
 
-  const handleCheckedSaveCard = () => {
-    setCreditCardForm({
-      ...creditCardForm,
-      checkedSaveCard: creditCardForm.checkedSaveCard ? false : true
-    });
-  };
-
-  const handleCreditCardFormSubmit = (event) => {
+  const handleCreditCardFormSubmit = useCallback((event) => {
     event.preventDefault();
-    console.log('submit form:', creditCardForm);
-  };
+    const errors = {};
+    if (!isValidLuhn(creditCardForm.cardNumber)) {
+        errors.cardNumber = "Invalid card number.";
+    }
+    if (!isValidExpirationDate(creditCardForm.expirationDate)) {
+        errors.expirationDate = "Expiration date is invalid.";
+    }
+    if (creditCardForm.CVV.length < 3) {
+        errors.CVV = "CVV must be 3-4 digits.";
+    }
 
-  const handleCreditCardFormCancel = () => {
+    setValidationErrors(errors);
+    
+    if (Object.keys(errors).length === 0) {
+        // Here you would typically send the data to your backend
+        console.log('Form submitted successfully:', creditCardForm);
+        setCreditCardForm(defaultCreditCardForm);
+    }
+  }, [creditCardForm]);
+
+  const handleCreditCardFormCancel = useCallback(() => {
     setCreditCardForm(defaultCreditCardForm);
-  };
+    setValidationErrors({});
+  }, []);
 
   return (
     <form onSubmit={handleCreditCardFormSubmit}>
@@ -130,12 +181,14 @@ function CreditCardForm() {
             type="tel"
             inputMode="numeric"
             placeholder="0000 0000 0000 0000"
-            pattern="[0-9]{16}"
-            maxLength="16"
+            pattern="[0-9]{13,19}"
+            maxLength="19"
             required
             value={creditCardForm.cardNumber}
             onChange={handleCreditCardFormChange}
+            className={validationErrors.cardNumber ? "border-red-500" : ""}
           />
+          {validationErrors.cardNumber && <p className="text-red-500 text-sm">{validationErrors.cardNumber}</p>}
         </div>
         <div className="grid grid-cols-2 gap-2">
             <div className="grid gap-2">
@@ -143,12 +196,14 @@ function CreditCardForm() {
                 <Input
                   name="expirationDate"
                   id="expirationDate"
-                  type="date"
-                  placeholder="--/--"
+                  type="month"
+                  placeholder="MM/YYYY"
                   required
                   value={creditCardForm.expirationDate}
                   onChange={handleCreditCardFormChange}
-                />      
+                  className={validationErrors.expirationDate ? "border-red-500" : ""}
+                />
+                {validationErrors.expirationDate && <p className="text-red-500 text-sm">{validationErrors.expirationDate}</p>}
             </div>
               <div className="grid gap-2">
                 <Label htmlFor="cardCVV">CVV</Label>
@@ -161,18 +216,25 @@ function CreditCardForm() {
                   required
                   value={creditCardForm.CVV}
                   onChange={handleCreditCardFormChange}
-                />      
+                  className={validationErrors.CVV ? "border-red-500" : ""}
+                />
+                {validationErrors.CVV && <p className="text-red-500 text-sm">{validationErrors.CVV}</p>}
             </div>
         </div>
         <div className="flex items-center gap-2">
-            <Checkbox id="saveCard" onCheckedChange={handleCheckedSaveCard} />
-            <Label htmlFor="saveCard" className="">Save card securely for future payments</Label>
+            <Checkbox 
+              id="saveCard" 
+              name="checkedSaveCard" 
+              checked={creditCardForm.checkedSaveCard} 
+              onCheckedChange={(checked) => handleCreditCardFormChange({ target: { name: 'checkedSaveCard', type: 'checkbox', checked } })} 
+            />
+            <Label htmlFor="saveCard">Save card securely for future payments</Label>
         </div>
         <CardAction className="w-full flex justify-end gap-3">
             <Button type="submit" onClick={handleCreditCardFormCancel} variant="outline" className="">
                 Cancel
             </Button>
-            <Button type="submit" className="">
+            <Button type="submit">
                 Add Card
             </Button>    
         </CardAction>

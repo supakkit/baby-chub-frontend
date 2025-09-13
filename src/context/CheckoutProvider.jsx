@@ -5,25 +5,25 @@ import { CartContext } from "./CartContext";
 
 
 export function CheckoutProvider({ children }) {
-    const [checkoutItems, setCheckoutItems] = useState(getCheckoutItemsFromLocalStorage());
+    const [checkoutItems, setCheckoutItems] = useState();
     const [purchaseOrder, setPurchaseOrder] = useState({});
 
     const { promotionForm, discount, subTotalPrice, totalPrice } = useContext(ApplyDiscountContext);
     const { cartItems, setCartItems } = useContext(CartContext);
 
 
-    const addToCheckout = (items, selectPlan = null) => {
-        setCheckoutItems(Array.isArray(items) ? [...items] : [{...items, selectPlan: {[selectPlan]: items.prices[selectPlan]}}]);
+    const addToCheckout = (items, plan) => {
+        setCheckoutItems(Array.isArray(items) ? [...items] : [{ ...items, plan }]);
     };
 
     const clearCheckout = () => {
         setCheckoutItems([]);
     }
 
-    function getCheckoutItemsFromLocalStorage() {
-        return localStorage.getItem("checkoutItems") ? 
-            JSON.parse(localStorage.getItem("checkoutItems")) : [];
-    }
+    // function getCheckoutItemsFromLocalStorage() {
+    //     return localStorage.getItem("checkoutItems") ? 
+    //         JSON.parse(localStorage.getItem("checkoutItems")) : [];
+    // }
 
     /* ------ Handle Checkout Form ------- */
 
@@ -43,7 +43,7 @@ export function CheckoutProvider({ children }) {
     /* -- End of checkout form handling -- */
 
     useEffect(() => {
-        localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
+        // localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
     }, [checkoutItems])
 
     return (

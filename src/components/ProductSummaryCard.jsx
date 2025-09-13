@@ -1,23 +1,29 @@
-import { useContext } from "react";
-import { CartContext } from "../context/CartContext";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "./ui/button";
+import { addToCart, planOptions } from "../services/cartService";
+import { useState } from "react";
 
-export function ProductSummaryCard({ product, isEdit, isFavorite = false }) {
-  const { ONETIME, MONTHLY, YEARLY, selectPlanInCart, addToCart, removeFromCart, removeFromFavorite } = useContext(CartContext);
+export function ProductSummaryCard({ 
+  product, 
+  isEdit, 
+  isFavorite = false, 
+  handleRemoveFromFavorite, 
+  handleRemoveFromCart, 
+  handleChangeProductPlan,
+}) {
+  const [plan, setPlan] = useState(product.plan);
 
-  const displayPriceRange = (product) => {
-      const minPrice = product.prices.oneTime || product.prices.monthly;
-      const maxPrice = product.prices.oneTime ? null : product.prices.yearly;
+  const displayPriceRange = (prices) => {
+      const minPrice = prices.oneTime || prices.monthly;
+      const maxPrice = prices.oneTime ? null : prices.yearly;
 
       return <>{minPrice}฿{maxPrice ? ` - ${maxPrice}฿` : null}</>
   }
@@ -26,12 +32,12 @@ export function ProductSummaryCard({ product, isEdit, isFavorite = false }) {
       <div className="flex gap-6 rounded-lg h-36 hover:bg-neutral-50 relative pr-4">
         {!isEdit ? null :
           <div
-            onClick={() => isFavorite ? removeFromFavorite(product) : removeFromCart(product)}
+            onClick={() => isFavorite ? handleRemoveFromFavorite(product._id) : handleRemoveFromCart(product._id)}
             className="group grid items-center justify-center absolute top-2 right-2 w-6 h-6 rounded-full hover:transition-opacity duration-500 ease-in-out hover:bg-primary/30 cursor-pointer"
           >
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
-              xmlns:xlink="http://www.w3.org/1999/xlink" 
+              xmlnsXlink="http://www.w3.org/1999/xlink" 
               viewBox="0 0 460.775 460.775"
               strokeLinecap="rounded"
               strokeLinejoin="rounded"
@@ -58,29 +64,39 @@ export function ProductSummaryCard({ product, isEdit, isFavorite = false }) {
                   <div
                     className="border-l-1 h-4"
                   ></div>
-                  {isFavorite ? <p className="text-primary">{displayPriceRange(product)}</p> :
+                  {isFavorite ? <p className="text-primary">{displayPriceRange(product.prices)}</p> :
                     <>
                       <p className="text-sm text-primary">
-                        {Object.values(product.selectPlan)[0]} THB 
-                        {Object.keys(product.selectPlan)[0] === MONTHLY ? '/MONTH' : 
-                        Object.keys(product.selectPlan)[0] === YEARLY ?  '/YEAR' : null}
+                        {product.plan === planOptions.ONETIME
+                          ? <>{product.prices[plan]} THB</>
+                          : product.plan === planOptions.MONTHLY
+                          ? <>{product.prices[plan]} THB/Month</>
+                          : product.plan === planOptions.YEARLY
+                          ? <>{product.prices[plan]} THB/Year</>
+                          : <>N/A</>
+                        }
                       </p>
                       {!isEdit ? null : product.prices.oneTime ? null :
-                        <Select onValueChange={(value) => selectPlanInCart(product, value)}>
+                        <Select 
+                          defaultValue={product.plan} 
+                          onValueChange={(value) => {
+                            handleChangeProductPlan(product._id, value); 
+                            setPlan(value);
+                          }}
+                        >
                           <SelectTrigger className="">
                             <SelectValue placeholder="Select your plan" />
                           </SelectTrigger>
                           <SelectContent >
                             <SelectGroup >
-                              <SelectItem value="monthly" selected>Monthly</SelectItem>
-                              <SelectItem value="yearly">Yearly</SelectItem>
+                              <SelectItem value={planOptions.MONTHLY} selected>Monthly</SelectItem>
+                              <SelectItem value={planOptions.YEARLY}>Yearly</SelectItem>
                             </SelectGroup>
                           </SelectContent>
                         </Select>
                       }
                     </>
                   }
-                  
               </div>
               <div className="flex gap-4">
                 <p
@@ -90,7 +106,10 @@ export function ProductSummaryCard({ product, isEdit, isFavorite = false }) {
                   <Button 
                     variant="outline" 
                     className="self-end"
-                    onClick={() => {addToCart(product); removeFromFavorite(product)}}
+                    onClick={() => {
+                      addToCart(product._id, product.prices.oneTime ? planOptions.ONETIME : product.prices.monthly ? planOptions.MONTHLY : planOptions.YEARLY); 
+                      handleRemoveFromFavorite(product._id);
+                    }}
                   >Add to cart</Button>
                   : null
                 }
