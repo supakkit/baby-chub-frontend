@@ -6,18 +6,19 @@ import { ApplyDiscountContext } from "../context/ApplyDiscountContext";
 export function TotalPriceCard({ children, products }) {
     const {
         promotionForm, 
-        setPromotionForm, 
-        discount,
+        setPromotionForm,
         promoApplyStatus, 
         setPromoApplyStatus,
         subTotalPrice, 
-        totalPrice, 
+        totalPrice,
+        checkPromotionCode,
         applyPromotionCode, 
-        calSubTotalPrice
+        calSubTotalPrice,
+        discountInfo
     } = useContext(ApplyDiscountContext);
     
     useEffect(() => {
-        applyPromotionCode(promotionForm, calSubTotalPrice(products));
+        applyPromotionCode(discountInfo, calSubTotalPrice(products));
     }, [products]);
 
     return (
@@ -25,7 +26,7 @@ export function TotalPriceCard({ children, products }) {
             <form
                 onSubmit={(event) => {
                     event.preventDefault();
-                    applyPromotionCode(promotionForm, subTotalPrice);
+                    checkPromotionCode(promotionForm, subTotalPrice);
                 }}
             >
                 <div className="flex justify-between items-start w-full gap-4">
@@ -38,7 +39,7 @@ export function TotalPriceCard({ children, products }) {
                             onChange={(e) => {setPromotionForm(e.target.value);setPromoApplyStatus('') }}
                         />
                         {!(promotionForm?.length > 0) ? null
-                            : discount > 0 ? <p className="pl-2 text-sm text-lime-500">{promoApplyStatus}</p>
+                            : subTotalPrice - totalPrice > 0 ? <p className="pl-2 text-sm text-lime-500">{promoApplyStatus}</p>
                             : <p className="pl-2 text-sm text-red-300">{promoApplyStatus}</p>
                         }
                     </div>
@@ -54,7 +55,7 @@ export function TotalPriceCard({ children, products }) {
             </div>
             <div className="flex justify-between items-center h-11 border-secondary border-t-2">
                 <p>Discount</p>
-                <p>- {discount} THB</p>    
+                <p>- {subTotalPrice - totalPrice} THB</p>    
             </div>
             <div className="flex justify-between h-11 font-semibold text-xl xl:text-2xl">
                 <p>{products.length} Items</p>
