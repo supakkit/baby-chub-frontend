@@ -20,6 +20,7 @@ import { useContext, useState } from "react"
 import { CheckoutContext } from "../context/CheckoutContext"
 import { useCallback } from "react"
 import { ApplyDiscountContext } from "../context/ApplyDiscountContext"
+import { toast } from "sonner"
 
 
 export function CheckoutCard() {
@@ -109,7 +110,7 @@ function CreditCardForm() {
     
     if (Object.keys(errors).length === 0) {
         // Here you would typically send the data to your backend
-        console.log('Form submitted successfully:', creditCardForm);
+        toast.success('Form submitted successfully')
         setCreditCardForm(defaultCreditCardForm);
     }
   }, [creditCardForm]);

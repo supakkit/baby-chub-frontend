@@ -24,8 +24,8 @@ import AdminLayout from "./views/admin/AdminLayout";
 import AdminDashboard from "./views/admin/AdminDashboard";
 import AdminUsers from "./views/admin/AdminUsers";
 import AdminOrders from "./views/admin/AdminOrders";
-import { ProductForm } from "./views/ProductForm";
 import { ResetPassword } from "./views/ResetPassword";
+import { AdminProduct } from "./views/admin/AdminProducts";
 
 const NewArrival = () => <div className="p-6">New Arrival – coming soon</div>;
 const router = createBrowserRouter([
@@ -127,15 +127,12 @@ const router = createBrowserRouter([
           { path: "dashboard", element: <AdminDashboard /> },
           { path: "users", element: <AdminUsers /> },
           { path: "orders", element: <AdminOrders /> },
+          { path: "products", element: <AdminProduct />}
         ],
       },
       {
         path: "reset-password",
         element: <ResetPassword />,
-      },
-      {
-        path: "product-form",
-        element: <ProductForm />,
       },
     ],
   },
