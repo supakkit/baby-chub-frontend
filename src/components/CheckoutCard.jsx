@@ -19,61 +19,22 @@ import { Link } from "react-router-dom"
 import { useContext, useState } from "react"
 import { CheckoutContext } from "../context/CheckoutContext"
 import { useCallback } from "react"
+import { ApplyDiscountContext } from "../context/ApplyDiscountContext"
 
-function isValidLuhn(cardNumber) {
-  if (!cardNumber || /[^\d]/.test(cardNumber) || cardNumber.length < 13 || cardNumber.length > 19) {
-    return false;
-  }
-  let sum = 0;
-  let isSecondDigit = false;
-  for (let i = cardNumber.length - 1; i >= 0; i--) {
-    let digit = parseInt(cardNumber.charAt(i), 10);
-    if (isSecondDigit) {
-      digit *= 2;
-      if (digit > 9) {
-        digit -= 9;
-      }
-    }
-    sum += digit;
-    isSecondDigit = !isSecondDigit;
-  }
-  return (sum % 10) === 0;
-}
-
-function isValidExpirationDate(expirationDate) {
-  if (!expirationDate) return false;
-  const [year, month] = expirationDate.split('/').map(Number);
-  const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth() + 1;
-
-  if (year < currentYear) {
-    return false;
-  }
-  if (year === currentYear && month < currentMonth) {
-    return false;
-  }
-  return true;
-}
 
 export function CheckoutCard() {
-  const [selectedValue, setSelectedValue] = useState('credit_card');
-  const { checkoutItems, handlePayNow } = useContext(CheckoutContext);
-
-  const handlePay = useCallback(
-    () => {
-      handlePayNow(selectedValue);
-    }, [handlePayNow, selectedValue]
-  );
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('credit_card');
+  const { checkoutItems, handlePay } = useContext(CheckoutContext);
+  const { promotionForm } = useContext(ApplyDiscountContext);
 
   return (
     <Card className="gap-4 min-w-sm">
       <CardHeader>
         <CardTitle>Payment</CardTitle>
         <RadioGroup 
-            defaultValue={selectedValue}
+            defaultValue={selectedPaymentMethod}
             className="grid gap-2"
-            onValueChange={setSelectedValue}
+            onValueChange={setSelectedPaymentMethod}
         >
             <Label
                 htmlFor="credit_card"
@@ -102,14 +63,14 @@ export function CheckoutCard() {
         <hr className="border-secondary border-0.5"></hr>
       </CardContent>
       <CardContent>
-        {selectedValue === 'credit_card' ? <CreditCardForm /> : <RedirectMessageBox paymentMethod={selectedValue} />}
+        {selectedPaymentMethod === 'credit_card' ? <CreditCardForm /> : <RedirectMessageBox paymentMethod={selectedPaymentMethod} />}
       </CardContent>
       <CardContent>
         <hr className="border-secondary border-0.5"></hr>
       </CardContent>
       <CardFooter className="flex-col gap-2">
         <TotalPriceCard products={checkoutItems}>
-          <Link to='/pending-payment' onclick={handlePay}>Pay now</Link>
+          <Link to='/pending-payment' onClick={() => handlePay(checkoutItems, promotionForm, selectedPaymentMethod)}>Pay now</Link>
         </TotalPriceCard>
       </CardFooter>
     </Card>
@@ -249,4 +210,40 @@ function RedirectMessageBox({ paymentMethod }) {
       After clicking "Pay with {paymentMethod}", you will be redirected to {paymentMethod} to complete your purchase securely.
     </div>
   );
+}
+
+function isValidLuhn(cardNumber) {
+  if (!cardNumber || /[^\d]/.test(cardNumber) || cardNumber.length < 13 || cardNumber.length > 19) {
+    return false;
+  }
+  let sum = 0;
+  let isSecondDigit = false;
+  for (let i = cardNumber.length - 1; i >= 0; i--) {
+    let digit = parseInt(cardNumber.charAt(i), 10);
+    if (isSecondDigit) {
+      digit *= 2;
+      if (digit > 9) {
+        digit -= 9;
+      }
+    }
+    sum += digit;
+    isSecondDigit = !isSecondDigit;
+  }
+  return (sum % 10) === 0;
+}
+
+function isValidExpirationDate(expirationDate) {
+  if (!expirationDate) return false;
+  const [year, month] = expirationDate.split('/').map(Number);
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+
+  if (year < currentYear) {
+    return false;
+  }
+  if (year === currentYear && month < currentMonth) {
+    return false;
+  }
+  return true;
 }

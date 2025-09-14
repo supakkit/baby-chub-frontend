@@ -1,72 +1,26 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { ProductSummaryCard } from "../components/ProductSummaryCard";
 import { TotalPriceCard } from "../components/TotalPriceCard";
 import { Link } from "react-router-dom";
 import { CheckoutContext } from "../context/CheckoutContext";
 import { Button } from "@/components/ui/button";
-import { changeProductPlan, clearCart, getProductsInCart, removeFromCart } from "../services/cartService";
+import { CartContext } from "../context/CartContext";
 
 export function Cart() {
     const { addToCheckout } = useContext(CheckoutContext);
-
-    const [cartItems, setCartItems] = useState([]);
-    const [loadingProducts, setLoadingProducts] = useState(true);
-    const [error, setError] = useState("");
-
-    const fetchProductFromCart = useCallback(
-        async () => {
-            setLoadingProducts(true);
-            try {
-                const data = await getProductsInCart();
-                setCartItems(data.products);
-                setError("");
-            } catch {
-                setError("Failed to load products from your cart")
-            } finally {
-                setLoadingProducts(false);
-            }
-        },[]
-    );
-
-    const handleChangeProductPlan = async (productId, plan) => {
-        try {
-            await changeProductPlan(productId, plan);
-            setCartItems(prevItems =>
-                prevItems.map(item =>
-                    item._id === productId ? { ...item, plan } : item
-                )
-            );
-        } catch (error) {
-            console.error("Failed to change product plan:", error);
-            setError("Failed to change product plan");
-        }
-    };
-    
-    const handleRemoveFromCart = async (productId) => {
-        try {
-            await removeFromCart(productId);
-            setCartItems(prevItems =>
-                prevItems.filter(item => item._id !== productId)
-            );
-        } catch (error) {
-            console.error("Failed to remove product:", error);
-            setError("Failed to remove product");
-        }
-    };
-
-    const handleClearCart = async () => {
-        try {
-            await clearCart();
-            setCartItems([]);
-        } catch (error) {
-            console.error("Failed to clear cart:", error);
-            setError("Failed to clear cart");
-        }
-    };
+    const {
+        cartItems,
+        loadingProducts,
+        error,
+        fetchProductFromCart,
+        handleChangeProductPlan,
+        handleRemoveFromCart,
+        handleClearCart,
+    } = useContext(CartContext);
 
     useEffect(() => {
         fetchProductFromCart();
-    }, [fetchProductFromCart]);
+    }, []);
 
     if (error)
         return <div className="min-h-screen text-center mt-10 text-red-500">{error}</div>;

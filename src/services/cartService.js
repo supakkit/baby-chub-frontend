@@ -11,7 +11,7 @@ export const getProductsInCart = async () => {
     try {
         const response = await api.get("/cart");
         const data = response.data;
-        console.log('data:', data)
+        // console.log('data:', data)
         let products = [];
         
         if (data?.cart?.products) {
@@ -75,8 +75,7 @@ export const removeFromCart = async (productId) => {
 
 export const clearCart = async () => {
     try {
-        const response = await api.delete("/cart/");
-        toast.success(response.data.message);
+        await api.delete("/cart/");
     } catch (error) {
         console.error(error);
         toast.error(error.message)

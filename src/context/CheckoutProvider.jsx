@@ -1,16 +1,12 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { CheckoutContext } from "./CheckoutContext";
-import { ApplyDiscountContext } from "./ApplyDiscountContext";
+import { createOrder } from "../services/orderService";
 import { CartContext } from "./CartContext";
 
 
 export function CheckoutProvider({ children }) {
     const [checkoutItems, setCheckoutItems] = useState();
-    const [purchaseOrder, setPurchaseOrder] = useState({});
-
-    const { promotionForm, discount, subTotalPrice, totalPrice } = useContext(ApplyDiscountContext);
-    const { cartItems, setCartItems } = useContext(CartContext);
-
+    const { cartItems, handleClearCart } = useContext(CartContext);
 
     const addToCheckout = (items, plan) => {
         setCheckoutItems(Array.isArray(items) ? [...items] : [{ ...items, plan }]);
@@ -20,41 +16,35 @@ export function CheckoutProvider({ children }) {
         setCheckoutItems([]);
     }
 
-    // function getCheckoutItemsFromLocalStorage() {
-    //     return localStorage.getItem("checkoutItems") ? 
-    //         JSON.parse(localStorage.getItem("checkoutItems")) : [];
-    // }
+    const handlePay = async (checkoutItems, promotionForm, selectedPaymentMethod) => {
 
-    /* ------ Handle Checkout Form ------- */
-
-    const handlePayNow = () => {
-        setPurchaseOrder({
-            items: checkoutItems,
-            promotion: promotionForm,
-            discount: discount,
-            subTotalPrice: subTotalPrice,
-            totalPrice: totalPrice,
+        const products = checkoutItems.map(item =>  {
+            return { productId: item._id, plan: item.plan };
         });
 
-        const purchaseProductIdList = checkoutItems.map(item => item.id);
-        setCartItems(cartItems.filter(cartItem => !purchaseProductIdList.includes(cartItem.id)));
+        try {
+            await createOrder(products, promotionForm, selectedPaymentMethod);
+            
+            const isCheckoutFromCart = products.every(checkoutProduct => {
+                return !!cartItems.find(cartProduct => cartProduct._id === checkoutProduct.productId)
+            });
+
+            if (isCheckoutFromCart) {
+                await handleClearCart();
+            }
+
+        } catch (error) {
+            console.error("Failed to checkout", error)
+        }
     };
-
-    /* -- End of checkout form handling -- */
-
-    useEffect(() => {
-        // localStorage.setItem("checkoutItems", JSON.stringify(checkoutItems));
-    }, [checkoutItems])
 
     return (
         <CheckoutContext.Provider
             value={{
                 checkoutItems, 
                 addToCheckout, 
-                setCheckoutItems, 
                 clearCheckout,
-                handlePayNow,
-                purchaseOrder,
+                handlePay,
             }}
         >
             {children}
