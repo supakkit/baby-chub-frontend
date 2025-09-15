@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger
 } from '@/components/ui/dialog';
 import { Trash2, Edit } from 'lucide-react';
@@ -71,6 +72,7 @@ export function AdminProduct() {
             <DialogContent className="sm:max-w-lg overflow-y-auto max-h-[90vh]">
               <DialogHeader>
                 <DialogTitle>{currentProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
+                <DialogDescription>Make changes to the product here.</DialogDescription>
               </DialogHeader>
               <ProductForm
                 product={currentProduct}
