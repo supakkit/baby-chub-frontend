@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Rating, RatingButton } from "@/components/ui/shadcn-io/rating";
 import { motion, AnimatePresence } from "framer-motion";
+// import { getReviews, addReview } from "./api.js";
 
 function timeAgo(timestamp) {
   const now = new Date();
-  const diff = Math.floor((now - timestamp) / 1000); // diff เป็นวินาที
+  const diff = Math.floor((now - new Date(timestamp)) / 1000); // diff เป็นวินาที
 
   if (diff < 60) return `${diff} seconds ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
@@ -15,26 +16,42 @@ function timeAgo(timestamp) {
   return `${Math.floor(diff / 86400)} days ago`;
 }
 
-export default function UserReview() {
+export default function UserReview({ productId }) {
   const [reviews, setReviews] = useState([]);
   const [userText, setUserText] = useState("");
   const [userRating, setUserRating] = useState(5);
+  const [loading, setLoading] = useState(true);
 
-  const handleSubmit = () => {
+  // Fetch reviews from DB
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setLoading(true);
+      const data = await getReviews(productId);
+      if (data) setReviews(data);
+      setLoading(false);
+    };
+
+    fetchReviews();
+  }, [productId]);
+
+  const handleSubmit = async () => {
     if (!userText) return;
 
     const newReview = {
-      id: Date.now(),
       name: "You",
       avatar: "/placeholder-user.jpg",
       text: userText,
       rating: userRating,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     };
 
-    setReviews([newReview, ...reviews]);
-    setUserText("");
-    setUserRating(5);
+    // ส่งไป database
+    const savedReview = await addReview(productId, newReview);
+    if (savedReview) {
+      setReviews([savedReview, ...reviews]);
+      setUserText("");
+      setUserRating(5);
+    }
   };
 
   return (
@@ -62,7 +79,9 @@ export default function UserReview() {
       </div>
 
       <div className="space-y-6">
-        {reviews.length === 0 ? (
+        {loading ? (
+          <div className="text-center text-muted-foreground">Loading...</div>
+        ) : reviews.length === 0 ? (
           <div className="text-center text-muted-foreground">
             No reviews yet.
           </div>
@@ -70,7 +89,7 @@ export default function UserReview() {
           <AnimatePresence>
             {reviews.map((review) => (
               <motion.div
-                key={review.id}
+                key={review.id || review._id}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}

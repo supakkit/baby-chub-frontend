@@ -4,7 +4,7 @@ import PromotionSlider from "@/components/PromotionSlider";
 import BrowseByAge from "@/components/BrowseByAge";
 import BrowseByType from "@/components/BrowseByType";
 import BrowseBySubject from "@/components/BrowseBySubject";
-import FeaturedSlider from "@/components/FeaturedSlider";
+import NewArrivals from "@/components/NewArrivals";
 import BestSellers from "@/components/BestSellers";
 import Partners from "@/components/Partners";
 import ReviewsSection from "@/components/ReviewsSection";
@@ -28,7 +28,7 @@ export function Home() {
         <BrowseBySubject />
       </section>
 
-      <FeaturedSlider title="Fresh Finds for Little Minds 💖" limit={8} />
+      <NewArrivals title="Fresh Finds for Little Minds 💖" limit={8} />
 
       <ReviewsSection />
       <Partners />

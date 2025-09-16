@@ -40,3 +40,12 @@ export const updateProduct = async (productId, updatedProduct) => {
         console.error(error);
     }
 };
+
+export const getProductDetail = async (productId) => {
+  try {
+    const response = await api.get(`/products/${productId}`);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+  }
+};

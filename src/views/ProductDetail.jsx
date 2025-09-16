@@ -1,9 +1,13 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
 import { Link, useParams } from "react-router-dom";
-import { CartContext } from "../context/CartContext";
-import UserReview from "../components/UserReview";
-import { RecommendProducts } from "../components/RecommendProducts";
+// import { CartContext } from "../context/CartContext";
+// import UserReview from "../components/UserReview";
+// import RecommendProducts from "../components/RecommendProducts";
+
+import { addToFavorite } from "../services/favoriteService";
+import { addToCart } from "../services/cartService";
+
 import {
   Carousel,
   CarouselContent,
@@ -17,136 +21,158 @@ import { CheckoutContext } from "../context/CheckoutContext";
 import { Badge } from "@/components/ui/badge";
 
 export function ProductDetail() {
-  const { products } = useContext(ProductContext);
+  const { products, getProductById } = useContext(ProductContext);
   const { productId } = useParams();
-  const { addToFavorite } = useContext(CartContext);
-  const { addToCart } = useContext(CartContext);
   const { addToCheckout } = useContext(CheckoutContext);
 
-  const product = products?.find((product) => product.id === productId);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectPlan, setSelectPlan] = useState(null);
+  const [mainImage, setMainImage] = useState(null);
 
-  const availablePrices = Object.entries(product.prices || {}).filter(
-    ([, value]) => value !== null
-  );
+  useEffect(() => {
+    const existingProduct = products?.find((p) => p._id === productId);
+    if (existingProduct) {
+      setProduct(existingProduct);
+      setLoading(false);
+    } else {
+      getProductById(productId).then((data) => {
+        setProduct(data?.product || null);
+        setLoading(false);
+      });
+    }
+  }, [productId]);
 
-  const defaultPlan = availablePrices.length
-    ? { type: availablePrices[0][0], value: availablePrices[0][1] }
-    : null;
+  useEffect(() => {
+    if (!product) return;
 
-  const [selectPlan, setSelectPlan] = useState(defaultPlan);
+    setMainImage(product.images?.[0] || null);
+  }, [product]);
 
-  const [mainImage, setMainImage] = useState(product.image);
-
-  const thumbnails = [
-    product.image,
-    "/images/programming-course-animal.png",
-    "/images/LearningTime.png",
-    "/images/money2.jpg",
-  ];
+  if (loading) return <div>Loading...</div>;
 
   if (!product) {
     return <div>Product not found.</div>;
   }
 
+  const thumbnails = product.images || [];
+
   return (
     <>
-      <div className="flex pt-20 pl-20 pr-20">
-        {/* Product Picture */}
-        <div className="flex flex-col items-center basis-[40%] p-10">
-          <div className="pb-10 w-full max-w-full">
-            <img
-              src={mainImage}
-              alt=""
-              className="w-full h-auto object-cover rounded-md"
-            />
+      <div className="layout py-8 min-h-screen">
+        <div className="flex flex-col lg:flex-row gap-8 mb-16 relative">
+          {/* Left Column: Images / Carousel */}
+          <div className="flex flex-col lg:basis-2/5 p-4">
+            <div className="flex flex-col items-center basis-[40%] p-10">
+              <div className="pb-10 w-full max-w-full">
+                <img
+                  src={mainImage}
+                  alt=""
+                  className="w-full h-auto object-cover rounded-md"
+                />
+              </div>
+              <div className="pb-10 w-full">
+                <Carousel>
+                  <CarouselContent className="gap-2">
+                    {thumbnails.map((img, idx) => (
+                      <CarouselItem
+                        key={idx}
+                        className="md:basis-1/2 lg:basis-1/3 cursor-pointer"
+                      >
+                        <img
+                          src={img}
+                          alt=""
+                          onMouseEnter={() => setMainImage(img)}
+                        />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="cursor-pointer" />
+                  <CarouselNext className="cursor-pointer" />
+                </Carousel>
+              </div>
+            </div>
           </div>
-          <div className="pb-10">
-            <Carousel>
-              <CarouselContent className="gap-1">
-                {thumbnails.map((img, idx) => (
-                  <CarouselItem
-                    key={idx}
-                    className="md:basis-1/2 lg:basis-1/3 cursor-pointer"
-                  >
-                    <img
-                      src={img}
-                      alt=""
-                      onMouseEnter={() => setMainImage(img)}
-                    />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="cursor-pointer" />
-              <CarouselNext className="cursor-pointer" />
-            </Carousel>
-          </div>
-        </div>
-        {/* Product Detail */}
-        <div className="flex flex-col basis-[60%] text-primary p-10">
-          <div className="flex flex-col pr-40">
-            <h1 className="font-bold pb-4 text-5xl">{product.name}</h1>
-            <p className="text text-justify pb-4">{product.description}</p>
-            <p className="pb-4">Type: {product.type}</p>
-            <p className="pb-4">Subject: {product.subjects}</p>
-            <div className="flex items-center gap-2 pb-4">
-              <span className>Tags:</span>
-              {product.tags.map((tag) => (
+
+          {/* Right Column: Details */}
+          <div className="flex flex-col lg:basis-3/5 p-4 text-primary">
+            <h1 className="font-bold text-4xl lg:text-5xl pb-4">
+              {product.name}
+            </h1>
+            <p className="text-base lg:text-lg text-justify pb-4">
+              {product.description}
+            </p>
+            <p className="pb-2">Type: {product.type}</p>
+            <p className="pb-2">Subject: {product.subjects}</p>
+
+            {/* Tags */}
+            <div className="flex items-center gap-2 pb-4 flex-wrap">
+              <span className="text-primary">Tags:</span>
+              {product.tags?.map((tag) => (
                 <Badge key={tag}>
                   <Link to={`/tags/${tag}`}>{tag}</Link>
                 </Badge>
               ))}
             </div>
-            {/* Select Plan */}
+
+            {/* Plan Selection */}
             <PlanSelectionCard
+              product={product}
               onPlanChange={setSelectPlan}
-              defaultValue={defaultPlan}
+              defaultValue={selectPlan}
             />
-            <p className="h-11 font-semibold text-3xl xl:text-4xl ml-auto">
-              {selectPlan?.value} Baht
-            </p>
-          </div>
-          <div className="flex gap-12 p-4 justify-end">
-            <img
-              className="h-10 cursor-pointer"
-              src="/images/heart(2).svg"
-              alt=""
-              onClick={() => {
-                addToFavorite(product, selectPlan.type);
-              }}
-            />
-            <img
-              className="h-10 cursor-pointer"
-              src="/images/addToCart.svg"
-              alt=""
-              onClick={() => {
-                addToCart(product, selectPlan.type);
-              }}
-            />
-            <Button
-              asChild
-              variant="default"
-              className="w-xs justify-self-end cursor-pointer"
-            >
-              <Link
-                to="/checkout"
-                onClick={() => addToCheckout(product, selectPlan.type)}
+
+            {/* Price */}
+            <div className="flex justify-end">
+              <p className="h-11 font-semibold text-3xl xl:text-4xl text-right">
+                {selectPlan?.value} Baht
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-4 mt-4 items-end w-full">
+              {/* ไอคอน Favorite + Cart */}
+              <div className="flex flex-row gap-4">
+                <img
+                  className="h-10 cursor-pointer"
+                  src="/images/heart(2).svg"
+                  alt="Add to Favorite"
+                  onClick={() => addToFavorite(product._id)}
+                />
+                <img
+                  className="h-10 cursor-pointer"
+                  src="/images/addToCart.svg"
+                  alt="Add to Cart"
+                  onClick={() => addToCart(product._id, selectPlan?.type)}
+                />
+              </div>
+
+              <Button
+                asChild
+                variant="default"
+                className="w-full sm:w-auto cursor-pointer"
               >
-                Checkout
-              </Link>
-            </Button>
+                <Link
+                  to="/checkout"
+                  onClick={() => addToCheckout(product, selectPlan?.type)}
+                >
+                  Checkout
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-      <div className="w-full p-10">
+
+      {/* User Reviews */}
+      {/* <div className="w-full p-4 lg:p-10">
         <UserReview />
-      </div>
-      <div className="w-full p-10 px-15">
-        <h2 className="flex text-2xl font-bold pb-2">You May Also Like</h2>
-        <RecommendProducts
-          className="flex"
-          tags={product?.tags || []}
-          currentProductId={product.id}
-        />
+      </div> */}
+
+      {/* Recommend Products */}
+      <div className="w-full p-4 lg:p-10">
+        <h2 className="text-2xl font-bold pb-4">You May Also Like</h2>
+        {/* <RecommendProducts currentType={product.type} limit={12} /> */}
       </div>
     </>
   );
