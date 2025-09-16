@@ -1,7 +1,15 @@
+// src/components/BestSellers.jsx
 import React, { useMemo, useEffect, useState } from "react";
+import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
 
 const API_URL = import.meta.env.VITE_API_URL; // e.g. http://localhost:3000/api/v1
+
+// สร้าง axios instance เผื่อใช้ซ้ำ
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true, // ถ้า backend มี cookie/session
+});
 
 export default function BestSellers() {
   const [items, setItems] = useState([]);
@@ -9,24 +17,18 @@ export default function BestSellers() {
 
   // fallback mock เผื่อ backend ล่ม
   const mock = [
-    { id: "m1", title: "3 Levels Tracing Pack", desc: "Fine-motor tracing set", image: "/images/3Levels.png" },
-    { id: "m2", title: "Forest Coding Adventure", desc: "Beginner programming", image: "/images/programming-course-forest-adventure.png" },
-    { id: "m3", title: "Money Math Cards", desc: "Practical math skills", image: "/images/money2.jpg" },
-    { id: "m4", title: "Daily Pack Age 6", desc: "Skill boosters", image: "/images/Daily6yr2.png" },
-    { id: "m5", title: "Learning Time Kit", desc: "Screen-smart learning", image: "/images/LearningTime.png" },
+    { id: "m1", title: "3 Levels Tracing Pack", desc: "Fine-motor tracing set for calm, focused practice every day. Includes progressive difficulty and printable sheets.", image: "/images/3Levels.png" },
+    { id: "m2", title: "Forest Coding Adventure", desc: "Beginner-friendly coding fundamentals with playful quests. Perfect on tablet—unplugged & screen-smart.", image: "/images/programming-course-forest-adventure.png" },
+    { id: "m3", title: "Money Math Cards", desc: "Practical money skills: counting, change, and everyday problem-solving with Thai context.", image: "/images/money2.jpg" },
+    { id: "m4", title: "Daily Pack Age 6", desc: "Handpicked daily activities that build core skills in minutes—fun and structured.", image: "/images/Daily6yr2.png" },
+    { id: "m5", title: "Learning Time Kit", desc: "Screen-smart learning routines your kid will love. Quick wins, clear progress.", image: "/images/LearningTime.png" },
   ];
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        // ดึงสินค้าจำนวนมากหน่อย จะได้สุ่มเลือก 3 ชิ้น
-        const url = new URL(`${API_URL}/products`);
-        url.searchParams.set("limit", "20");
-        const res = await fetch(url.toString(), { credentials: "include" });
-        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-        const data = await res.json();
-
+        const { data } = await api.get("/products", { params: { limit: 20 } });
         const list = Array.isArray(data?.products) ? data.products : [];
         const normalized = list.map((p) => ({
           id: p._id || p.id,
@@ -42,13 +44,13 @@ export default function BestSellers() {
         // สุ่มเลือก 3 ชิ้น
         const shuffled = [...normalized].sort(() => Math.random() - 0.5);
         const picked = shuffled.slice(0, 3);
+
         if (!cancelled) {
           setItems(picked.length ? picked : mock.slice(0, 3));
         }
       } catch (e) {
-        setError(e?.message || "Failed to load");
-        // ใช้ mock แทน
-        setItems(mock.slice(0, 3));
+        setError(e?.response?.data?.message || e?.message || "Failed to load");
+        if (!cancelled) setItems(mock.slice(0, 3)); // ใช้ mock แทน
       }
     })();
     return () => {
@@ -57,7 +59,6 @@ export default function BestSellers() {
   }, []);
 
   const [first, second, third] = useMemo(() => {
-    // จัดเป็น 2 – 1 – 3 ตามเลย์เอาต์เดิม
     if (items.length < 3) return [items[0], items[1], items[2]];
     return [items[0], items[1], items[2]];
   }, [items]);
@@ -117,7 +118,6 @@ export default function BestSellers() {
           )}
         </div>
 
-        {/* แจ้ง error แบบเงียบ ๆ (ถ้ามี) */}
         {error && (
           <p className="mt-6 text-center text-xs text-foreground/60">
             (Showing fallback while loading failed: {error})
@@ -185,13 +185,13 @@ function PodiumCard({
         />
       </figure>
 
-      {/* ชื่อ + รายละเอียดสั้น ๆ (แทน Toy#1/2/3) */}
+      {/* ชื่อ + รายละเอียด (ยาวขึ้นได้) */}
       <div className="mt-3 text-center">
         <div className="inline-flex px-3 py-1 rounded-full text-xs md:text-sm font-medium text-card-foreground bg-white/80 backdrop-blur border border-border/20 shadow-sm">
           {item.title}
         </div>
         {item.desc ? (
-          <div className="mt-1 text-xs text-foreground/70 line-clamp-1 px-1">
+          <div className="mt-2 text-sm text-foreground/80 line-clamp-3 px-2">
             {item.desc}
           </div>
         ) : null}
