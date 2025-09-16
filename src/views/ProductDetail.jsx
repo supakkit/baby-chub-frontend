@@ -1,8 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
 import { Link, useParams } from "react-router-dom";
-import { CartContext } from "../context/CartContext";
-import UserReview from "../components/UserReview";
+// import { CartContext } from "../context/CartContext";
+// import UserReview from "../components/UserReview";
 // import RecommendProducts from "../components/RecommendProducts";
 
 import { addToFavorite } from "../services/favoriteService";
@@ -147,7 +147,6 @@ export function ProductDetail() {
                 />
               </div>
 
-              {/* ปุ่ม Checkout (ใหญ่เท่าเดิม) */}
               <Button
                 asChild
                 variant="default"
