@@ -29,7 +29,7 @@ export function ProductCard({ product }) {
             onClick={() => handleViewProducts(product._id)}
             className="md:max-w-56 flex justify-between h-full gap-0 p-0 rounded-3xl overflow-clip md:hover:scale-105 duration-300 hover:shadow-primary"
         >
-            <CardHeader className="p-0 pt-4 gap-0 hover:relative">
+            <CardHeader className="p-0 pt-4 gap-0 relative">
                 <img
                     src={product.images[0]}
                     alt=""

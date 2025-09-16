@@ -46,7 +46,7 @@ export default function NewArrivals({
         setApiLoading(true);
         setApiError(null);
 
-        const { data } = await api.get("/products/new", {
+        const { data } = await api.get("/new-products", {
           params: { limit: String(limit) },
         });
 
