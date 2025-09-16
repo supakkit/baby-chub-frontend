@@ -7,6 +7,7 @@ import { CartContext } from "./CartContext";
 export function CheckoutProvider({ children }) {
     const [checkoutItems, setCheckoutItems] = useState();
     const { cartItems, handleClearCart } = useContext(CartContext);
+    const [order, setOrder] = useState(null);
 
     const addToCheckout = (items, plan) => {
         setCheckoutItems(Array.isArray(items) ? [...items] : [{ ...items, plan }]);
@@ -23,7 +24,11 @@ export function CheckoutProvider({ children }) {
         });
 
         try {
-            await createOrder(products, promotionForm, selectedPaymentMethod);
+            const data = await createOrder(products, promotionForm, selectedPaymentMethod);
+            
+            if (data?.order) {
+                setOrder(data.order);
+            }
             
             const isCheckoutFromCart = products.every(checkoutProduct => {
                 return !!cartItems.find(cartProduct => cartProduct._id === checkoutProduct.productId)
@@ -45,6 +50,7 @@ export function CheckoutProvider({ children }) {
                 addToCheckout, 
                 clearCheckout,
                 handlePay,
+                order,
             }}
         >
             {children}

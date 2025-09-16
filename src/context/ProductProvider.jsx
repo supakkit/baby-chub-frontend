@@ -6,7 +6,7 @@ import { getProducts, getProductDetail } from "../services/productsService.js";
 export function ProductProvider({ children }) {
     const [loadingProducts, setLoadingProducts] = useState(true);
     const [error, setError] = useState("");
-    const pageSize = 4;
+    const pageSize = 12;
 
     const getProductsByQuery = async ({ age = [], price = [], type = [], subject = [], page = 1, limit = pageSize, q = '' } = {}) => {
         setLoadingProducts(true);

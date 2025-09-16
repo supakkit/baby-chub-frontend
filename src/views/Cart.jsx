@@ -31,9 +31,9 @@ export function Cart() {
                 className="text-4xl font-bold text-center text-primary pb-4"
             >Cart</div>
             {cartItems?.length > 0
-                ? <div className="flex flex-col lg:flex-row gap-12 min-h-screen">
+                ? <div className="flex flex-col gap-12 lg:max-w-5xl mx-auto">
                     {
-                    <div className="w-full flex flex-col gap-4">
+                    <div className="w-full flex flex-col gap-4 mb-8">
                         <div className="flex justify-between items-center">
                             <h3 className="font-medium text-lg text-primary">Your Shopping Cart</h3>
                             <Button variant="link" onClick={handleClearCart}>Remove All</Button>
@@ -52,7 +52,7 @@ export function Cart() {
                         }    
                     </div>
                     }
-                    <div className="md:w-1/2 md:self-end lg:w-xl lg:self-end lg:sticky bottom-8">
+                    <div className="md:w-1/2 lg:w-lg md:self-end bottom-16 bg-gray-50 p-6 rounded-3xl">
                         <TotalPriceCard products={cartItems}>
                             <Link to='/checkout' onClick={() => addToCheckout(cartItems)}>Checkout</Link>
                         </TotalPriceCard>

@@ -82,7 +82,7 @@ export function Favorite() {
                             />
                         )) 
                     }
-                    <div className="grid md:justify-end pt-4 pb-8 bg-white sticky bottom-0">
+                    <div className="grid md:justify-end pt-4 pb-8 bg-white sticky bottom-0 mt-8">
                         <Button asChild variant="default" className="w-full md:w-xs text-lg">
                             <Link to="/cart">Cart</Link>
                         </Button>

@@ -87,7 +87,7 @@ export function Products() {
             ? <div className="min-h-screen text-center mt-10 text-xl text-primary">Loading products...</div>
             : filteredProducts?.length > 0 ? null :
             <div className="text-center text-xl text-primary">Sorry, no products found!</div>} */}
-            <div className="flex flex-col md:flex-row gap-8 mb-8 relative">
+            <div className="flex flex-col md:flex-row gap-8 mb-16 relative">
                 <div className="">
                     <ProductFilter
                         products={filteredProducts}
