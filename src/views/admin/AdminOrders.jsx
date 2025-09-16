@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Drawer from "../../components/Drawer";
 import { Loader2 } from "lucide-react";
-import { getOrders, getOrderById, patchOrderStatus, deleteOrder } from "../../services/orderService.js";
+import {
+  getOrders,
+  getOrderById,
+  patchOrderStatus,
+  deleteOrder,
+} from "../../services/orderService.js";
 
 function currency(amount) {
   return new Intl.NumberFormat("th-TH", {
@@ -34,7 +39,11 @@ export default function AdminOrders() {
     const fetchOrders = async () => {
       setIsLoadingOrders(true);
       try {
-        const data = await getOrders({ status: orderStatus, page: currentPage, limit: ordersPerPage });
+        const data = await getOrders({
+          status: orderStatus,
+          page: currentPage,
+          limit: ordersPerPage,
+        });
         setOrderData(data);
       } catch (error) {
         console.error("Failed to fetch orders:", error);
@@ -197,7 +206,9 @@ export default function AdminOrders() {
               orderData.items.map((order) => (
                 <tr key={order._id} className="border-t hover:bg-gray-50">
                   <td className="py-2 px-3 font-medium">{order.number}</td>
-                  <td className="py-2 px-3">{order.userId?.fullName || "N/A"}</td>
+                  <td className="py-2 px-3">
+                    {order.userId?.fullName || "N/A"}
+                  </td>
                   <td className="py-2 px-3">{order.products?.length}</td>
                   <td className="py-2 px-3">{currency(order.totalAmount)}</td>
                   <td className="py-2 px-3">{order.status}</td>
@@ -239,7 +250,11 @@ export default function AdminOrders() {
       </div>
 
       {/* Drawer: Order detail */}
-      <Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title="Order details">
+      <Drawer
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        title="Order details"
+      >
         {isLoadingDetail || !orderDetail ? (
           <div className="animate-pulse space-y-3">
             <div className="h-4 bg-gray-200 rounded" />
@@ -253,7 +268,8 @@ export default function AdminOrders() {
             </div>
             <div>
               <span className="font-medium">User:</span>{" "}
-              {orderDetail.userId?.fullName || "N/A"} ({orderDetail.userId?.email || "N/A"})
+              {orderDetail.userId?.fullName || "N/A"} (
+              {orderDetail.userId?.email || "N/A"})
             </div>
             <div>
               <span className="font-medium">Status:</span> {orderDetail.status}
