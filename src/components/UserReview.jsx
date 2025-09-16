@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Rating, RatingButton } from "@/components/ui/shadcn-io/rating";
 import { motion, AnimatePresence } from "framer-motion";
-import { getReviews, addReview } from "./api.js";
+// import { getReviews, addReview } from "./api.js";
 
 function timeAgo(timestamp) {
   const now = new Date();
