@@ -1,27 +1,66 @@
-import React, { useMemo /*, useContext */ } from "react";
-import { Card, CardContent } from "@/components/ui/card"; 
+import React, { useMemo, useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+
+const API_URL = import.meta.env.VITE_API_URL; // e.g. http://localhost:3000/api/v1
 
 export default function BestSellers() {
-  // TODO: ภายหลังสลับมาใช้ context ที่เดียวกับ Product
-  // const { products: ctxProducts } = useContext(ProductContext) || {};
-  // const itemsFromCtx = Array.isArray(ctxProducts)
-  //   ? ctxProducts.map(p => ({ id: p.id, title: p.title || p.name, image: p.img || p.image || p.thumbnail }))
-  //   : [];
+  const [items, setItems] = useState([]);
+  const [error, setError] = useState("");
 
+  // fallback mock เผื่อ backend ล่ม
   const mock = [
-    { id: 1, title: "Toy #1", image: "/images/3Levels.png" },
-    { id: 2, title: "Toy #2", image: "/images/programming-course-forest-adventure.png" },
-    { id: 3, title: "Toy #3", image: "/images/money2.jpg" },
-    { id: 4, title: "Toy #4", image: "/images/Daily6yr2.png" },
-    { id: 5, title: "Toy #5", image: "/images/LearningTime.png" },
+    { id: "m1", title: "3 Levels Tracing Pack", desc: "Fine-motor tracing set", image: "/images/3Levels.png" },
+    { id: "m2", title: "Forest Coding Adventure", desc: "Beginner programming", image: "/images/programming-course-forest-adventure.png" },
+    { id: "m3", title: "Money Math Cards", desc: "Practical math skills", image: "/images/money2.jpg" },
+    { id: "m4", title: "Daily Pack Age 6", desc: "Skill boosters", image: "/images/Daily6yr2.png" },
+    { id: "m5", title: "Learning Time Kit", desc: "Screen-smart learning", image: "/images/LearningTime.png" },
   ];
 
-  const items = useMemo(() => {
-    // return itemsFromCtx.length ? itemsFromCtx : mock;
-    return mock;
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        // ดึงสินค้าจำนวนมากหน่อย จะได้สุ่มเลือก 3 ชิ้น
+        const url = new URL(`${API_URL}/products`);
+        url.searchParams.set("limit", "20");
+        const res = await fetch(url.toString(), { credentials: "include" });
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+        const data = await res.json();
+
+        const list = Array.isArray(data?.products) ? data.products : [];
+        const normalized = list.map((p) => ({
+          id: p._id || p.id,
+          title: p.name || p.title || "Untitled",
+          desc: p.description || "",
+          image:
+            (Array.isArray(p.images) && p.images[0]) ||
+            p.image ||
+            p.thumbnail ||
+            "/images/placeholder.png",
+        }));
+
+        // สุ่มเลือก 3 ชิ้น
+        const shuffled = [...normalized].sort(() => Math.random() - 0.5);
+        const picked = shuffled.slice(0, 3);
+        if (!cancelled) {
+          setItems(picked.length ? picked : mock.slice(0, 3));
+        }
+      } catch (e) {
+        setError(e?.message || "Failed to load");
+        // ใช้ mock แทน
+        setItems(mock.slice(0, 3));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const [first, second, third] = items; // mock: เดี๋ยวค่อยจัดอันดับตามยอดซื้อทีหลัง
+  const [first, second, third] = useMemo(() => {
+    // จัดเป็น 2 – 1 – 3 ตามเลย์เอาต์เดิม
+    if (items.length < 3) return [items[0], items[1], items[2]];
+    return [items[0], items[1], items[2]];
+  }, [items]);
 
   return (
     <section className="relative w-screen left-1/2 -translate-x-1/2 bg-gradient-to-b from-white to-muted/40 py-12 md:py-16">
@@ -35,7 +74,7 @@ export default function BestSellers() {
 
         {/* PODIUM 2 – 1 – 3 */}
         <div className="relative mx-auto flex items-end justify-center gap-4 md:gap-8">
-          {/* Aura วิ้ง ๆ หลังอันดับ 1 */}
+          {/* Aura หลังอันดับ 1 */}
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex justify-center">
             <div className="relative">
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 h-48 w-48 md:h-64 md:w-64 rounded-full bg-pink-200/40 blur-3xl animate-pulse" />
@@ -43,7 +82,7 @@ export default function BestSellers() {
             </div>
           </div>
 
-          {/* Rank 2 (ซ้าย) */}
+          {/* Rank 2 */}
           {second && (
             <PodiumCard
               item={second}
@@ -54,7 +93,7 @@ export default function BestSellers() {
             />
           )}
 
-          {/* Rank 1 (กลาง) */}
+          {/* Rank 1 */}
           {first && (
             <PodiumCard
               item={first}
@@ -66,7 +105,7 @@ export default function BestSellers() {
             />
           )}
 
-          {/* Rank 3 (ขวา) */}
+          {/* Rank 3 */}
           {third && (
             <PodiumCard
               item={third}
@@ -77,12 +116,18 @@ export default function BestSellers() {
             />
           )}
         </div>
+
+        {/* แจ้ง error แบบเงียบ ๆ (ถ้ามี) */}
+        {error && (
+          <p className="mt-6 text-center text-xs text-foreground/60">
+            (Showing fallback while loading failed: {error})
+          </p>
+        )}
       </div>
     </section>
   );
 }
 
-/* ===== สี่เหลี่ยมจัตุรัสล้วน + เงา (ไม่ใช้การ์ด/ไม่มีกรอบ) ===== */
 function PodiumCard({
   item,
   rank,
@@ -105,7 +150,7 @@ function PodiumCard({
 
   return (
     <div className={`relative ${sizes[size]} ${className}`}>
-      {/* ป้ายอันดับ (วงรี) */}
+      {/* ป้ายอันดับ */}
       <div className="absolute -top-3 -left-3 z-20">
         <div
           className={[
@@ -126,7 +171,6 @@ function PodiumCard({
       <figure
         className={[
           "relative overflow-hidden aspect-square",
-          // เงานุ่ม + ลอยนิด ๆ
           "shadow-[0_10px_25px_rgba(0,0,0,0.12)] hover:shadow-[0_18px_40px_rgba(0,0,0,0.16)]",
           "transition-transform duration-300 will-change-transform hover:-translate-y-1",
           "rounded-none bg-transparent",
@@ -141,11 +185,16 @@ function PodiumCard({
         />
       </figure>
 
-      {/* ชื่อสินค้า (แคปซูลใส ๆ ไม่เป็นบล็อก) */}
-      <div className="flex justify-center">
-        <span className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs md:text-sm font-medium text-card-foreground bg-white/80 backdrop-blur border border-border/20 shadow-sm">
+      {/* ชื่อ + รายละเอียดสั้น ๆ (แทน Toy#1/2/3) */}
+      <div className="mt-3 text-center">
+        <div className="inline-flex px-3 py-1 rounded-full text-xs md:text-sm font-medium text-card-foreground bg-white/80 backdrop-blur border border-border/20 shadow-sm">
           {item.title}
-        </span>
+        </div>
+        {item.desc ? (
+          <div className="mt-1 text-xs text-foreground/70 line-clamp-1 px-1">
+            {item.desc}
+          </div>
+        ) : null}
       </div>
 
       {/* ฐานโพเดียม */}
