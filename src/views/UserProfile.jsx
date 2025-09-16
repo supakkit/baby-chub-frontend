@@ -1,21 +1,14 @@
 // src/views/UserProfile.jsx
-// Professional user profile page (frontend-only mock)
-// - A11y deep pass: aria-busy, disable inputs while saving, per-field errors with aria-invalid/aria-describedby
-// - Profile photo: add "Remove photo" to clear avatar without logging out
-// - Orders: disable/tooltip download button for placeholder links (#)
-// - Focus management: return focus to the triggering button after successful actions
+// Professional user profile page (frontend-only mock -> updated to real sessions)
+// - Adds real sessions loading via getMySessions() and revoke via revokeSession()
+// - A11y deep pass remains (aria-busy, per-field errors, focus management)
 
-// ======================================================
-// SECTION: Imports
-// ======================================================
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useUser } from "../context/UserContext";
+import { getMySessions, revokeSession } from "../services/userServices";
 
-// ======================================================
-// SECTION: Local helpers (classnames, masking, branding, file->dataURL)
-// ======================================================
 function cn(...xs) {
   return xs.filter(Boolean).join(" ");
 }
@@ -36,6 +29,8 @@ function brandFromCard(number = "") {
   if (/^(6011|65)/.test(n)) return "Discover";
   return "Card";
 }
+
+
 async function fileToDataURL(file) {
   if (!file) return null;
   return new Promise((resolve, reject) => {
@@ -46,13 +41,7 @@ async function fileToDataURL(file) {
   });
 }
 
-// ======================================================
-// SECTION: Component
-// ======================================================
 export function UserProfile() {
-  // ----------------------------------------------------
-  // User context and safe defaults (prevents null crashes)
-  // ----------------------------------------------------
   const {
     user,
     updateProfile,
@@ -88,28 +77,27 @@ export function UserProfile() {
       promotions: user?.notifications?.promotions ?? false,
     },
     orders: Array.isArray(user?.orders) ? user.orders : [],
-    sessions: Array.isArray(user?.sessions)
-      ? user.sessions
-      : [
-          {
-            id: "sess-current",
-            device: "This device",
-            ip: "127.0.0.1",
-            lastActive: new Date().toISOString(),
-          },
-        ],
   };
 
-  // ----------------------------------------------------
-  // Derived collections
-  // ----------------------------------------------------
+  // Orders / cards
   const orders = safeUser.orders;
   const savedCards = safeUser.paymentMethods;
-  const sessions = safeUser.sessions;
 
-  // ----------------------------------------------------
-  // Profile state + avatar preview
-  // ----------------------------------------------------
+  // --- NEW: real sessions state ---
+  const [sessions, setSessions] = useState([]);
+  async function loadSessions() {
+    try {
+      const list = await getMySessions();
+      setSessions(Array.isArray(list) ? list : []);
+    } catch (e) {
+      // optional: toast.error("Failed to load sessions");
+    }
+  }
+  useEffect(() => {
+    loadSessions();
+  }, []);
+
+  // Avatar / profile states
   const [avatarPreview, setAvatarPreview] = useState(safeUser.avatarUrl);
   const [avatarFileName, setAvatarFileName] = useState("");
   const [firstName, setFirstName] = useState(user?.firstName || "");
@@ -117,17 +105,10 @@ export function UserProfile() {
   const [email] = useState(user?.email || "");
   const [phone, setPhone] = useState(safeUser.phone);
 
-  // Per-field error states (A11y: show message under field)
   const [phoneError, setPhoneError] = useState("");
 
-  // ----------------------------------------------------
-  // Address state
-  // ----------------------------------------------------
   const [addr, setAddr] = useState(safeUser.address);
 
-  // ----------------------------------------------------
-  // Payment (metadata only) + per-field errors
-  // ----------------------------------------------------
   const [cardForm, setCardForm] = useState({
     holder: "",
     number: "",
@@ -143,24 +124,15 @@ export function UserProfile() {
     cvc: "",
   });
 
-  // ----------------------------------------------------
-  // Preferences + Notifications
-  // ----------------------------------------------------
   const [ageRange, setAgeRange] = useState(safeUser.preferences.ageRange);
   const [interests, setInterests] = useState(safeUser.preferences.interests);
   const [notif, setNotif] = useState(safeUser.notifications);
   const [newsletter, setNewsletter] = useState(!!user?.newsletter);
 
-  // ----------------------------------------------------
-  // Security (change password)
-  // ----------------------------------------------------
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
 
-  // ----------------------------------------------------
-  // Loading flags per form (used for aria-busy & disabled)
-  // ----------------------------------------------------
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingAddress, setSavingAddress] = useState(false);
   const [savingPrefs, setSavingPrefs] = useState(false);
@@ -169,9 +141,6 @@ export function UserProfile() {
   const [changingPw, setChangingPw] = useState(false);
   const [removingPhoto, setRemovingPhoto] = useState(false);
 
-  // ----------------------------------------------------
-  // Focus management: capture the last pressed button per form
-  // ----------------------------------------------------
   const btnProfileRef = useRef(null);
   const btnAddressRef = useRef(null);
   const btnPrefsRef = useRef(null);
@@ -180,15 +149,11 @@ export function UserProfile() {
   const btnChangePwRef = useRef(null);
   const btnRemovePhotoRef = useRef(null);
 
-  // ======================================================
-  // SECTION: Validation helpers (lightweight, client-side)
-  // ======================================================
   const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const onlyDigits = (s = "") => s.replace(/\D+/g, "");
   function validatePhone(p = "") {
-    // Simple, country-agnostic: allow digits/spaces/+, must be >= 8 digits
     const d = onlyDigits(p);
-    if (d.length === 0) return ""; // empty is allowed here (optional field)
+    if (d.length === 0) return "";
     if (d.length < 8) return "Phone number seems too short.";
     return "";
   }
@@ -210,9 +175,6 @@ export function UserProfile() {
   }
   const hasAnyError = (obj) => Object.values(obj).some(Boolean);
 
-  // ======================================================
-  // SECTION: Handlers — Avatar
-  // ======================================================
   async function onAvatarSelect(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -236,7 +198,7 @@ export function UserProfile() {
       setAvatarPreview("");
       setAvatarFileName("");
       toast.success("Profile photo removed");
-      btnRemovePhotoRef.current?.focus(); // focus back to the action button
+      btnRemovePhotoRef.current?.focus();
     } catch (err) {
       toast.error(err?.message || "Failed to remove photo");
     } finally {
@@ -244,12 +206,8 @@ export function UserProfile() {
     }
   }
 
-  // ======================================================
-  // SECTION: Handlers — Profile
-  // ======================================================
   async function handleSaveProfile(e) {
     e.preventDefault();
-    // validate phone and show per-field error
     const pErr = validatePhone(phone);
     setPhoneError(pErr);
     if (pErr) return;
@@ -263,7 +221,7 @@ export function UserProfile() {
         avatarUrl: avatarPreview || "",
       });
       toast.success("Profile updated");
-      btnProfileRef.current?.focus(); // return focus to the action button
+      btnProfileRef.current?.focus();
     } catch (err) {
       toast.error(err?.message || "Failed to update profile");
     } finally {
@@ -271,9 +229,6 @@ export function UserProfile() {
     }
   }
 
-  // ======================================================
-  // SECTION: Handlers — Address
-  // ======================================================
   async function handleSaveAddress(e) {
     e.preventDefault();
     setSavingAddress(true);
@@ -297,13 +252,9 @@ export function UserProfile() {
     }
   }
 
-  // ======================================================
-  // SECTION: Handlers — Payment (metadata only)
-  // ======================================================
   async function handleAddCard(e) {
     e.preventDefault();
 
-    // Validate and show per-field error messages
     const errs = validateCardFields(cardForm);
     setCardErrors(errs);
     if (hasAnyError(errs)) return;
@@ -352,9 +303,6 @@ export function UserProfile() {
     toast.success("Payment method removed");
   }
 
-  // ======================================================
-  // SECTION: Handlers — Preferences & Notifications
-  // ======================================================
   async function handleSavePrefs(e) {
     e.preventDefault();
     setSavingPrefs(true);
@@ -383,9 +331,6 @@ export function UserProfile() {
     }
   }
 
-  // ======================================================
-  // SECTION: Handlers — Security (Change password) & Account
-  // ======================================================
   async function handleChangePassword(e) {
     e.preventDefault();
     if (newPw !== confirmPw) {
@@ -410,6 +355,7 @@ export function UserProfile() {
       setChangingPw(false);
     }
   }
+
   async function handleExportData() {
     toast.success("We’ll email you a copy of your data.");
   }
@@ -424,9 +370,17 @@ export function UserProfile() {
     toast.success("Account deleted");
   }
 
-  // ======================================================
-  // SECTION: UI
-  // ======================================================
+  // --- NEW: revoke session handler ---
+  async function handleRevoke(sessionId) {
+    try {
+      await revokeSession(sessionId);
+      await loadSessions();
+      toast.success("Session revoked");
+    } catch (e) {
+      toast.error(e?.message || "Failed to revoke session");
+    }
+  }
+
   return (
     <section className="layout mx-auto px-4 pt-8 pb-14 md:pt-10 md:pb-18">
       {/* Header */}
@@ -443,9 +397,7 @@ export function UserProfile() {
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* ------------ Left (content) ------------ */}
         <div className="md:col-span-2 space-y-8">
-          {/* ======================================================
-              SECTION: Profile & Avatar (A11y + Remove photo)
-              ====================================================== */}
+          {/* Profile */}
           <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
             <h2 className="text-xl font-semibold">Profile</h2>
             <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
@@ -471,7 +423,6 @@ export function UserProfile() {
                     Profile photo
                   </label>
 
-                  {/* Hidden input + clickable button */}
                   <input
                     id="avatar"
                     type="file"
@@ -503,7 +454,6 @@ export function UserProfile() {
                     </button>
                   </div>
 
-                  {/* Filename / No file chosen */}
                   <div className="text-sm mt-2">
                     {avatarFileName || "No file chosen"}
                   </div>
@@ -541,7 +491,7 @@ export function UserProfile() {
                 </div>
               </div>
 
-              {/* Email + Phone (with per-field error) */}
+              {/* Email + Phone */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="email" className="block text-sm mb-1">
@@ -564,7 +514,7 @@ export function UserProfile() {
                     value={phone}
                     onChange={(e) => {
                       setPhone(e.target.value);
-                      if (phoneError) setPhoneError(""); // clear inline error while typing
+                      if (phoneError) setPhoneError("");
                     }}
                     aria-invalid={!!phoneError}
                     aria-describedby={phoneError ? "err-phone" : undefined}
@@ -599,9 +549,7 @@ export function UserProfile() {
             </form>
           </section>
 
-          {/* ======================================================
-              SECTION: Billing Address (A11y: aria-busy & disable)
-              ====================================================== */}
+          {/* Billing Address */}
           <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
             <h2 className="text-xl font-semibold">Billing Address</h2>
             <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
@@ -707,265 +655,7 @@ export function UserProfile() {
             </form>
           </section>
 
-          {/* ======================================================
-              SECTION: Payment Methods (A11y + per-field errors)
-              ====================================================== */}
-          <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
-            <h2 className="text-xl font-semibold">Payment Methods</h2>
-            <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
-              We store card metadata only (brand, last4, expiry). Full card
-              numbers are never saved.
-            </p>
-
-            {/* Existing cards */}
-            <div className="mt-4 space-y-3">
-              {savedCards.length === 0 ? (
-                <div className="text-sm text-[color:var(--muted-foreground)]">
-                  No saved cards.
-                </div>
-              ) : (
-                savedCards.map((c, i) => (
-                  <div
-                    key={`${c.brand}-${c.last4}-${i}`}
-                    className="flex items-center justify-between rounded-md border border-[color:var(--border)] bg-white px-3 py-2"
-                  >
-                    <div className="text-sm">
-                      <div className="font-medium">
-                        {c.brand} •••• {c.last4}
-                      </div>
-                      <div className="text-[color:var(--muted-foreground)]">
-                        {c.holder} — exp {c.expMonth}/
-                        {String(c.expYear).slice(-2)}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveCard(i)}
-                      className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/50"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Add new card (metadata only) */}
-            <form
-              onSubmit={handleAddCard}
-              className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4"
-              aria-busy={addingCard}
-            >
-              {/* Holder */}
-              <div className="md:col-span-2">
-                <label htmlFor="holder" className="block text-sm mb-1">
-                  Name on card
-                </label>
-                <input
-                  id="holder"
-                  value={cardForm.holder}
-                  onChange={(e) => {
-                    setCardForm({ ...cardForm, holder: e.target.value });
-                    if (cardErrors.holder) {
-                      setCardErrors((p) => ({ ...p, holder: "" }));
-                    }
-                  }}
-                  aria-invalid={!!cardErrors.holder}
-                  aria-describedby={
-                    cardErrors.holder ? "err-holder" : undefined
-                  }
-                  className={cn(
-                    "w-full h-10 px-3 rounded-md border bg-white",
-                    cardErrors.holder
-                      ? "border-red-500"
-                      : "border-[color:var(--input)]"
-                  )}
-                  disabled={addingCard}
-                />
-                {cardErrors.holder && (
-                  <p
-                    id="err-holder"
-                    className="mt-1 text-xs text-red-600"
-                    role="alert"
-                  >
-                    {cardErrors.holder}
-                  </p>
-                )}
-              </div>
-
-              {/* Number */}
-              <div className="md:col-span-2">
-                <label htmlFor="number" className="block text-sm mb-1">
-                  Card number
-                </label>
-                <input
-                  id="number"
-                  inputMode="numeric"
-                  placeholder="4242 4242 4242 4242"
-                  value={cardForm.number}
-                  onChange={(e) => {
-                    setCardForm({ ...cardForm, number: e.target.value });
-                    if (cardErrors.number) {
-                      setCardErrors((p) => ({ ...p, number: "" }));
-                    }
-                  }}
-                  aria-invalid={!!cardErrors.number}
-                  aria-describedby={
-                    cardErrors.number ? "err-number" : undefined
-                  }
-                  className={cn(
-                    "w-full h-10 px-3 rounded-md border bg-white",
-                    cardErrors.number
-                      ? "border-red-500"
-                      : "border-[color:var(--input)]"
-                  )}
-                  disabled={addingCard}
-                />
-                {cardErrors.number && (
-                  <p
-                    id="err-number"
-                    className="mt-1 text-xs text-red-600"
-                    role="alert"
-                  >
-                    {cardErrors.number}
-                  </p>
-                )}
-              </div>
-
-              {/* Expiry month */}
-              <div>
-                <label htmlFor="expMonth" className="block text-sm mb-1">
-                  Exp. month (MM)
-                </label>
-                <input
-                  id="expMonth"
-                  inputMode="numeric"
-                  maxLength={2}
-                  placeholder="MM"
-                  value={cardForm.expMonth}
-                  onChange={(e) => {
-                    setCardForm({ ...cardForm, expMonth: e.target.value });
-                    if (cardErrors.expMonth) {
-                      setCardErrors((p) => ({ ...p, expMonth: "" }));
-                    }
-                  }}
-                  aria-invalid={!!cardErrors.expMonth}
-                  aria-describedby={
-                    cardErrors.expMonth ? "err-expMonth" : undefined
-                  }
-                  className={cn(
-                    "w-full h-10 px-3 rounded-md border bg-white",
-                    cardErrors.expMonth
-                      ? "border-red-500"
-                      : "border-[color:var(--input)]"
-                  )}
-                  disabled={addingCard}
-                />
-                {cardErrors.expMonth && (
-                  <p
-                    id="err-expMonth"
-                    className="mt-1 text-xs text-red-600"
-                    role="alert"
-                  >
-                    {cardErrors.expMonth}
-                  </p>
-                )}
-              </div>
-
-              {/* Expiry year */}
-              <div>
-                <label htmlFor="expYear" className="block text-sm mb-1">
-                  Exp. year (YY or YYYY)
-                </label>
-                <input
-                  id="expYear"
-                  inputMode="numeric"
-                  maxLength={4}
-                  placeholder="YYYY"
-                  value={cardForm.expYear}
-                  onChange={(e) => {
-                    setCardForm({ ...cardForm, expYear: e.target.value });
-                    if (cardErrors.expYear) {
-                      setCardErrors((p) => ({ ...p, expYear: "" }));
-                    }
-                  }}
-                  aria-invalid={!!cardErrors.expYear}
-                  aria-describedby={
-                    cardErrors.expYear ? "err-expYear" : undefined
-                  }
-                  className={cn(
-                    "w-full h-10 px-3 rounded-md border bg-white",
-                    cardErrors.expYear
-                      ? "border-red-500"
-                      : "border-[color:var(--input)]"
-                  )}
-                  disabled={addingCard}
-                />
-                {cardErrors.expYear && (
-                  <p
-                    id="err-expYear"
-                    className="mt-1 text-xs text-red-600"
-                    role="alert"
-                  >
-                    {cardErrors.expYear}
-                  </p>
-                )}
-              </div>
-
-              {/* CVC */}
-              <div className="md:col-span-2">
-                <label htmlFor="cvc" className="block text-sm mb-1">
-                  CVC (not stored)
-                </label>
-                <input
-                  id="cvc"
-                  inputMode="numeric"
-                  maxLength={4}
-                  placeholder="CVC"
-                  value={cardForm.cvc}
-                  onChange={(e) => {
-                    setCardForm({ ...cardForm, cvc: e.target.value });
-                    if (cardErrors.cvc) {
-                      setCardErrors((p) => ({ ...p, cvc: "" }));
-                    }
-                  }}
-                  aria-invalid={!!cardErrors.cvc}
-                  aria-describedby={cardErrors.cvc ? "err-cvc" : undefined}
-                  className={cn(
-                    "w-full h-10 px-3 rounded-md border bg-white",
-                    cardErrors.cvc
-                      ? "border-red-500"
-                      : "border-[color:var(--input)]"
-                  )}
-                  disabled={addingCard}
-                />
-                {cardErrors.cvc && (
-                  <p
-                    id="err-cvc"
-                    className="mt-1 text-xs text-red-600"
-                    role="alert"
-                  >
-                    {cardErrors.cvc}
-                  </p>
-                )}
-              </div>
-
-              {/* Submit */}
-              <div className="md:col-span-2">
-                <button
-                  type="submit"
-                  ref={btnAddCardRef}
-                  disabled={addingCard}
-                  className="inline-flex items-center justify-center h-10 px-4 rounded-md bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:opacity-90 disabled:opacity-60"
-                >
-                  {addingCard ? "Adding..." : "Add card"}
-                </button>
-              </div>
-            </form>
-          </section>
-
-          {/* ======================================================
-              SECTION: Orders (Download button: disable for '#')
-              ====================================================== */}
+          {/* Orders */}
           <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -983,67 +673,6 @@ export function UserProfile() {
               </Link>
             </div>
 
-            {/* Mobile cards */}
-            <div className="mt-5 grid grid-cols-1 gap-3 md:hidden">
-              {orders.length === 0 ? (
-                <div className="text-sm text-[color:var(--muted-foreground)]">
-                  No orders yet.
-                </div>
-              ) : (
-                orders.map((o) => (
-                  <div
-                    key={o.id}
-                    className="rounded-md border border-[color:var(--border)] bg-white p-3 space-y-1"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium">#{o.id}</div>
-                      <div className="text-sm">
-                        {new Date(o.date).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="text-sm text-[color:var(--muted-foreground)]">
-                      {o.status} — ${o.total?.toFixed?.(2)}
-                    </div>
-                    <div className="pt-2 flex gap-2 flex-wrap">
-                      {(o.items || []).map((it) => {
-                        const disabled =
-                          !it.downloadable ||
-                          !it.downloadUrl ||
-                          it.downloadUrl === "#";
-                        return (
-                          <button
-                            key={it.id}
-                            disabled={disabled}
-                            onClick={() =>
-                              !disabled
-                                ? window.open(it.downloadUrl, "_blank")
-                                : toast.message(
-                                    "Download available after payment confirmation."
-                                  )
-                            }
-                            title={
-                              disabled
-                                ? "Download not available yet"
-                                : "Download your product"
-                            }
-                            className={cn(
-                              "h-9 px-3 rounded-md border text-sm inline-flex items-center justify-center",
-                              !disabled
-                                ? "bg-white hover:bg-[color:var(--muted)]/40"
-                                : "bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
-                            )}
-                          >
-                            Download {it.name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Desktop table */}
             <div className="mt-5 hidden md:block overflow-auto">
               {orders.length === 0 ? (
                 <div className="text-sm text-[color:var(--muted-foreground)]">
@@ -1074,7 +703,6 @@ export function UserProfile() {
                         <td className="py-3 pr-3">{o.status}</td>
                         <td className="py-3">
                           <div className="flex gap-2 flex-wrap">
-                            {/* View details -> /orders/:id */}
                             <Link
                               to={`/orders/${o.id}`}
                               className="h-9 px-3 inline-flex items-center justify-center rounded-md border hover:bg-[color:var(--muted)]/40"
@@ -1123,9 +751,7 @@ export function UserProfile() {
             </div>
           </section>
 
-          {/* ======================================================
-              SECTION: Security (Change password)
-              ====================================================== */}
+          {/* Security (Change password + Active sessions) */}
           <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
             <h2 className="text-xl font-semibold">Security</h2>
             <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
@@ -1197,27 +823,36 @@ export function UserProfile() {
             <div className="mt-6">
               <h3 className="font-medium">Active sessions</h3>
               <div className="mt-3 space-y-2">
-                {sessions.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex items-center justify-between rounded-md border border-[color:var(--border)] bg-white px-3 py-2 text-sm"
-                  >
-                    <div>
-                      <div className="font-medium">{s.device}</div>
-                      <div className="text-[color:var(--muted-foreground)]">
-                        IP {s.ip} — {new Date(s.lastActive).toLocaleString()}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() =>
-                        toast.message("Session revocation requires backend")
-                      }
-                      className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/50"
-                    >
-                      Revoke
-                    </button>
+                {sessions.length === 0 ? (
+                  <div className="text-sm text-[color:var(--muted-foreground)]">
+                    No active sessions.
                   </div>
-                ))}
+                ) : (
+                  sessions.map((s) => (
+                    <div
+                      key={s._id}
+                      className="flex items-center justify-between rounded-md border border-[color:var(--border)] bg-white px-3 py-2 text-sm"
+                    >
+                      <div>
+                        <div className="font-medium">
+                          {s.device || "Unknown device"}
+                        </div>
+                        <div className="text-[color:var(--muted-foreground)]">
+                          IP {s.ip || "-"} —{" "}
+                          {s.lastActive
+                            ? new Date(s.lastActive).toLocaleString()
+                            : "-"}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleRevoke(s._id)}
+                        className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/50"
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </section>
@@ -1225,9 +860,7 @@ export function UserProfile() {
 
         {/* ------------ Right (sidebar) ------------ */}
         <aside className="md:col-span-1 space-y-8">
-          {/* ======================================================
-              SECTION: Notifications (A11y: aria-busy & disable)
-              ====================================================== */}
+          {/* Notifications */}
           <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
             <h2 className="text-xl font-semibold">Notifications</h2>
             <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
@@ -1296,9 +929,7 @@ export function UserProfile() {
             </form>
           </section>
 
-          {/* ======================================================
-              SECTION: Privacy & Account (Export / Delete / Logout)
-              ====================================================== */}
+          {/* Privacy & Account */}
           <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
             <h2 className="text-xl font-semibold">Privacy & Account</h2>
             <p className="text-sm text-[color:var(--muted-foreground)] mt-1">

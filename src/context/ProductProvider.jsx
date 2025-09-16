@@ -1,7 +1,7 @@
 
 import { useContext, useState } from "react";
 import { ProductContext } from "./ProductContext";
-import { getProducts } from "../services/productsService.js";
+import { getProducts, getProductDetail } from "../services/productsService.js";
 
 export function ProductProvider({ children }) {
     const [loadingProducts, setLoadingProducts] = useState(true);
@@ -26,10 +26,23 @@ export function ProductProvider({ children }) {
             const data = await getProducts( paramsObj );
             // console.log('data:', data)
             return data;
-            
+
         } catch (err) {
             console.error(err);
             setError("Failed to load products.");
+        } finally {
+            setLoadingProducts(false);
+        }
+    };
+
+    const getProductById = async (productId) => {
+        setLoadingProducts(true);
+        try {
+            const data = await getProductDetail(productId);
+            return data;
+        } catch (err) {
+            console.error(err);
+            setError("Failed to load product.");
         } finally {
             setLoadingProducts(false);
         }
@@ -42,6 +55,7 @@ export function ProductProvider({ children }) {
                 loadingProducts,
                 error,
                 getProductsByQuery,
+                getProductById,
             }}
         >
             {children}
