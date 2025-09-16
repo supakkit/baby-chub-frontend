@@ -10,6 +10,7 @@ import { SignIn } from "./views/SignIn";
 import { SignUp } from "./views/SignUp";
 import { ForgotPassword } from "./views/ForgotPassword";
 import { PendingPayment } from "./views/PendingPayment";
+import { OrderConfirmation } from "./views/OrderConfirmation";
 import { Help } from "./views/Help";
 import { UserProfile } from "./views/UserProfile";
 import { ProtectedRoute } from "./views/ProtectedRoute";
@@ -73,6 +74,10 @@ const router = createBrowserRouter([
         element: <PendingPayment />,
       },
       {
+        path: "order-confirmation",
+        element: <OrderConfirmation />,
+      },
+      {
         path: "help",
         element: <Help />,
       },
@@ -122,7 +127,7 @@ const router = createBrowserRouter([
           { path: "dashboard", element: <AdminDashboard /> },
           { path: "users", element: <AdminUsers /> },
           { path: "orders", element: <AdminOrders /> },
-          { path: "products", element: <AdminProduct />}
+          { path: "products", element: <AdminProduct /> },
         ],
       },
       {
