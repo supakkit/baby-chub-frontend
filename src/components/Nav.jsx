@@ -24,7 +24,6 @@ import { SignIn } from "@/views/SignIn";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { motion } from "framer-motion";
 
-
 export default function Nav() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
@@ -70,9 +69,15 @@ export default function Nav() {
     <header className="sticky top-0 z-50 shadow-sm bg-white">
       {/* Top bar */}
       <div className="w-full h-7 bg-[#543285] text-white flex justify-end items-center px-6">
-        <Link to="/help" className="text-sm hover:opacity-90">
-          Help
-        </Link>
+        <motion.div
+          whileHover={{ x: 5, scale: 1.05 }}
+          whileTap={{ x: 6, scale: 1.1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 10 }}
+        >
+          <Link to="/help" className="text-sm hover:opacity-90">
+            Help
+          </Link>
+        </motion.div>
       </div>
 
       {/* Desktop Nav */}
