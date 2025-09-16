@@ -66,9 +66,34 @@ export function Products() {
         fetchProducts(defaultFilters);
     };
 
+    // useEffect(() => {
+    //     fetchProducts();
+    // }, []);
+
     useEffect(() => {
-        fetchProducts();
-    }, []);
+    const ageParam = searchParams.get('age');
+    const typeParam = searchParams.get('type');
+    const subjectParam = searchParams.get('subject');
+    
+    let initialFilters = { ...defaultFilters };
+
+    if (ageParam) {
+        initialFilters.age = JSON.parse(ageParam);
+    }
+    
+    if (typeParam) {
+        initialFilters.type = JSON.parse(typeParam);
+    }
+
+    if (subjectParam) {
+        initialFilters.subject = JSON.parse(subjectParam);
+    }
+    
+    // Set the state and fetch products based on the URL params
+    setSelectedFilters(initialFilters);
+    fetchProducts(initialFilters);
+    
+  }, []);
 
     // if (loadingProducts)
     //     return (

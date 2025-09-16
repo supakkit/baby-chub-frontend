@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { SignIn } from "@/views/SignIn";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { motion } from "framer-motion";
+import { NavigateToProducts } from "./NavigateToProducts";
 
 export default function Nav() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -55,10 +56,10 @@ export default function Nav() {
       label: "All",
       path: "/products",
       dropdown: [
-        { label: "By Ages 3 - 4", path: "/all/ages-3-4" },
-        { label: "By Ages 4 - 6", path: "/all/ages-4-6" },
-        { label: "By Ages 6 - 9", path: "/all/ages-6-9" },
-        { label: "By Ages 9 - 12", path: "/all/ages-9-12" },
+        { label: "By Ages 3 - 4", path: "/all/ages-3-4", id: "3-4", min: 3, max: 4 },
+        { label: "By Ages 4 - 6", path: "/all/ages-4-6", id: "4-6", min: 4, max: 6 },
+        { label: "By Ages 6 - 9", path: "/all/ages-6-9", id: "6-9", min: 6, max: 9 },
+        { label: "By Ages 9 - 12", path: "/all/ages-9-12", id: "9-12", min: 9, max: 12 },
       ],
     },
     { label: "New Arrival", path: "/new" },
@@ -120,13 +121,11 @@ export default function Nav() {
               {item.dropdown && (
                 <div className="absolute left-2 mt-2 w-40 bg-white shadow-lg rounded-md opacity-0 group-hover:opacity-100 transition-all pointer-events-auto group-hover:pointer-events-auto z-50">
                   {item.dropdown.map((sub) => (
-                    <Link
-                      key={sub.path}
-                      to={sub.path}
-                      className="block px-4 py-2 hover:bg-[#543285] hover:text-white text-sm"
-                    >
-                      {sub.label}
-                    </Link>
+                    <NavigateToProducts key={sub.id} filter={{"age": [{min: sub.min, max: sub.max}]}}>
+                      <span className="block px-4 py-2 hover:bg-[#543285] hover:text-white text-sm cursor-pointer">
+                        {sub.label}
+                      </span>
+                    </NavigateToProducts>
                   ))}
                 </div>
               )}
@@ -405,13 +404,11 @@ export default function Nav() {
                     {item.dropdown && (
                       <div className="ml-4 flex flex-col gap-1">
                         {item.dropdown.map((sub) => (
-                          <Link
-                            key={sub.path}
-                            to={sub.path}
-                            className="text-gray-600 hover:text-[#543285] text-sm"
-                          >
-                            {sub.label}
-                          </Link>
+                          <NavigateToProducts key={sub.id} filter={{"age": [{min: sub.min, max: sub.max}]}}>
+                            <span className="text-gray-600 hover:text-[#543285] text-sm cursor-pointer">
+                              {sub.label}
+                            </span>
+                          </NavigateToProducts>
                         ))}
                       </div>
                     )}
