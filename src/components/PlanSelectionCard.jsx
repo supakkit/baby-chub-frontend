@@ -1,66 +1,68 @@
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardContent,
 } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@radix-ui/react-label";
-import { useParams } from "react-router-dom";
-import { useContext } from "react";
-import { ProductContext } from "../context/ProductContext";
 
-export function PlanSelectionCard({ onPlanChange, defaultValue }) {
-  const { products } = useContext(ProductContext);
-  const { productId } = useParams();
-
-  const product = products.find((product) => product.id === productId);
+export function PlanSelectionCard({ product, defaultValue, onPlanChange }) {
   if (!product) {
-    return <div>Product not found.</div>;
+    return <div className="text-red-500">Product not found.</div>;
   }
-  // First version when "prices" data uses an array of objects kub (keep it for learning code reason)
-  // const availablePrices = product.prices.filter((p) => p.value !== null);
 
-  //use entries method to
-  const availablePrices = Object.entries(product.prices || {}).filter(
-    ([, value]) => value !== null
-  );
+  // ดึง plans จาก prices และตัด null
+  const plans = Object.entries(product.prices || {})
+    .filter(([_, value]) => value !== null)
+    .map(([type, value]) => ({ type, value }));
+
+  if (plans.length === 0) {
+    return (
+      <div className="text-gray-500">No available plans for this product.</div>
+    );
+  }
+
+  // กำหนด default plan เป็น monthly ถ้ามี
+  const defaultPlan =
+    defaultValue ||
+    plans.find((plan) => plan.type.toLowerCase() === "monthly") ||
+    plans[0];
 
   return (
-    <div className="pb-4">
-      <Card className="max-w-xs shadow-sm">
-        <CardHeader>
-          <CardTitle>Plan Options</CardTitle>
-          <CardDescription>Select your preferred plan</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup
-            defaultValue={defaultValue ? JSON.stringify(defaultValue) : ""}
-            onValueChange={(value) => onPlanChange(JSON.parse(value))}
-          >
-            {availablePrices.map(([type, value], index) => {
-              const id = `price-${index}`;
-              return (
-                <div className="flex items-center space-x-2 mb-4" key={index}>
-                  <RadioGroupItem
-                    value={JSON.stringify({ type, value })}
-                    id={id}
-                  />
-                  <Label htmlFor={id} className="flex flex-col">
-                    <span className="font-semibold">{type} plan</span>
-                    <span className="text-sm text-muted-foreground">
-                      {value} Baht
-                    </span>
-                  </Label>
-                </div>
-              );
-            })}
-          </RadioGroup>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="max-w-xs shadow-sm mb-4">
+      <CardHeader>
+        <CardTitle>Plan Options</CardTitle>
+        <CardDescription>Select your preferred plan</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <RadioGroup
+          defaultValue={JSON.stringify(defaultPlan)}
+          onValueChange={(value) => onPlanChange(JSON.parse(value))}
+        >
+          {plans.map(({ type, value }, idx) => {
+            const id = `plan-${idx}`;
+            return (
+              <div key={idx} className="flex items-center mb-2">
+                <RadioGroupItem
+                  value={JSON.stringify({ type, value })}
+                  id={id}
+                />
+                <Label
+                  htmlFor={id}
+                  className="ml-2 flex justify-between w-full"
+                >
+                  <span className="font-semibold">{type} plan</span>
+                  <span className="text-sm text-muted-foreground">
+                    {value} Baht
+                  </span>
+                </Label>
+              </div>
+            );
+          })}
+        </RadioGroup>
+      </CardContent>
+    </Card>
   );
 }

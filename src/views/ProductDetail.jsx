@@ -1,9 +1,9 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
 import { Link, useParams } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import UserReview from "../components/UserReview";
-import { RecommendProducts } from "../components/RecommendProducts";
+import RecommendProducts from "../components/RecommendProducts";
 import {
   Carousel,
   CarouselContent,
@@ -17,36 +17,42 @@ import { CheckoutContext } from "../context/CheckoutContext";
 import { Badge } from "@/components/ui/badge";
 
 export function ProductDetail() {
-  const { products } = useContext(ProductContext);
+  const { products, getProductById } = useContext(ProductContext);
   const { productId } = useParams();
-  const { addToFavorite } = useContext(CartContext);
-  const { addToCart } = useContext(CartContext);
+  const { addToFavorite, addToCart } = useContext(CartContext);
   const { addToCheckout } = useContext(CheckoutContext);
 
-  const product = products?.find((product) => product.id === productId);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectPlan, setSelectPlan] = useState(null);
+  const [mainImage, setMainImage] = useState(null);
 
-  const availablePrices = Object.entries(product.prices || {}).filter(
-    ([, value]) => value !== null
-  );
+  useEffect(() => {
+    const existingProduct = products?.find((p) => p._id === productId);
+    if (existingProduct) {
+      setProduct(existingProduct);
+      setLoading(false);
+    } else {
+      getProductById(productId).then((data) => {
+        setProduct(data?.product || null);
+        setLoading(false);
+      });
+    }
+  }, [productId]);
 
-  const defaultPlan = availablePrices.length
-    ? { type: availablePrices[0][0], value: availablePrices[0][1] }
-    : null;
+  useEffect(() => {
+    if (!product) return;
 
-  const [selectPlan, setSelectPlan] = useState(defaultPlan);
+    setMainImage(product.images?.[0] || null);
+  }, [product]);
 
-  const [mainImage, setMainImage] = useState(product.image);
-
-  const thumbnails = [
-    product.image,
-    "/images/programming-course-animal.png",
-    "/images/LearningTime.png",
-    "/images/money2.jpg",
-  ];
+  if (loading) return <div>Loading...</div>;
 
   if (!product) {
     return <div>Product not found.</div>;
   }
+
+  const thumbnails = product.images || [];
 
   return (
     <>
@@ -98,8 +104,9 @@ export function ProductDetail() {
             </div>
             {/* Select Plan */}
             <PlanSelectionCard
+              product={product}
               onPlanChange={setSelectPlan}
-              defaultValue={defaultPlan}
+              defaultValue={selectPlan}
             />
             <p className="h-11 font-semibold text-3xl xl:text-4xl ml-auto">
               {selectPlan?.value} Baht
@@ -111,7 +118,7 @@ export function ProductDetail() {
               src="/images/heart(2).svg"
               alt=""
               onClick={() => {
-                addToFavorite(product, selectPlan.type);
+                addToFavorite(product, selectPlan?.type);
               }}
             />
             <img
@@ -119,7 +126,7 @@ export function ProductDetail() {
               src="/images/addToCart.svg"
               alt=""
               onClick={() => {
-                addToCart(product, selectPlan.type);
+                addToCart(product, selectPlan?.type);
               }}
             />
             <Button
@@ -129,7 +136,7 @@ export function ProductDetail() {
             >
               <Link
                 to="/checkout"
-                onClick={() => addToCheckout(product, selectPlan.type)}
+                onClick={() => addToCheckout(product, selectPlan?.type)}
               >
                 Checkout
               </Link>
@@ -142,11 +149,7 @@ export function ProductDetail() {
       </div>
       <div className="w-full p-10 px-15">
         <h2 className="flex text-2xl font-bold pb-2">You May Also Like</h2>
-        <RecommendProducts
-          className="flex"
-          tags={product?.tags || []}
-          currentProductId={product.id}
-        />
+        <RecommendProducts className="flex" currentType={product.type} />
       </div>
     </>
   );
