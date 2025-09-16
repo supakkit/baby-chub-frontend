@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -30,6 +31,13 @@ export function PlanSelectionCard({ product, defaultValue, onPlanChange }) {
     plans.find((plan) => plan.type.toLowerCase() === "monthly") ||
     plans[0];
 
+  // ส่งค่า defaultPlan กลับ parent ตอน mount
+  useEffect(() => {
+    if (defaultPlan) {
+      onPlanChange(defaultPlan);
+    }
+  }, [defaultPlan, onPlanChange]);
+
   return (
     <Card className="max-w-xs shadow-sm mb-4">
       <CardHeader>
@@ -45,14 +53,8 @@ export function PlanSelectionCard({ product, defaultValue, onPlanChange }) {
             const id = `plan-${idx}`;
             return (
               <div key={idx} className="flex items-center mb-2">
-                <RadioGroupItem
-                  value={JSON.stringify({ type, value })}
-                  id={id}
-                />
-                <Label
-                  htmlFor={id}
-                  className="ml-2 flex justify-between w-full"
-                >
+                <RadioGroupItem value={JSON.stringify({ type, value })} id={id} />
+                <Label htmlFor={id} className="ml-2 flex justify-between w-full">
                   <span className="font-semibold">{type} plan</span>
                   <span className="text-sm text-muted-foreground">
                     {value} Baht
