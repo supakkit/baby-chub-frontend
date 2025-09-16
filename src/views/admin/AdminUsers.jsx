@@ -1,94 +1,29 @@
 // src/views/admin/AdminUsers.jsx
 import { useEffect, useMemo, useState } from "react";
 import Drawer from "../../components/Drawer";
+import {
+  listAdminUsers,
+  getAdminUserById,
+  updateUserRole,
+  resendUserVerification,
+  deleteUserById,
+} from "../../services/adminUserServices";
 
-
-const MOCK = true; // ← BE พร้อมแล้วค่อยเปลี่ยนเป็น false
-
-// --- Mock list & detail ---
-function mockUsers(page = 1, limit = 20) {
-  const items = Array.from({ length: limit }, (_, i) => {
-    const n = (page - 1) * limit + i;
-    return {
-      id: `u_${n}`,
-      name: n % 2 ? "Demo User" : "Jane Doe",
-      email: n % 2 ? "demo@babychub.app" : `jane${n}@example.com`,
-      role: n % 7 === 0 ? "admin" : "user",
-      verified: n % 3 !== 0,
-      orders: Math.floor(Math.random() * 12),
-      createdAt: new Date(Date.now() - n * 86_400_000).toISOString(),
-    };
-  });
-  return { items, total: 200, page, pageSize: limit };
-}
-function mockUserDetail(id) {
-  return {
-    id,
-    name: "Demo User",
-    email: "demo@babychub.app",
-    role: "user",
-    verified: true,
-    createdAt: "2025-07-12T09:00:00Z",
-    lastLogin: "2025-09-10T12:21:00Z",
-    ordersCount: 5,
-    addresses: [{ label: "Default", detail: "Bangkok, Thailand" }],
-    notes: "VIP customer; likes coding courses.",
-  };
+function useDebouncedValue(value, delay = 300) {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return v;
 }
 
-// --- API adapters ---
-async function getUsers(params) {
-  const { page = 1, limit = 20 } = params || {};
-  if (MOCK) return mockUsers(Number(page), Number(limit));
-  const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`/admin/users?${qs}`, { credentials: "include" });
-  if (!res.ok) throw new Error("Fetch /admin/users failed");
-  const data = await res.json();
-  // ถ้า schema BE ต่างไป ให้ map ตรงนี้
-  return data;
-}
-
-async function getUserDetail(id) {
-  if (MOCK) return mockUserDetail(id);
-  const res = await fetch(`/admin/users/${id}`, { credentials: "include" });
-  if (!res.ok) throw new Error("Fetch /admin/users/:id failed");
-  return res.json();
-}
-
-async function patchUserRole(id, nextRole) {
-  if (MOCK) return new Promise((r) => setTimeout(() => r(true), 250));
-  const res = await fetch(`/admin/users/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ role: nextRole }),
-  });
-  return res.ok;
-}
-
-async function resendVerify(id) {
-  if (MOCK) return new Promise((r) => setTimeout(() => r(true), 250));
-  const res = await fetch(`/admin/users/${id}/resend-verify`, {
-    method: "POST",
-    credentials: "include",
-  });
-  return res.ok;
-}
-
-async function deleteUser(id) {
-  if (MOCK) return new Promise((r) => setTimeout(() => r(true), 250));
-  const res = await fetch(`/admin/users/${id}`, {
-    method: "DELETE",
-    credentials: "include",
-  });
-  return res.ok;
-}
-
-// --- Component ---
 export default function AdminUsers() {
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("");
-  const [verified, setVerified] = useState("");
+  const [verified, setVerified] = useState(""); // "", "1", "0"
+  const qDebounced = useDebouncedValue((query || "").trim(), 300);
+
   const [page, setPage] = useState(1);
   const limit = 20;
 
@@ -99,99 +34,98 @@ export default function AdminUsers() {
     pageSize: limit,
   });
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Drawer state
   const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
+  // filter เปลี่ยน -> กลับหน้า 1
   useEffect(() => {
+    setPage(1);
+  }, [qDebounced, role, verified]);
+
+  useEffect(() => {
+    let mounted = true;
     setLoading(true);
-    getUsers({ query, role, verified, page, limit })
-      .then((d) => setData(d))
-      .finally(() => setLoading(false));
-  }, [query, role, verified, page]);
+    setErrorMsg("");
+    listAdminUsers({ query: qDebounced, role, verified, page, limit })
+      .then((d) => mounted && setData(d))
+      .catch((e) => {
+        if (!mounted) return;
+        console.error(e);
+        setErrorMsg(
+          e?.response?.data?.message || e.message || "Failed to load users"
+        );
+        setData({ items: [], total: 0, page: 1, pageSize: limit });
+      })
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, [qDebounced, role, verified, page]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil((data.total || 0) / limit)),
     [data.total]
   );
 
-  const onChangeRole = async (id, current) => {
-    const next = current === "admin" ? "user" : "admin";
-    const ok = await patchUserRole(id, next);
-    if (ok) {
+  async function onView(id) {
+    setOpen(true);
+    setLoadingDetail(true);
+    setDetail(null);
+    try {
+      const d = await getAdminUserById(id);
+      setDetail(d);
+    } catch (e) {
+      console.error(e);
+      alert(e?.response?.data?.message || "Failed to load user detail");
+      setOpen(false);
+    } finally {
+      setLoadingDetail(false);
+    }
+  }
+
+  async function onToggleRole(id, currentRole) {
+    const next = currentRole === "admin" ? "user" : "admin";
+    try {
+      await updateUserRole(id, next);
       setData((d) => ({
         ...d,
         items: d.items.map((u) => (u.id === id ? { ...u, role: next } : u)),
       }));
-      if (detail?.id === id) setDetail((s) => ({ ...s, role: next })); // sync ใน drawer
-    } else {
-      alert("Failed to update role");
+      setDetail((prev) => (prev?.id === id ? { ...prev, role: next } : prev));
+    } catch (e) {
+      console.error(e);
+      alert(e?.response?.data?.message || "Failed to update role");
     }
-  };
+  }
 
-  const onResend = async (id) => {
-    const ok = await resendVerify(id);
-    alert(ok ? "Verification email sent." : "Failed to resend email");
-  };
+  async function onResendVerify(id) {
+    try {
+      await resendUserVerification(id);
+      alert("Verification email sent.");
+    } catch (e) {
+      console.error(e);
+      alert(e?.response?.data?.message || "Failed to resend verification");
+    }
+  }
 
-  const onDelete = async (id) => {
+  async function onDelete(id) {
     if (!confirm("Delete this user?")) return;
-    const ok = await deleteUser(id);
-    if (ok) {
+    try {
+      await deleteUserById(id);
       setData((d) => ({
         ...d,
         items: d.items.filter((u) => u.id !== id),
-        total: (d.total || 1) - 1,
+        total: Math.max(0, (d.total || 0) - 1),
       }));
-      if (detail?.id === id) setOpen(false);
-    } else {
-      alert("Failed to delete user");
+      setOpen(false);
+    } catch (e) {
+      console.error(e);
+      alert(e?.response?.data?.message || "Failed to delete user");
     }
-  };
-
-  const onView = async (id) => {
-    setSelectedId(id);
-    setOpen(true);
-    setLoadingDetail(true);
-    try {
-      const d = await getUserDetail(id);
-      setDetail(d);
-    } finally {
-      setLoadingDetail(false);
-    }
-  };
-
-  const RowActions = (u) => (
-    <div className="flex gap-2">
-      <button
-        className="h-9 px-3 rounded-md border hover:bg-[color:var(--muted)]/30"
-        onClick={() => onView(u.id)}
-      >
-        View
-      </button>
-      <button
-        className="h-9 px-3 rounded-md border hover:bg-[color:var(--muted)]/30"
-        onClick={() => onChangeRole(u.id, u.role)}
-      >
-        Toggle role
-      </button>
-      <button
-        className="h-9 px-3 rounded-md border hover:bg-[color:var(--muted)]/30"
-        onClick={() => onResend(u.id)}
-      >
-        Resend verify
-      </button>
-      <button
-        className="h-9 px-3 rounded-md border hover:bg-red-500/10"
-        onClick={() => onDelete(u.id)}
-      >
-        Delete
-      </button>
-    </div>
-  );
+  }
 
   return (
     <div className="space-y-4">
@@ -202,6 +136,10 @@ export default function AdminUsers() {
           placeholder="Search name/email"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setQuery("");
+            if (e.key === "Enter") setPage(1);
+          }}
         />
         <select
           className="h-10 px-3 rounded-md border"
@@ -244,6 +182,12 @@ export default function AdminUsers() {
                   Loading...
                 </td>
               </tr>
+            ) : errorMsg ? (
+              <tr>
+                <td colSpan={7} className="p-6 text-center text-red-600">
+                  {errorMsg}
+                </td>
+              </tr>
             ) : data.items.length === 0 ? (
               <tr>
                 <td colSpan={7} className="p-6 text-center">
@@ -262,10 +206,45 @@ export default function AdminUsers() {
                   <td className="py-2 px-3">{u.verified ? "Yes" : "No"}</td>
                   <td className="py-2 px-3">{u.orders}</td>
                   <td className="py-2 px-3">
-                    {new Date(u.createdAt).toLocaleDateString("th-TH")}
+                    {u.createdAt
+                      ? new Date(u.createdAt).toLocaleDateString("th-TH")
+                      : "-"}
                   </td>
                   <td className="py-2 px-3">
-                    <RowActions {...u} />
+                    <div className="flex gap-2">
+                      <button
+                        className="h-9 px-3 rounded-md border hover:bg-[color:var(--muted)]/30"
+                        onClick={() => onView(u.id)}
+                        title="View user details"
+                        aria-label="View user details"
+                      >
+                        View
+                      </button>
+                      <button
+                        className="h-9 px-3 rounded-md border hover:bg-[color:var(--muted)]/30"
+                        onClick={() => onToggleRole(u.id, u.role)}
+                        title="Toggle between Admin and User role"
+                        aria-label="Toggle role"
+                      >
+                        Toggle role
+                      </button>
+                      <button
+                        className="h-9 px-3 rounded-md border hover:bg-[color:var(--muted)]/30"
+                        onClick={() => onResendVerify(u.id)}
+                        title="Resend verification email to this user"
+                        aria-label="Resend verification"
+                      >
+                        Resend verify
+                      </button>
+                      <button
+                        className="h-9 px-3 rounded-md border hover:bg-red-500/10"
+                        onClick={() => onDelete(u.id)}
+                        title="Delete this user permanently"
+                        aria-label="Delete user"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -280,6 +259,8 @@ export default function AdminUsers() {
           className="h-9 px-3 rounded-md border"
           disabled={page <= 1}
           onClick={() => setPage((p) => p - 1)}
+          title="Go to previous page"
+          aria-label="Previous page"
         >
           Prev
         </button>
@@ -290,12 +271,14 @@ export default function AdminUsers() {
           className="h-9 px-3 rounded-md border"
           disabled={page >= totalPages}
           onClick={() => setPage((p) => p + 1)}
+          title="Go to next page"
+          aria-label="Next page"
         >
           Next
         </button>
       </div>
 
-      {/* Drawer: User detail */}
+      {/* Drawer */}
       <Drawer open={open} onClose={() => setOpen(false)} title="User details">
         {loadingDetail || !detail ? (
           <div className="animate-pulse space-y-3">
@@ -323,48 +306,55 @@ export default function AdminUsers() {
             </div>
             <div>
               <span className="font-medium">Created:</span>{" "}
-              {new Date(detail.createdAt).toLocaleString("th-TH")}
+              {detail.createdAt
+                ? new Date(detail.createdAt).toLocaleString("th-TH")
+                : "-"}
             </div>
             <div>
               <span className="font-medium">Last login:</span>{" "}
-              {new Date(detail.lastLogin).toLocaleString("th-TH")}
+              {detail.lastLogin
+                ? new Date(detail.lastLogin).toLocaleString("th-TH")
+                : "-"}
             </div>
-            <div>
-              <span className="font-medium">Addresses:</span>
-              <ul className="list-disc pl-5">
-                {(detail.addresses || []).map((a, i) => (
-                  <li key={i}>
-                    {a.label}: {a.detail}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {Array.isArray(detail.addresses) && detail.addresses.length > 0 && (
+              <div>
+                <span className="font-medium">Addresses:</span>
+                <ul className="list-disc pl-5">
+                  {detail.addresses.map((a, i) => (
+                    <li key={i}>
+                      {a.label}: {a.detail}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {detail.notes && (
               <div>
                 <span className="font-medium">Notes:</span> {detail.notes}
               </div>
             )}
-
             <div className="pt-3 flex gap-2">
               <button
                 className="h-9 px-3 rounded-md border"
-                onClick={() => onChangeRole(detail.id, detail.role)}
+                onClick={() => onToggleRole(detail.id, detail.role)}
+                title="Toggle between Admin and User role"
+                aria-label="Toggle role"
               >
                 Toggle role
               </button>
               <button
                 className="h-9 px-3 rounded-md border"
-                onClick={() =>
-                  resendVerify(detail.id).then((ok) =>
-                    alert(ok ? "Verification email sent." : "Failed")
-                  )
-                }
+                onClick={() => onResendVerify(detail.id)}
+                title="Resend verification email to this user"
+                aria-label="Resend verification"
               >
                 Resend verify
               </button>
               <button
                 className="h-9 px-3 rounded-md border hover:bg-red-500/10"
                 onClick={() => onDelete(detail.id)}
+                title="Delete this user permanently"
+                aria-label="Delete user"
               >
                 Delete
               </button>

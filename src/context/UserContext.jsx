@@ -9,7 +9,6 @@ import {
   useCallback,
 } from "react";
 
-// Services (ต้องมีไฟล์ src/services/userServices.js ตามที่จัดให้ก่อนหน้า)
 import {
   signin,
   getCurrentUser,
@@ -22,13 +21,15 @@ import {
   updateAvatar,
   removeAvatar,
   getMyOrders,
+  // --- sessions services ---
+  getMySessions,
+  revokeSession,
 } from "../services/userServices";
 
 const Ctx = createContext(null);
 
-// เก็บ preferences ฝั่ง FE (เพราะ BE ยังไม่มี schema/route นี้)
+// FE-only prefs
 const PREFS_KEY = "babychub:prefs";
-// โหมด demo เผื่อหน้าเก่าเรียก login แบบ mock (ไม่มี password)
 const DEMO_MODE =
   String(import.meta.env?.VITE_DEMO_MODE || "").toLowerCase() === "true";
 const DEMO_USER = {
@@ -66,44 +67,80 @@ export function useUser() {
 }
 
 export function UserProvider({ children }) {
-  // เราจะเก็บ user จาก BE + merge preferences ฝั่ง FE
   const [user, setUser] = useState(null);
   const [loadingMe, setLoadingMe] = useState(true);
+
+  // --- sessions state (shared) ---
+  const [sessions, setSessions] = useState([]);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
 
   const isAuthenticated = !!user?.id;
   const ordersCount = user?.orders?.length ?? 0;
 
-  // ---------- Boot: โหลด session จาก cookie ----------
+  // ---------- Boot: load me (and optionally orders) ----------
   useEffect(() => {
     (async () => {
       try {
-        const me = await getCurrentUser(); // GET /auth/me (อ่าน cookie)
-        // (option) preload orders จาก BE เพื่อลด N+1 ภายหลัง
+        const me = await getCurrentUser(); // cookie-based
+        // preload orders to avoid N+1 later
         let orders = [];
         try {
           const got = await getMyOrders();
           orders = Array.isArray(got) ? got : [];
         } catch {}
-        // merge preferences ฝั่ง FE
         const prefs = loadPrefs();
         setUser({ ...me, preferences: prefs, orders });
       } catch {
-        setUser(null); // ยังไม่ล็อกอิน
+        setUser(null);
       } finally {
         setLoadingMe(false);
       }
     })();
   }, []);
 
+  // ---------- Sessions ----------
+  const loadSessions = useCallback(async () => {
+    try {
+      const list = await getMySessions();
+      const arr = Array.isArray(list) ? list : [];
+      setSessions(arr);
+      // หา current session id (ถ้า BE ส่ง current: true มาด้วย)
+      const cur = arr.find((x) => x.current === true);
+      setCurrentSessionId(cur?._id || null);
+    } catch {
+      setSessions([]);
+      setCurrentSessionId(null);
+    }
+  }, []);
+
+  const revokeSessionById = useCallback(
+    async (id) => {
+      // เรียก API เพิกถอน
+      const info = await revokeSession(id); // แนะนำให้ BE คืน { revoked: true, current: boolean }
+      // รีเฟรชรายการเสมอ
+      await loadSessions();
+
+      // เกณฑ์ตัดสินใจ logout:
+      // 1) ถ้า BE บอกว่า current === true → logout
+      // 2) ถ้า BE ไม่บอก current: ใช้ตัวเทียบกับ currentSessionId เดิม
+      const revokedIsCurrent =
+        info?.current === true || (currentSessionId && id === currentSessionId);
+
+      if (revokedIsCurrent) {
+        await logout(); // clear FE + call /auth/logout
+      }
+      return true;
+    },
+    [loadSessions, currentSessionId]
+  );
+
   // ---------- AUTH ----------
   const login = useCallback(async (payload = {}) => {
-    // ถ้ามี password → เข้าสู่ระบบจริง
     if (payload?.password) {
       const { user: u } = await signin({
         email: payload.email,
         password: payload.password,
-      }); // POST /auth/login (cookie)
-      // เติม preferences ฝั่ง FE + preload orders
+      });
       const prefs = loadPrefs();
       let orders = [];
       try {
@@ -115,7 +152,6 @@ export function UserProvider({ children }) {
       return next;
     }
 
-    // ไม่มี password (เคส legacy/mock) → demo mode เท่านั้น
     if (DEMO_MODE) {
       const prefs = loadPrefs();
       const next = {
@@ -132,15 +168,16 @@ export function UserProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
-      await apiLogout(); // POST /auth/logout (ล้าง cookie)
+      await apiLogout(); // POST /auth/logout → clear cookies server-side
     } finally {
       setUser(null);
+      setSessions([]);
+      setCurrentSessionId(null);
     }
     return true;
   }, []);
 
-  // ---------- PROFILE (รวม router อัตโนมัติ) ----------
-  // ใช้ signature เดิม: updateProfile(partial)
+  // ---------- PROFILE ----------
   const updateProfile = useCallback(async (partial) => {
     if (!partial || typeof partial !== "object") return true;
 
@@ -175,21 +212,19 @@ export function UserProvider({ children }) {
       return true;
     }
 
-    // 5) Basic fields (firstName, lastName, mobile, targetAge)
+    // 5) Basic fields
     const updated = await updateProfileBasics(partial); // PATCH /users
     setUser((u) => ({ ...(u || {}), ...updated }));
     return true;
   }, []);
 
-  // ---------- Preferences (ฝั่ง FE เท่านั้น) ----------
-  // ใช้ signature เดิม: updatePreferences(partial)
+  // ---------- Preferences (FE-only) ----------
   const updatePreferencesFE = useCallback((partial) => {
     setUser((u) => {
       const next = {
         ...(u || {}),
         preferences: { ...(u?.preferences || {}), ...(partial || {}) },
       };
-      // persist ฝั่ง FE
       savePrefs(next.preferences);
       return next;
     });
@@ -204,7 +239,6 @@ export function UserProvider({ children }) {
   }, []);
 
   // ---------- Password ----------
-  // ใช้ signature เดิม: changePassword(current, next)
   const changePassword = useCallback(async (current, next) => {
     if (!current || !next) throw new Error("Missing current/new password.");
     if (next.length < 8)
@@ -215,14 +249,15 @@ export function UserProvider({ children }) {
 
   // ---------- Delete account ----------
   const deleteAccount = useCallback(async () => {
-    // ตรงกับ DELETE /users ใน backend
     const { default: api } = await import("../services/api");
     await api.delete("/users");
     setUser(null);
+    setSessions([]);
+    setCurrentSessionId(null);
     return true;
   }, []);
 
-  // ---------- Orders helpers (คงสัญญาเดิม) ----------
+  // ---------- Orders helpers ----------
   const addOrder = useCallback((order) => {
     setUser((prev) => {
       if (!prev) return prev;
@@ -266,9 +301,15 @@ export function UserProvider({ children }) {
       changePassword,
       deleteAccount,
 
-      // orders (used by Library UI)
+      // orders
       addOrder,
       updateOrderItem,
+
+      // sessions (shared)
+      sessions,
+      loadSessions,
+      revokeSession: revokeSessionById,
+      currentSessionId,
     }),
     [
       user,
@@ -284,6 +325,10 @@ export function UserProvider({ children }) {
       deleteAccount,
       addOrder,
       updateOrderItem,
+      sessions,
+      loadSessions,
+      revokeSessionById,
+      currentSessionId,
     ]
   );
 

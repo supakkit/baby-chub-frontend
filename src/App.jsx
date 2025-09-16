@@ -6,11 +6,11 @@ import { Cart } from "./views/Cart";
 import { Checkout } from "./views/Checkout";
 import { Products } from "./views/Products";
 import { ProductDetail } from "./views/ProductDetail";
-import { Dashboard } from "./views/Dashboard";
 import { SignIn } from "./views/SignIn";
 import { SignUp } from "./views/SignUp";
 import { ForgotPassword } from "./views/ForgotPassword";
 import { PendingPayment } from "./views/PendingPayment";
+import { OrderConfirmation } from "./views/OrderConfirmation";
 import { Help } from "./views/Help";
 import { UserProfile } from "./views/UserProfile";
 import { ProtectedRoute } from "./views/ProtectedRoute";
@@ -58,10 +58,6 @@ const router = createBrowserRouter([
         element: <Checkout />,
       },
       {
-        path: "dashboard",
-        element: <Dashboard />,
-      },
-      {
         path: "signin",
         element: <SignIn />,
       },
@@ -76,6 +72,10 @@ const router = createBrowserRouter([
       {
         path: "pending-payment",
         element: <PendingPayment />,
+      },
+      {
+        path: "order-confirmation",
+        element: <OrderConfirmation />,
       },
       {
         path: "help",
@@ -127,7 +127,7 @@ const router = createBrowserRouter([
           { path: "dashboard", element: <AdminDashboard /> },
           { path: "users", element: <AdminUsers /> },
           { path: "orders", element: <AdminOrders /> },
-          { path: "products", element: <AdminProduct />}
+          { path: "products", element: <AdminProduct /> },
         ],
       },
       {

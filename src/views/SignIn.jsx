@@ -1,7 +1,4 @@
 // src/views/SignIn.jsx
-// ✅ Login จริงผ่าน UserContext (เรียก /auth/login + cookie)
-// ✅ แสดงข้อความ error แบบ generic มาตรฐาน: "Email or password is incorrect."
-// ✅ จัดการกรณี 403 (not verified), 429/423 (rate limited/locked), 5xx, network
 
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
