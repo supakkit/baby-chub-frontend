@@ -158,24 +158,32 @@ export default function AdminOrders() {
       <button
         className="h-9 px-3 rounded-md border hover:bg-[color:var(--muted)]/30"
         onClick={() => onView(o.id)}
+        title="View order details"
+        aria-label="View order details"
       >
         View
       </button>
       <button
         className="h-9 px-3 rounded-md border hover:bg-[color:var(--muted)]/30"
         onClick={() => onChangeStatus(o.id, "paid")}
+        title="Mark this order as paid"
+        aria-label="Mark paid"
       >
         Mark paid
       </button>
       <button
         className="h-9 px-3 rounded-md border hover:bg-[color:var(--muted)]/30"
         onClick={() => onChangeStatus(o.id, "cancelled")}
+        title="Cancel this order"
+        aria-label="Cancel order"
       >
         Cancel
       </button>
       <button
         className="h-9 px-3 rounded-md border hover:bg-red-500/10"
         onClick={() => onDelete(o.id)}
+        title="Delete this order permanently"
+        aria-label="Delete order"
       >
         Delete
       </button>
@@ -276,6 +284,8 @@ export default function AdminOrders() {
           className="h-9 px-3 rounded-md border"
           disabled={page <= 1}
           onClick={() => setPage((p) => p - 1)}
+          title="Go to previous page"
+          aria-label="Previous page"
         >
           Prev
         </button>
@@ -286,6 +296,8 @@ export default function AdminOrders() {
           className="h-9 px-3 rounded-md border"
           disabled={page >= totalPages}
           onClick={() => setPage((p) => p + 1)}
+          title="Go to next page"
+          aria-label="Next page"
         >
           Next
         </button>
@@ -363,18 +375,24 @@ export default function AdminOrders() {
               <button
                 className="h-9 px-3 rounded-md border"
                 onClick={() => onChangeStatus(detail.id, "paid")}
+                title="Mark this order as paid"
+                aria-label="Mark paid"
               >
                 Mark paid
               </button>
               <button
                 className="h-9 px-3 rounded-md border"
                 onClick={() => onChangeStatus(detail.id, "cancelled")}
+                title="Cancel this order"
+                aria-label="Cancel order"
               >
                 Cancel
               </button>
               <button
                 className="h-9 px-3 rounded-md border hover:bg-red-500/10"
                 onClick={() => onDelete(detail.id)}
+                title="Delete this order permanently"
+                aria-label="Delete order"
               >
                 Delete
               </button>
