@@ -1,11 +1,85 @@
 // src/components/ReviewsSection.jsx
-import React, { useRef, useEffect, useMemo, useState } from "react";
+import React, { useRef, useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL; // e.g. http://localhost:3000/api/v1
+/* ===== Mock reviews for website (not product-specific) ===== */
+const mockReviews = [
+  {
+    id: 1,
+    name: "Neetibut V.",
+    childAge: "4y",
+    rating: 5,
+    title: "Happy Coding",
+    body:
+      "My daughter loves the tracing pack. We use it ~10 minutes before bed—calm, focused, and screen-smart.",
+    avatar: "/images/user-neeti.jpg",
+    verified: true,
+    createdAt: "2025-02-01",
+  },
+  {
+    id: 2,
+    name: "Mean K.",
+    childAge: "6y",
+    rating: 5,
+    title: "Instant download, zero friction",
+    body:
+      "Bought during a busy week—paid and downloaded in under a minute. Works great on tablet.",
+    avatar: "/images/user-3.jpg",
+    verified: true,
+    createdAt: "2025-01-26",
+  },
+  {
+    id: 3,
+    name: "Kantapon K.",
+    childAge: "9y",
+    rating: 4,
+    title: "Fun + educational",
+    body:
+      "The emotion cards sparked real conversations. Would love more Thai/English bilingual sets!",
+    avatar: "/images/user-kan.jpg",
+    verified: true,
+    createdAt: "2025-01-20",
+  },
+  {
+    id: 4,
+    name: "Ryu P.",
+    childAge: "3y",
+    rating: 5,
+    title: "Great for travel",
+    body:
+      "Printed a mini pack for the flight. Kept our toddler engaged—lifesaver.",
+    avatar: "/images/user-4.jpg",
+    verified: true,
+    createdAt: "2025-01-18",
+  },
+  {
+    id: 5,
+    name: "Fluke S.",
+    childAge: "12y",
+    rating: 5,
+    title: "Worth every baht",
+    body:
+      "Clear instructions and age-appropriate difficulty. We’ll be back for the bundle.",
+    avatar: "/images/user-5.jpg",
+    verified: true,
+    createdAt: "2025-01-10",
+  },
+  {
+    id: 6,
+    name: "Poompui S.",
+    childAge: "6y",
+    rating: 5,
+    title: "Teacher-approved at home",
+    body:
+      "I teach primary school—this aligns well with milestones. Simple to set up, quick wins.",
+    avatar: "/images/user-6.jpg",
+    verified: true,
+    createdAt: "2025-01-05",
+  },
+];
 
 function Stars({ rating = 5, size = "sm" }) {
   const sizeClass = size === "lg" ? "text-xl" : size === "md" ? "text-base" : "text-sm";
@@ -20,60 +94,9 @@ function Stars({ rating = 5, size = "sm" }) {
 
 export default function ReviewsSection({
   title = "What parents are saying",
-  productId,                 // ✅ ต้องส่ง productId มาเพื่อดึงรีวิวของสินค้านั้น
-  page = 1,
-  limit = 12,
+  reviews = mockReviews, // ⬅️ ใช้ mock เป็นค่าเริ่มต้น
 }) {
   const trackRef = useRef(null);
-  const [loading, setLoading] = useState(true);
-  const [reviews, setReviews] = useState([]); // แทน mock
-  const [error, setError] = useState(null);
-
-  // ดึงข้อมูลรีวิวจากแบ็กเอนด์
-  useEffect(() => {
-    let ignore = false;
-    async function fetchReviews() {
-      if (!productId) {
-        setLoading(false);
-        setReviews([]);
-        return;
-      }
-      try {
-        setLoading(true);
-        setError(null);
-        const url = new URL(`${API_URL}/products/${productId}/reviews`);
-        // ถ้าหลังบ้านรองรับการแบ่งหน้าในอนาคต:
-        // url.searchParams.set("page", String(page));
-        // url.searchParams.set("limit", String(limit));
-
-        const res = await fetch(url.toString(), { credentials: "include" });
-        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data?.reviews) ? data.reviews : [];
-
-        // แปลงให้เข้ากับ UI เดิม (มี fallback กันข้อมูลไม่ครบ)
-        const mapped = list.map((r, idx) => ({
-          id: r._id || idx,
-          name: r.user?.name || "Anonymous",
-          childAge: r.user?.childAge ? `${r.user.childAge}y` : "", // ไม่มีใน schema ตอนนี้
-          rating: Number(r.rating) || 5,
-          title: r.comment?.length > 48 ? r.comment.slice(0, 48) + "…" : (r.comment || "Review"),
-          body: r.comment || "",
-          avatar: r.user?.avatar || "/images/reviews/user-placeholder.jpg",
-          verified: true, // ถ้ายังไม่มีฟิลด์จากหลังบ้าน ให้ถือว่า verified ไว้ก่อน
-          createdAt: r.createdAt,
-        }));
-
-        if (!ignore) setReviews(mapped);
-      } catch (err) {
-        if (!ignore) setError(err?.message || "Unknown error");
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    }
-    fetchReviews();
-    return () => { ignore = true; };
-  }, [productId, page, limit]);
 
   const avg = useMemo(() => {
     if (!reviews.length) return 0;
@@ -103,11 +126,11 @@ export default function ReviewsSection({
         </div>
         <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-foreground">{title}</h2>
         <p className="mt-1 text-sm md:text-base text-muted-foreground">
-          Real feedback from busy parents, quick wins, screen-smart activities.
+          Real feedback from busy parents—quick wins, screen-smart activities.
         </p>
       </div>
 
-      {/* ปุ่มควบคุมมุมขวาบน */}
+      {/* Controls ขวาบน */}
       <div className="absolute top-8 right-4 flex gap-2">
         <Button
           variant="outline"
@@ -115,7 +138,7 @@ export default function ReviewsSection({
           aria-label="Previous reviews"
           className="rounded-full h-12 w-12"
           onClick={() => scrollByCard(-1)}
-          disabled={loading || !reviews.length}
+          disabled={!reviews.length}
         >
           <ChevronLeft className="h-6 w-6" />
         </Button>
@@ -125,7 +148,7 @@ export default function ReviewsSection({
           aria-label="Next reviews"
           className="rounded-full h-12 w-12"
           onClick={() => scrollByCard(1)}
-          disabled={loading || !reviews.length}
+          disabled={!reviews.length}
         >
           <ChevronRight className="h-6 w-6" />
         </Button>
@@ -137,79 +160,56 @@ export default function ReviewsSection({
         className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2
         [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {loading ? (
-          // skeleton ง่าย ๆ
-          Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="snap-start flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px]
-              border-0 rounded-none shadow-[0_8px_24px_rgba(0,0,0,0.08)] animate-pulse h-48 bg-muted"
-            />
-          ))
-        ) : error ? (
-          <div className="text-sm text-red-600">{error}</div>
-        ) : !reviews.length ? (
-          <div className="text-sm text-muted-foreground">No reviews yet.</div>
-        ) : (
-          reviews.map((r) => (
-            <Card
-              key={r.id}
-              data-review-card
-              className="
-                snap-start flex-shrink-0
-                w-[280px] sm:w-[320px] md:w-[360px]
-                border-0 rounded-none
-                shadow-[0_8px_24px_rgba(0,0,0,0.08)]
-                hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]
-                transition-shadow
-              "
-            >
-              <CardHeader className="flex flex-row items-center gap-3">
-                <div className="h-10 w-10 rounded-full overflow-hidden bg-muted border">
-                  <img
-                    src={r.avatar}
-                    alt={`${r.name} avatar`}
-                    className="h-full w-full object-cover"
-                  />
+        {reviews.map((r) => (
+          <Card
+            key={r.id}
+            data-review-card
+            className="
+              snap-start flex-shrink-0
+              w-[280px] sm:w-[320px] md:w-[360px]
+              border-0 rounded-none
+              shadow-[0_8px_24px_rgba(0,0,0,0.08)]
+              hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]
+              transition-shadow
+            "
+          >
+            <CardHeader className="flex flex-row items-center gap-3">
+              <div className="h-10 w-10 rounded-full overflow-hidden bg-muted border">
+                <img src={r.avatar} alt={`${r.name} avatar`} className="h-full w-full object-cover" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
+                  {r.verified && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary/30 text-foreground/80">
+                      Verified
+                    </span>
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-foreground truncate">{r.name}</p>
-                    {r.verified && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary/30 text-foreground/80">
-                        Verified
-                      </span>
-                    )}
-                  </div>
-                  {r.childAge ? (
-                    <p className="text-xs text-muted-foreground">Child: {r.childAge}</p>
-                  ) : null}
-                </div>
-              </CardHeader>
+                {r.childAge ? (
+                  <p className="text-xs text-muted-foreground">Child: {r.childAge}</p>
+                ) : null}
+              </div>
+            </CardHeader>
 
-              <CardContent className="pt-0">
-                <Stars rating={r.rating} />
-                <h3 className="mt-2 text-sm font-semibold text-foreground">{r.title}</h3>
-                <p className="mt-1 text-sm text-foreground/90">{r.body}</p>
-              </CardContent>
+            <CardContent className="pt-0">
+              <Stars rating={r.rating} />
+              <h3 className="mt-2 text-sm font-semibold text-foreground">{r.title}</h3>
+              <p className="mt-1 text-sm text-foreground/90">{r.body}</p>
+            </CardContent>
 
-              <CardFooter className="pt-0">
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {r.createdAt
-                    ? new Date(r.createdAt).toLocaleDateString()
-                    : new Date().toLocaleDateString()}{" "}
-                  • Purchased: Digital pack
-                </div>
-              </CardFooter>
-            </Card>
-          ))
-        )}
+            <CardFooter className="pt-0">
+              <div className="mt-2 text-xs text-muted-foreground">
+                {r.createdAt
+                  ? new Date(r.createdAt).toLocaleDateString()
+                  : new Date().toLocaleDateString()}{" "}
+                • Purchased: Digital pack
+              </div>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
 
-      {/* CTA */}
-      <div className="mt-8 flex flex-wrap items-center gap-3">
-        <Button className="rounded-full px-6 py-5">See all reviews</Button>
-      </div>
     </section>
   );
 }
