@@ -29,7 +29,7 @@ export function OrderConfirmation() {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setIsDownloaded(true); // ✅ เมื่อครบ 100% ให้เปลี่ยนข้อความ
+          setIsDownloaded(true);
           return 100;
         }
         return prev + 10;
@@ -43,33 +43,33 @@ export function OrderConfirmation() {
   }, []);
 
   return (
-    <div className="bg-background min-h-screen w-full py-12 px-6 flex flex-col items-center">
+    <div className="bg-background mx-auto min-h-screen max-w-10/12 py-10 px-6 flex flex-col items-center">
       {/* Success Banner */}
-      <div className="w-full flex justify-between items-center max-w-5xl mb-8">
-        <Button
-          variant="outline"
-          className="flex items-center gap-2"
-          onClick={() => navigate("/shop")}
-        >
-          ← Back to shop
-        </Button>
-        <h1 className="text-3xl font-bold text-primary">Payment Successful!</h1>
-        <h2 className="text-xl font-semibold text-primary">Your Order</h2>
+      <div className="w-full flex flex-col items-center mb-10">
+        <h1 className="text-4xl font-bold text-primary mb-6 text-center">
+          Payment Successful!
+        </h1>
+
+        {/* Grid: Thank you / Your Order */}
+        <div className="grid grid-cols-2 gap-2 max-w-5xl w-full">
+          <h2 className="text-2xl font-semibold text-primary text-left">
+            Thank you for your purchase
+          </h2>
+          <h2 className="text-2xl font-semibold text-primary text-right">
+            Your Order
+          </h2>
+        </div>
       </div>
 
       <div className="flex gap-12 max-w-6xl w-full">
         {/* Left Side */}
         <div className="flex-1">
-          <h2 className="text-2xl font-bold text-primary mb-6">
-            Thank you for your purchase
-          </h2>
-
           {/* Download illustration + Progress bar */}
           <Card className="w-full h-[300px] mb-8 flex flex-col items-center justify-center">
             <CardContent className="flex flex-col items-center justify-center h-full gap-6">
               <AnimatedCircularProgressBar
                 value={progress}
-                gaugePrimaryColor="rgb(79 70 229)"
+                gaugePrimaryColor="#543285"
                 gaugeSecondaryColor="rgba(0, 0, 0, 0.1)"
               />
             </CardContent>
