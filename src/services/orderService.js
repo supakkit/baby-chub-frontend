@@ -2,17 +2,6 @@ import api from "./api";
 import { toast } from 'sonner';
 
 
-export const getUserOrder = async () => {
-    // try {
-    //     const response = await api.get("/order");
-    //     const data = response.data;
-        
-
-    // } catch (error) {
-    //     console.error(error);
-    // }
-};
-
 export const createOrder = async (products = [], promoCode = "", paymentMethod) => {
     try {
         // console.log('products:', products)
@@ -33,5 +22,42 @@ export const updateOrder = async (orderId, status) => {
     } catch (error) {
         console.error(error);
         toast.error(error.message);
+    }
+};
+
+export const getOrders = async (params) => {
+    try {
+        const response = await api.get("/admin/orders", { params });
+        return response.data;
+        
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const getOrderById = async (orderId) => {
+    try {
+        const response = await api.get(`/order/${orderId}`);
+        return response.data;
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const patchOrderStatus = async (orderId, status) => {
+    try {
+        const response = await api.patch(`/admin/order/${orderId}`, { status });
+        return response.status === 200;
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+export const deleteOrder = async (orderId) => {
+    try {
+        const response = await api.delete(`/admin/order/${orderId}`);
+        return response.status === 200;
+    } catch (error) {
+        console.error(error);
     }
 };

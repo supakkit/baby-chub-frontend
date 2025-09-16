@@ -17,7 +17,7 @@ export function Layout() {
         <Footer />
       </footer>
       <CookieBanner />
-      <Toaster richColors position="bottom-right" />
+      <Toaster richColors position="Top-Center" />
     </>
   );
 }
