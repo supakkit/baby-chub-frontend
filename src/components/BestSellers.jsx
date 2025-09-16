@@ -1,56 +1,110 @@
 // src/components/BestSellers.jsx
 import React, { useMemo, useEffect, useState } from "react";
 import axios from "axios";
-import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL; // e.g. http://localhost:3000/api/v1
 
-// สร้าง axios instance เผื่อใช้ซ้ำ
+// ✅ ใส่ productId ที่ต้องการ “ล็อกให้แสดง” เสมอ (เรียงตามที่อยากให้โชว์)
+const FIXED_PRODUCT_IDS = [
+  "68c992ed93f2e43ba8ef5c99", // No.1
+  "68c983a81e8691e8c31f7fb1", // No.2
+  "68c9943d93f2e43ba8ef5cb0", // No.3
+];
+
+// axios instance
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // ถ้า backend มี cookie/session
+  withCredentials: true,
 });
 
 export default function BestSellers() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
 
-  // fallback mock เผื่อ backend ล่ม
+  // fallback mock เผื่อกรณีหา product id ไม่ครบจริง ๆ
   const mock = [
     { id: "m1", title: "3 Levels Tracing Pack", desc: "Fine-motor tracing set for calm, focused practice every day. Includes progressive difficulty and printable sheets.", image: "/images/3Levels.png" },
     { id: "m2", title: "Forest Coding Adventure", desc: "Beginner-friendly coding fundamentals with playful quests. Perfect on tablet—unplugged & screen-smart.", image: "/images/programming-course-forest-adventure.png" },
     { id: "m3", title: "Money Math Cards", desc: "Practical money skills: counting, change, and everyday problem-solving with Thai context.", image: "/images/money2.jpg" },
-    { id: "m4", title: "Daily Pack Age 6", desc: "Handpicked daily activities that build core skills in minutes—fun and structured.", image: "/images/Daily6yr2.png" },
-    { id: "m5", title: "Learning Time Kit", desc: "Screen-smart learning routines your kid will love. Quick wins, clear progress.", image: "/images/LearningTime.png" },
   ];
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await api.get("/products", { params: { limit: 20 } });
+        // 1) ลองดึงล็อตใหญ่ก่อนแล้วกรองเอาเฉพาะ 3 id นี้
+        const { data } = await api.get("/products", { params: { limit: 100 } });
         const list = Array.isArray(data?.products) ? data.products : [];
-        const normalized = list.map((p) => ({
-          id: p._id || p.id,
-          title: p.name || p.title || "Untitled",
-          desc: p.description || "",
-          image:
-            (Array.isArray(p.images) && p.images[0]) ||
-            p.image ||
-            p.thumbnail ||
-            "/images/placeholder.png",
-        }));
 
-        // สุ่มเลือก 3 ชิ้น
-        const shuffled = [...normalized].sort(() => Math.random() - 0.5);
-        const picked = shuffled.slice(0, 3);
+        const mapById = new Map(
+          list.map((p) => [
+            String(p._id || p.id),
+            {
+              id: p._id || p.id,
+              title: p.name || p.title || "Untitled",
+              desc: p.description || "",
+              image:
+                (Array.isArray(p.images) && p.images[0]) ||
+                p.image ||
+                p.thumbnail ||
+                "/images/placeholder.png",
+            },
+          ])
+        );
+
+        let ordered = FIXED_PRODUCT_IDS.map((id) => mapById.get(String(id))).filter(Boolean);
+
+        // 2) ถ้ายังหาไม่ครบ 3 ตัว ลองยิงทีละ id
+        if (ordered.length < FIXED_PRODUCT_IDS.length) {
+          const missingIds = FIXED_PRODUCT_IDS.filter(
+            (id) => !ordered.find((it) => String(it?.id) === String(id))
+          );
+
+          const fetchedMissing = await Promise.all(
+            missingIds.map(async (id) => {
+              try {
+                const res = await api.get(`/products/${id}`);
+                const p = res?.data?.product || res?.data; // เผื่อ format ไม่เหมือนกัน
+                if (!p) return null;
+                return {
+                  id: p._id || p.id,
+                  title: p.name || p.title || "Untitled",
+                  desc: p.description || "",
+                  image:
+                    (Array.isArray(p.images) && p.images[0]) ||
+                    p.image ||
+                    p.thumbnail ||
+                    "/images/placeholder.png",
+                };
+              } catch {
+                return null;
+              }
+            })
+          );
+
+          // รวมและเรียงตาม FIXED_PRODUCT_IDS
+          const merged = new Map(ordered.map((it) => [String(it.id), it]));
+          fetchedMissing
+            .filter(Boolean)
+            .forEach((it) => merged.set(String(it.id), it));
+
+          ordered = FIXED_PRODUCT_IDS.map((id) => merged.get(String(id))).filter(Boolean);
+        }
 
         if (!cancelled) {
-          setItems(picked.length ? picked : mock.slice(0, 3));
+          // ถ้ายังไม่ครบ 3 ตัวจริง ๆ ให้ใช้ mock เติมให้ครบ
+          const finalItems =
+            ordered.length === FIXED_PRODUCT_IDS.length
+              ? ordered
+              : [...ordered, ...mock].slice(0, 3);
+          setItems(finalItems);
         }
       } catch (e) {
-        setError(e?.response?.data?.message || e?.message || "Failed to load");
-        if (!cancelled) setItems(mock.slice(0, 3)); // ใช้ mock แทน
+        if (!cancelled) {
+          setError(e?.response?.data?.message || e?.message || "Failed to load");
+          setItems(mock.slice(0, 3));
+        }
       }
     })();
     return () => {
@@ -59,7 +113,7 @@ export default function BestSellers() {
   }, []);
 
   const [first, second, third] = useMemo(() => {
-    if (items.length < 3) return [items[0], items[1], items[2]];
+    // ต้องการลำดับ 1–2–3; โพเดียมจะแสดงเป็น 2–1–3
     return [items[0], items[1], items[2]];
   }, [items]);
 
@@ -101,7 +155,7 @@ export default function BestSellers() {
               rank={1}
               size="lg"
               className="z-10 -translate-y-2 md:-translate-y-4"
-              badgeBg="bg-accent"
+              badgeBg="bg-muted"
               highlight
             />
           )}
@@ -113,7 +167,7 @@ export default function BestSellers() {
               rank={3}
               size="sm"
               className="translate-y-4 md:translate-y-6 rotate-[0.5deg]"
-              badgeBg="bg-muted"
+              badgeBg="bg-accent"
             />
           )}
         </div>
@@ -167,41 +221,44 @@ function PodiumCard({
         </div>
       </div>
 
-      {/* รูปสี่เหลี่ยมจัตุรัส + เงา */}
-      <figure
-        className={[
-          "relative overflow-hidden aspect-square",
-          "shadow-[0_10px_25px_rgba(0,0,0,0.12)] hover:shadow-[0_18px_40px_rgba(0,0,0,0.16)]",
-          "transition-transform duration-300 will-change-transform hover:-translate-y-1",
-          "rounded-none bg-transparent",
-          highlight ? "ring-1 ring-primary/30" : "",
-        ].join(" ")}
-      >
-        <img
-          src={item.image}
-          alt={item.title}
-          className="w-full h-full object-cover select-none pointer-events-none"
-          draggable={false}
-        />
-      </figure>
+      {/* ลิงก์ไปหน้า product detail */}
+      <Link to={`/products/${item.id}`} className="block group">
+        {/* รูปสี่เหลี่ยมจัตุรัส + เงา */}
+        <figure
+          className={[
+            "relative overflow-hidden aspect-square",
+            "shadow-[0_10px_25px_rgba(0,0,0,0.12)] group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.16)]",
+            "transition-transform duration-300 will-change-transform group-hover:-translate-y-1",
+            "rounded-none bg-transparent",
+            highlight ? "ring-1 ring-primary/30" : "",
+          ].join(" ")}
+        >
+          <img
+            src={item.image}
+            alt={item.title}
+            className="w-full h-full object-cover select-none pointer-events-none"
+            draggable={false}
+          />
+        </figure>
 
-      {/* ชื่อ + รายละเอียด (ยาวขึ้นได้) */}
-      <div className="mt-3 text-center">
-        <div className="inline-flex px-3 py-1 rounded-full text-xs md:text-sm font-medium text-card-foreground bg-white/80 backdrop-blur border border-border/20 shadow-sm">
-          {item.title}
-        </div>
-        {item.desc ? (
-          <div className="mt-2 text-sm text-foreground/80 line-clamp-3 px-2">
-            {item.desc}
+        {/* ชื่อ + รายละเอียด */}
+        <div className="mt-3 text-center">
+          <div className="inline-flex px-3 py-1 rounded-full text-xs md:text-sm font-medium text-card-foreground bg-white/80 backdrop-blur border border-border/20 shadow-sm">
+            {item.title}
           </div>
-        ) : null}
-      </div>
+          {item.desc ? (
+            <div className="mt-2 text-sm text-foreground/80 line-clamp-2 px-2">
+              {item.desc}
+            </div>
+          ) : null}
+        </div>
+      </Link>
 
       {/* ฐานโพเดียม */}
       <div
         className={[
           "mx-auto mt-2 h-2 rounded-full",
-          isGold ? "w-3/4 bg-primary/40" : isSilver ? "w-2/3 bg-secondary/30" : "w-2/3 bg-muted/50",
+          isGold ? "w-3/4 bg-primary/40" : isSilver ? "w-2/3 bg-muted/50" : "w-2/3 bg-muted/50",
         ].join(" ")}
       />
     </div>
