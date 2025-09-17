@@ -3,10 +3,11 @@ import Nav from "../components/Nav";
 import CookieBanner from "../components/CookieBanner";
 import Footer from "../components/Footer";
 import { Toaster } from "@/components/ui/sonner";
+import ScrollToTop from "../components/ScrollToTop";
 
 export function Layout() {
   return (
-    <>
+    <ScrollToTop>
       <header>
         <Nav />
       </header>
@@ -18,6 +19,6 @@ export function Layout() {
       </footer>
       <CookieBanner />
       <Toaster richColors position="top-center" />
-    </>
+    </ScrollToTop>
   );
 }
