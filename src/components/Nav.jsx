@@ -204,7 +204,7 @@ export default function Nav() {
                       alt={user?.name || "User"}
                     />
                     <AvatarFallback>
-                      {user?.name?.[0]?.toUpperCase() || "?"}
+                      {user?.firstName?.[0].toUpperCase() || ""}
                     </AvatarFallback>
                   </Avatar>
                 </Link>

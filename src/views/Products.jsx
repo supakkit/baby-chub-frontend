@@ -74,6 +74,7 @@ export function Products() {
     const ageParam = searchParams.get('age');
     const typeParam = searchParams.get('type');
     const subjectParam = searchParams.get('subject');
+    const queryParam = searchParams.get('q');
     
     let initialFilters = { ...defaultFilters };
 
@@ -87,6 +88,10 @@ export function Products() {
 
     if (subjectParam) {
         initialFilters.subject = JSON.parse(subjectParam);
+    }
+
+    if (queryParam) {
+        initialFilters.q = JSON.parse(queryParam);
     }
     
     // Set the state and fetch products based on the URL params
