@@ -24,6 +24,7 @@ import { SignIn } from "@/views/SignIn";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { motion } from "framer-motion";
 import { NavigateToProducts } from "./NavigateToProducts";
+import { HashLink } from 'react-router-hash-link';
 
 export default function Nav() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -62,7 +63,7 @@ export default function Nav() {
         { label: "By Ages 9 - 12", path: "/all/ages-9-12", id: "9-12", min: 9, max: 12 },
       ],
     },
-    { label: "New Arrival", path: "/new" },
+    { label: "New Arrival", path: "/#new-arrivals" },
     { label: "About Us", path: "/about" },
   ];
 
@@ -102,7 +103,7 @@ export default function Nav() {
         <nav className="flex justify-center gap-12 relative">
           {NAV_ITEMS.map((item) => (
             <div key={item.path} className="group relative">
-              <Link to={item.path}>
+              <HashLink smooth to={item.path}>
                 <motion.span
                   whileHover={{ scale: 1.1, color: "#7d52ba" }}
                   whileTap={{ scale: 0.95 }}
@@ -116,7 +117,7 @@ export default function Nav() {
                 >
                   {item.label}
                 </motion.span>
-              </Link>
+              </HashLink>
 
               {item.dropdown && (
                 <div className="absolute left-2 mt-2 w-40 bg-white shadow-lg rounded-md opacity-0 group-hover:opacity-100 transition-all pointer-events-auto group-hover:pointer-events-auto z-50">

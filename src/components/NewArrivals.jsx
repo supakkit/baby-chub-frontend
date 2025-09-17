@@ -150,7 +150,7 @@ export default function NewArrivals({
   if (!featuredProducts.length) return null;
 
   return (
-    <section className="relative mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-10 newarrivals-no-fav">
+    <section id="new-arrivals" className="relative mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-10 newarrivals-no-fav">
       {/* ซ่อนไอคอนหัวใจจาก ProductCard เฉพาะใน section นี้ */}
       <style>{`
         .newarrivals-no-fav button.absolute.top-3.right-3.bg-white.p-2.rounded-full.shadow {
