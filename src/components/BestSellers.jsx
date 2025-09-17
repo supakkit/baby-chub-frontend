@@ -3,7 +3,9 @@ import React, { useMemo, useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL; // e.g. http://localhost:3000/api/v1
+const API_URL = import.meta.env.DEV
+  ? import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
+  : import.meta.env.VITE_PUBLIC_API_URL;
 
 // ✅ ใส่ productId ที่ต้องการ “ล็อกให้แสดง” เสมอ (เรียงตามที่อยากให้โชว์)
 const FIXED_PRODUCT_IDS = [

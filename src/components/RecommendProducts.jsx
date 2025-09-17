@@ -6,7 +6,9 @@ import { ProductContext } from "../context/ProductContext";
 import { ProductCard } from "./ProductCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL; // e.g. http://localhost:3000/api/v1
+const API_URL = import.meta.env.DEV
+  ? import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
+  : import.meta.env.VITE_PUBLIC_API_URL;
 const GAP_PX_DEFAULT = 16;
 
 // ── axios instance ─────────────────────────────────────────────
