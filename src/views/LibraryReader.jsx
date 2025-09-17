@@ -3,7 +3,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL; // e.g. http://localhost:3000/api/v1
+const API_URL = import.meta.env.DEV
+  ? import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
+  : import.meta.env.VITE_PUBLIC_API_URL;
 
 export default function LibraryReader() {
   const { productId } = useParams();
