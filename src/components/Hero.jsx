@@ -93,7 +93,7 @@ export default function Hero() {
                 text-base px-6 py-4 rounded-full
                 hover:bg-primary/90 transition-transform hover:scale-[1.02] shadow-md"
                 asChild>
-                  <Link to="/this-page-does-not-exist">Explore Products</Link>
+                  <Link to="/library/reader">Explore Products</Link>
                   </Button>
                 <Button
                   size="lg"

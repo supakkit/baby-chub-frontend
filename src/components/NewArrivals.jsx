@@ -1,12 +1,19 @@
 // src/components/NewArrivals.jsx
 import React, { useRef, useContext, useMemo, useEffect, useState } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { ProductContext } from "../context/ProductContext";
 import { ProductCard } from "./ProductCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL; // e.g. http://localhost:3000/api/v1
 const GAP_PX_DEFAULT = 16;
+
+// ── axios instance ─────────────────────────────────────────────
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true, // ถ้า backend ใช้ cookie/เซสชัน
+});
 
 export default function NewArrivals({
   title = "Fresh Finds for Little Minds",
@@ -25,8 +32,10 @@ export default function NewArrivals({
   const [apiProducts, setApiProducts] = useState([]);
   const [apiError, setApiError] = useState(null);
 
+  // fetch โดย axios (ใช้ก็ต่อเมื่อ context ไม่มีของ)
   useEffect(() => {
     let ignore = false;
+
     async function fetchFromApi() {
       if (ctxProducts.length > 0) return;
       if (!API_URL) {
@@ -36,35 +45,47 @@ export default function NewArrivals({
       try {
         setApiLoading(true);
         setApiError(null);
-        const url = new URL(`${API_URL}/products/new`);
-        url.searchParams.set("limit", String(limit));
-        const res = await fetch(url.toString(), { credentials: "include" });
-        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-        const data = await res.json();
+
+        const { data } = await api.get("/new-products", {
+          params: { limit: String(limit) },
+        });
+
         const list = Array.isArray(data?.products) ? data.products : [];
         if (!ignore) setApiProducts(list);
       } catch (err) {
-        if (!ignore) setApiError(err?.message || "Fetch error");
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Fetch error (axios)";
+        if (!ignore) setApiError(msg);
       } finally {
         if (!ignore) setApiLoading(false);
       }
     }
+
     fetchFromApi();
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, [ctxProducts.length, limit]);
 
+  // เลือก datasource: context ก่อน, ไม่มีก็ใช้ api
   const baseProducts = ctxProducts.length ? ctxProducts : apiProducts;
 
   const featuredProducts = useMemo(() => {
     if (!baseProducts.length) return [];
     let candidates = baseProducts.filter((p) => {
       const bool = p?.featured === true;
-      const tag = Array.isArray(p?.tags) && p.tags.some((t) => String(t).toLowerCase() === "featured");
+      const tag =
+        Array.isArray(p?.tags) &&
+        p.tags.some((t) => String(t).toLowerCase() === "featured");
       const badge = String(p?.badge || "").toLowerCase() === "featured";
       return bool || tag || badge;
     });
     if (candidates.length === 0) {
-      candidates = [...baseProducts].sort((a, b) => (b?.sales ?? 0) - (a?.sales ?? 0));
+      candidates = [...baseProducts].sort(
+        (a, b) => (b?.sales ?? 0) - (a?.sales ?? 0)
+      );
     }
     return candidates.slice(0, limit);
   }, [baseProducts, limit]);
@@ -84,6 +105,7 @@ export default function NewArrivals({
     el.scrollBy({ left: dir === "next" ? amount : -amount, behavior: "smooth" });
   };
 
+  // autoplay
   useEffect(() => {
     if (!trackRef.current) return;
     if (featuredProducts.length <= 4) return;
@@ -101,6 +123,7 @@ export default function NewArrivals({
     return () => clearInterval(timer);
   }, [featuredProducts.length, autoPlayMs, gapPx]);
 
+  // Loading / Error
   if (ctxLoading || apiLoading) {
     return (
       <section className="relative mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-10">
@@ -117,7 +140,9 @@ export default function NewArrivals({
   if (!ctxProducts.length && apiError) {
     return (
       <section className="relative mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-10">
-        <div className="text-sm text-red-600">Failed to load new arrivals: {apiError}</div>
+        <div className="text-sm text-red-600">
+          Failed to load new arrivals: {apiError}
+        </div>
       </section>
     );
   }
@@ -126,7 +151,7 @@ export default function NewArrivals({
 
   return (
     <section className="relative mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-10 newarrivals-no-fav">
-      {/* 🧽 ซ่อนหัวใจเฉพาะใน Section นี้เท่านั้น */}
+      {/* ซ่อนไอคอนหัวใจจาก ProductCard เฉพาะใน section นี้ */}
       <style>{`
         .newarrivals-no-fav button.absolute.top-3.right-3.bg-white.p-2.rounded-full.shadow {
           display: none !important;

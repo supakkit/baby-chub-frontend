@@ -1,4 +1,5 @@
 import React from "react";
+import { NavigateToProducts } from "./NavigateToProducts";
 
 // หมวดหมู่หลัก + อีโมจิ
 const types = [
@@ -20,18 +21,18 @@ export default function BrowseByType() {
         {/* ปุ่มแนวนอน + อีโมจิใหญ่ */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
           {types.map((t) => (
-            <a
-              key={t.id}
-              href={`/products?type=${t.id}`}
-              className={[
-                "inline-flex items-center justify-center h-12 px-5 rounded-xl",
-                "bg-white border border-border text-foreground font-semibold",
-                "shadow-sm hover:shadow-md hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-              ].join(" ")}
-            >
-              <span className="text-sm md:text-base">{t.label}</span>
-              <span className="ml-2 text-2xl md:text-3xl">{t.emoji}</span>
-            </a>
+            <NavigateToProducts key={t.id} filter={{ type: [t.id] }}>
+              <span
+                className={[
+                  "inline-flex items-center justify-center h-12 px-5 rounded-xl w-full cursor-pointer",
+                  "bg-white border border-border text-foreground font-semibold",
+                  "shadow-sm hover:shadow-md hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                ].join(" ")}
+              >
+                <span className="text-sm md:text-base">{t.label}</span>
+                <span className="ml-2 text-2xl md:text-3xl">{t.emoji}</span>
+              </span>
+            </NavigateToProducts>
           ))}
         </div>
       </div>

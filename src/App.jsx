@@ -26,6 +26,7 @@ import AdminUsers from "./views/admin/AdminUsers";
 import AdminOrders from "./views/admin/AdminOrders";
 import { ResetPassword } from "./views/ResetPassword";
 import { AdminProduct } from "./views/admin/AdminProducts";
+import LibraryReader from "./views/LibraryReader";
 
 const NewArrival = () => <div className="p-6">New Arrival – coming soon</div>;
 const router = createBrowserRouter([
@@ -134,6 +135,7 @@ const router = createBrowserRouter([
         path: "reset-password",
         element: <ResetPassword />,
       },
+      { path: "library/reader/:productId?", element: <LibraryReader /> },
     ],
   },
 ]);

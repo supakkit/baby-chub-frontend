@@ -6,12 +6,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { addProduct, updateProduct } from '../services/productsService';
 import { toast } from 'sonner';
 
-
 export function ProductForm({ product, onSuccess }) {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
         type: '',
+        subjects: [], // Add subjects field to the state
         prices: { oneTime: '', monthly: '', yearly: '' },
         isDiscounted: false,
         age: { min: 3, max: 12 },
@@ -23,6 +23,7 @@ export function ProductForm({ product, onSuccess }) {
     const [selectedImages, setSelectedImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
     const imageInputRef = useRef(null);
+    const [newSubject, setNewSubject] = useState(''); // State for the new subject input
 
     const isUpdate = !!product;
 
@@ -46,6 +47,24 @@ export function ProductForm({ product, onSuccess }) {
         }
     };
 
+    const handleAddSubject = (e) => {
+        e.preventDefault();
+        if (newSubject.trim() !== '') {
+            setFormData(prevData => ({
+                ...prevData,
+                subjects: [...prevData.subjects, newSubject.trim().toLowerCase()],
+            }));
+            setNewSubject('');
+        }
+    };
+
+    const handleRemoveSubject = (subjectToRemove) => {
+        setFormData(prevData => ({
+            ...prevData,
+            subjects: prevData.subjects.filter(subject => subject !== subjectToRemove),
+        }));
+    };
+
     const validateForm = () => {
         const newErrors = {};
         if (!formData.name) newErrors.name = 'Name is required.';
@@ -62,9 +81,8 @@ export function ProductForm({ product, onSuccess }) {
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
         setSelectedImages(files);
-
+        
         const newPreviews = files.map(file => URL.createObjectURL(file));
-        // Append new previews to existing ones
         setImagePreviews(prev => [...prev.filter(url => !url.startsWith('blob:')), ...newPreviews]);
     };
 
@@ -73,7 +91,7 @@ export function ProductForm({ product, onSuccess }) {
         const newPreviews = imagePreviews.filter((_, index) => index !== indexToRemove);
         setSelectedImages(newSelectedImages);
         setImagePreviews(newPreviews);
-
+        
         if (newSelectedImages.length === 0 && newPreviews.length === 0 && imageInputRef.current) {
             imageInputRef.current.value = null;
         }
@@ -81,18 +99,20 @@ export function ProductForm({ product, onSuccess }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        if (!validateForm()) return;
+        if (!validateForm()) {
+            setLoading(false);
+            return;
+        }
 
+        setLoading(true);
         const prices = {
             oneTime: formData.prices.oneTime === '' ? null : Number(formData.prices.oneTime),
             monthly: formData.prices.monthly === '' ? null : Number(formData.prices.monthly),
             yearly: formData.prices.yearly === '' ? null : Number(formData.prices.yearly),
         };
 
-        // Create a new FormData instance
         const productValues = new FormData();
-
+        
         // Append all text fields
         productValues.append('name', formData.name);
         productValues.append('description', formData.description);
@@ -104,13 +124,12 @@ export function ProductForm({ product, onSuccess }) {
         productValues.append('prices', JSON.stringify(prices));
         productValues.append('age', JSON.stringify(formData.age));
         productValues.append('asset', JSON.stringify(formData.asset));
+        productValues.append('subjects', JSON.stringify(formData.subjects));
         
-        // Append new selected image files
         selectedImages.forEach(file => {
             productValues.append('images', file);
         });
 
-        // Append existing image URLs to keep for updates
         if (isUpdate) {
             const existingUrls = imagePreviews.filter(url => !url.startsWith('blob:'));
             productValues.append('existingImages', JSON.stringify(existingUrls));
@@ -137,6 +156,7 @@ export function ProductForm({ product, onSuccess }) {
                 name: product.name,
                 description: product.description,
                 type: product.type,
+                subjects: product.subjects, // Populate subjects from the product object
                 prices: {
                     oneTime: product.prices.oneTime || '',
                     monthly: product.prices.monthly || '',
@@ -155,12 +175,12 @@ export function ProductForm({ product, onSuccess }) {
             });
             setImagePreviews(product.images);
         }
-    }, [product]);
+    }, [product, isUpdate]);
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4 grid">
             <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Name</label>
+                <label className="text-sm font-medium leading-none">Name</label>
                 <Input
                     name="name"
                     value={formData.name}
@@ -172,7 +192,7 @@ export function ProductForm({ product, onSuccess }) {
             </div>
 
             <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Description</label>
+                <label className="text-sm font-medium leading-none">Description</label>
                 <Textarea
                     name="description"
                     value={formData.description}
@@ -184,7 +204,7 @@ export function ProductForm({ product, onSuccess }) {
             </div>
 
             <div>
-                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Type</label>
+                <label className="text-sm font-medium leading-none">Type</label>
                 <Input
                     name="type"
                     value={formData.type}
@@ -195,10 +215,38 @@ export function ProductForm({ product, onSuccess }) {
                 {errors.type && <p className="text-sm font-medium text-red-500">{errors.type}</p>}
             </div>
 
+            {/* Subjects field */}
+            <div>
+                <label className="text-sm font-medium leading-none">Subjects</label>
+                <div className="mt-1 flex gap-2 flex-wrap">
+                    {formData.subjects.map((subject, index) => (
+                        <div key={index} className="flex items-center px-3 py-1 text-sm bg-gray-100 rounded-full">
+                            <span>{subject}</span>
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveSubject(subject)}
+                                className="ml-2 h-4 w-4 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-700"
+                            >
+                                &times;
+                            </button>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-2 flex">
+                    <Input
+                        value={newSubject}
+                        onChange={(e) => setNewSubject(e.target.value)}
+                        placeholder="Add a subject and press Enter"
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddSubject(e)}
+                    />
+                    <Button type="button" onClick={handleAddSubject} className="ml-2">Add</Button>
+                </div>
+            </div>
+
             {/* Prices fields */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">One-Time Price</label>
+                    <label className="text-sm font-medium leading-none">One-Time Price</label>
                     <Input
                         type="number"
                         name="prices.oneTime"
@@ -209,7 +257,7 @@ export function ProductForm({ product, onSuccess }) {
                     />
                 </div>
                 <div>
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Monthly Price</label>
+                    <label className="text-sm font-medium leading-none">Monthly Price</label>
                     <Input
                         type="number"
                         name="prices.monthly"
@@ -220,7 +268,7 @@ export function ProductForm({ product, onSuccess }) {
                     />
                 </div>
                 <div>
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Yearly Price</label>
+                    <label className="text-sm font-medium leading-none">Yearly Price</label>
                     <Input
                         type="number"
                         name="prices.yearly"
@@ -234,7 +282,7 @@ export function ProductForm({ product, onSuccess }) {
 
             <div className="flex gap-4">
                 <div className="flex-1">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Min Age</label>
+                    <label className="text-sm font-medium leading-none">Min Age</label>
                     <Input
                         type="number"
                         name="age.min"
@@ -244,7 +292,7 @@ export function ProductForm({ product, onSuccess }) {
                     />
                 </div>
                 <div className="flex-1">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Max Age</label>
+                    <label className="text-sm font-medium leading-none">Max Age</label>
                     <Input
                         type="number"
                         name="age.max"
@@ -258,7 +306,7 @@ export function ProductForm({ product, onSuccess }) {
             {/* Asset fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Asset Path</label>
+                    <label className="text-sm font-medium leading-none">Asset Path</label>
                     <Input
                         name="asset.path"
                         value={formData.asset.path}
@@ -269,7 +317,7 @@ export function ProductForm({ product, onSuccess }) {
                     {errors['asset.path'] && <p className="text-sm font-medium text-red-500">{errors['asset.path']}</p>}
                 </div>
                 <div>
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Asset Type</label>
+                    <label className="text-sm font-medium leading-none">Asset Type</label>
                     <Input
                         name="asset.type"
                         value={formData.asset.type}

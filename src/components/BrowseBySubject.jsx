@@ -1,4 +1,5 @@
 import React from "react";
+import { NavigateToProducts } from "./NavigateToProducts";
 
 // รายการหมวดวิชา + อีโมจิ
 const subjects = [
@@ -7,7 +8,7 @@ const subjects = [
   { id: "language", label: "Language", emoji: "🗣️" },
   { id: "science", label: "Science", emoji: "🔬" },
   { id: "english", label: "English", emoji: "📚" },
-  { id: "life-skill", label: "Life Skill", emoji: "🌱" },
+  { id: "skill", label: "Life Skill", emoji: "🌱" },
   { id: "art", label: "Art", emoji: "🎨" },
   { id: "others", label: "Others", emoji: "✨" },
 ];
@@ -23,18 +24,18 @@ export default function BrowseBySubject() {
         {/* ปุ่มแนวนอน + อีโมจิท้ายข้อความ */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
           {subjects.map((s) => (
-            <a
-              key={s.id}
-              href={`/products?subject=${s.id}`}
-              className={[
-                "inline-flex items-center justify-center h-11 px-4 md:h-12 md:px-5 rounded-xl",
-                "bg-white border border-border text-foreground font-semibold",
-                "shadow-sm hover:shadow-md hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-              ].join(" ")}
-            >
-              <span className="text-sm md:text-base">{s.label}</span>
-              <span className="ml-2 text-2xl md:text-3xl">{s.emoji}</span>
-            </a>
+            <NavigateToProducts key={s.id} filter={{"subject": [s.id]}}>
+              <span
+                className={[
+                  "inline-flex items-center justify-center h-11 px-4 md:h-12 md:px-5 rounded-xl w-full cursor-pointer",
+                  "bg-white border border-border text-foreground font-semibold",
+                  "shadow-sm hover:shadow-md hover:bg-muted/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                ].join(" ")}
+              >
+                <span className="text-sm md:text-base">{s.label}</span>
+                <span className="ml-2 text-2xl md:text-3xl">{s.emoji}</span>
+              </span>  
+            </NavigateToProducts>
           ))}
         </div>
       </div>
