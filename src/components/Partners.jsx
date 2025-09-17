@@ -16,7 +16,7 @@ const partnersData = [
 
 export default function Partners() {
   return (
-    <section className="bg-background py-16 md:py-24">
+    <section className="bg-transparent py-16 md:py-24">
       <div className="layout">
         <h2 className="text-3xl font-bold text-center text-foreground mb-12">
           Our partners

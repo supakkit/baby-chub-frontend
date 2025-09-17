@@ -120,7 +120,7 @@ export default function BestSellers() {
   }, [items]);
 
   return (
-    <section className="relative w-screen left-1/2 -translate-x-1/2 bg-gradient-to-b from-white to-muted/40 py-12 md:py-16">
+    <section className="relative w-screen left-1/2 -translate-x-1/2 py-12 md:py-16 bg-transparent">
       <div className="layout">
         <h2 className="text-3xl font-bold text-foreground text-center mb-2">
           ✨ Loved by Little Learners ✨
