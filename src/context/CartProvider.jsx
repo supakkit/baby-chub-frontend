@@ -12,7 +12,7 @@ export function CartProvider({ children }) {
         setLoadingProducts(true);
         try {
             const data = await getProductsInCart();
-            setCartItems(data.products);
+            setCartItems(data?.products || []);
             setError("");
         } catch {
             setError("Failed to load products from your cart")

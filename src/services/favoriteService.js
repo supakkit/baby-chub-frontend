@@ -19,9 +19,9 @@ export const getProductsInFavorite = async () => {
         }
         
         return {
-            error: data.error,
+            error: data?.error,
             products,
-            message: data.message
+            message: data?.message
         };
 
     } catch (error) {
@@ -34,11 +34,11 @@ export const addToFavorite = async (productId) => {
     try {
         // console.log('productId:', productId)
         const response = await api.post("/favorite", { productId });
-        toast.success(response.data.message);
+        toast.success(response.data?.message);
         
     } catch (error) {
         console.error(error);
-        toast.error(error.message);
+        toast.error(error?.message);
     }
 };
 
@@ -46,20 +46,20 @@ export const removeFromFavorite = async (productId) => {
     try {
         // console.log('productId:', productId)
         const response = await api.delete(`/favorite/${productId}`);
-        toast.success(response.data.message);
+        toast.success(response.data?.message);
 
     } catch (error) {
         console.error(error);
-        toast.error(error.message)
+        toast.error(error?.message)
     }
 };
 
 export const clearFavorite = async () => {
     try {
         const response = await api.delete("/favorite/");
-        toast.success(response.data.message);
+        toast.success(response.data?.message);
     } catch (error) {
         console.error(error);
-        toast.error(error.message)
+        toast.error(error?.message)
     }
 };

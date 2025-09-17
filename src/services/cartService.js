@@ -27,9 +27,9 @@ export const getProductsInCart = async () => {
         }
         
         return {
-            error: data.error,
+            error: data?.error,
             products,
-            message: data.message
+            message: data?.message
         };
 
     } catch (error) {
@@ -42,7 +42,7 @@ export const addToCart = async (productId, plan) => {
     try {
         // console.log('productId:', productId, 'plan:', plan)
         const response = await api.post("/cart", { productId, plan });
-        toast.success(response.data.message);
+        toast.success(response.data?.message);
         
     } catch (error) {
         console.error(error);
@@ -53,11 +53,11 @@ export const addToCart = async (productId, plan) => {
 export const changeProductPlan = async (productId, plan) => {
     try {
         const response = await api.patch(`/cart/${productId}`, { plan });
-        toast.success(response.data.message);
+        toast.success(response.data?.message);
 
     } catch (error) {
         console.error(error);
-        toast.error(error.message);
+        toast.error(error?.message);
     }
 };
 
@@ -65,11 +65,11 @@ export const removeFromCart = async (productId) => {
     try {
         // console.log('productId:', productId)
         const response = await api.delete(`/cart/${productId}`);
-        toast.success(response.data.message);
+        toast.success(response.data?.message);
 
     } catch (error) {
         console.error(error);
-        toast.error(error.message)
+        toast.error(error?.message)
     }
 };
 

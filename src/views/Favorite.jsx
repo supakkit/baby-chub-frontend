@@ -19,7 +19,7 @@ export function Favorite() {
             try {
                 hasFetched.current = true;
                 const data = await getProductsInFavorite();
-                setFavoriteItems(data.products);
+                setFavoriteItems(data?.products || []);
                 setError("");
             } catch {
                 setError("Failed to load products from your favorite")

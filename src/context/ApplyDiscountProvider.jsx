@@ -14,7 +14,7 @@ export function ApplyDiscountProvider({ children }) {
         try {
             const code = promoCode.toString().trim();
             const data = await applyDiscount(code);
-            const discountInfo = data.discount;
+            const discountInfo = data?.discount || null;
 
             setDiscountInfo(discountInfo);
             applyPromotionCode(discountInfo, subTotalPrice);

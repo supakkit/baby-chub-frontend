@@ -38,10 +38,10 @@ export function Products() {
     const fetchProducts = async (query) => {
         const data = await getProductsByQuery(query);
         // console.log('data:', data)
-        setFilteredProducts(data.products || []);
+        setFilteredProducts(data?.products || []);
         
-        if (typeof data.total === "number") setTotal(data.total);
-        if (typeof data.page === "number") setPage(data.page);
+        if (typeof data?.total === "number") setTotal(data.total);
+        if (typeof data?.page === "number") setPage(data.page);
         // console.log('total:', data.total)
 
         // reflect current state in URL

@@ -13,7 +13,7 @@ export function PendingPayment() {
     async (order) => {
       try {
         const data = await updateOrder(order._id, "paid"); // simulate payment confirmation
-        toast.success(data.libraryStatus);
+        toast.success(data?.libraryStatus || "Failed to add products to your library");
         // เตรียม orderData ให้ส่งต่อไปหน้า confirmation
         const orderData = {
           orderId: order._id || "ORD-" + Math.floor(Math.random() * 1000000),

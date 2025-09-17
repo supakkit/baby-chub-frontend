@@ -25,7 +25,7 @@ export function AdminProduct() {
     async () => {
       try {
         const data = await getProducts();
-        setProducts(data.products || []);
+        setProducts(data?.products || []);
       } catch (error) {
         toast.error(error);
       }
@@ -39,7 +39,7 @@ export function AdminProduct() {
       try {
         const data = await deleteProduct(productId);
         fetchProducts();
-        toast.success(data.message);
+        toast.success(data?.message);
       } catch (error) {
         toast.error(error);
       }
