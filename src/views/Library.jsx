@@ -2,12 +2,12 @@
 // "My Library" — Production view with realistic behavior.
 // - Uses real data from UserContext (user.orders). No hard-coded demo in this file.
 // - Auth guard: redirect to /signin when user is not authenticated.
-// - Full controls: Tabs (Active/Expired/All) + Search + Type Filter + Sort.
-// - Clear CTA rules:
+// - Controls: Tabs (Active/Expired/All) + Search + Type Filter + Sort.
+// - CTA rules (summary):
 //    * ACTIVE subscription/app -> "Continue" (filled) + "Renew" (outline).
 //    * EXPIRED subscription/app -> "Continue" disabled + "Renew" becomes main CTA (filled).
-//    * DIGITAL -> "Download" (enabled/disabled); disabled shows toast.
-// - All clickable elements have cursor-pointer + hover states for consistent affordance.
+//    * DIGITAL (ebook/audiobook/worksheets) -> "Download" (enabled/disabled).
+// - Added: progress bar now shows % number; "View order" → "View product" (navigate to product page).
 
 import { useMemo, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { useUser } from "../context/UserContext";
 
 // ======================================================================
-// SECTION: Helpers (formatting + inference)
+// Helpers (formatting + inference)
 // ======================================================================
 
 function fmtDate(d) {
@@ -41,6 +41,12 @@ function inferType(item) {
   return "content";
 }
 
+function isDigital(t) {
+  return ["digital", "ebook", "audiobook", "worksheets"].includes(
+    String(t || "").toLowerCase()
+  );
+}
+
 function isDownloadDisabled(item) {
   return (
     !item?.downloadable ||
@@ -50,8 +56,11 @@ function isDownloadDisabled(item) {
   );
 }
 
+// clamp 0..100
+const clampPct = (n) => Math.max(0, Math.min(100, Number(n ?? 0)));
+
 // ======================================================================
-// SECTION: Component
+// Component
 // ======================================================================
 export function Library() {
   const navigate = useNavigate();
@@ -135,12 +144,11 @@ export function Library() {
   }, [rows, query, typeFilter, tab, sortKey, today]);
 
   // ======================================================================
-  // SECTION: Action handlers (wire to your backend as needed)
+  // Action handlers (wire to your backend as needed)
   // ======================================================================
 
   async function handleAccessLink(r) {
     try {
-      // Example: request fresh access link (prefer backend-generated links)
       const itemId = r.id; // "orderId:itemId"
       const res = await fetch(
         `/users/me/library/${encodeURIComponent(itemId)}/access-link`,
@@ -215,8 +223,17 @@ export function Library() {
     }
   }
 
+  // New: view product instead of order detail
+  function handleViewProduct(r) {
+    if (r?.productId) {
+      navigate(`/products/${r.productId}`);
+    } else {
+      toast.message("Product details unavailable.");
+    }
+  }
+
   // ======================================================================
-  // SECTION: UI
+  // UI
   // ======================================================================
   return (
     <section className="p-6 md:p-12 max-w-6xl mx-auto">
@@ -314,143 +331,112 @@ export function Library() {
             return (
               <article
                 key={r.id}
-                className="border border-[color:var(--border)] rounded-lg p-5 shadow-sm hover:shadow-lg transition flex flex-col justify-between bg-[color:var(--card)]"
-                aria-label={`Library item: ${r.title}`}
+                className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6"
               >
-                {/* Content */}
-                <div>
-                  <h2 className="text-lg font-semibold">{r.title}</h2>
+                {/* Title */}
+                <h3 className="text-lg md:text-xl font-semibold">{r.title}</h3>
 
-                  <div className="text-sm text-[color:var(--muted-foreground)]">
-                    Purchased: {fmtDate(r.purchaseDate)}
-                  </div>
-
-                  {/* Expiry */}
-                  <div className="mt-1 text-sm">
+                {/* Meta */}
+                <div className="mt-1 text-sm text-[color:var(--muted-foreground)]">
+                  <div>Purchased: {fmtDate(r.purchaseDate)}</div>
+                  <div className="mt-0.5">
                     {r.expireDate ? (
                       <>
-                        Expires: <b>{fmtDate(r.expireDate)}</b>{" "}
-                        {typeof dLeft === "number" && (
+                        Expires:{" "}
+                        <b className="text-[color:var(--foreground)]">
+                          {fmtDate(r.expireDate)}
+                        </b>{" "}
+                        {isExpired ? (
+                          <span className="ml-2 inline-flex items-center rounded px-2 py-0.5 text-xs bg-[color:var(--muted)]/40">
+                            Expired
+                          </span>
+                        ) : typeof dLeft === "number" ? (
                           <span
-                            className={`ml-2 inline-flex px-2 py-0.5 rounded ${
-                              isExpired
-                                ? "bg-gray-200 text-gray-600"
-                                : isDanger
-                                ? "bg-amber-100 text-amber-800"
-                                : "bg-emerald-100 text-emerald-800"
+                            className={`ml-2 inline-flex items-center rounded px-2 py-0.5 text-xs ${
+                              isDanger
+                                ? "bg-[color:var(--destructive)]/20"
+                                : "bg-[color:var(--muted)]/40"
                             }`}
                           >
-                            {isExpired
-                              ? "Expired"
-                              : dLeft === 0
-                              ? "Expires today"
-                              : `In ${dLeft} day${dLeft === 1 ? "" : "s"}`}
+                            In {dLeft} day{dLeft !== 1 ? "s" : ""}
                           </span>
-                        )}
+                        ) : null}
                       </>
                     ) : (
-                      <span className="text-[color:var(--muted-foreground)]">
-                        No expiry
-                      </span>
+                      <>No expiry</>
                     )}
                   </div>
-
-                  {/* Progress bar (subscription/app) */}
-                  {typeof r.progress === "number" && (
-                    <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-[#543285] h-2 rounded-full"
-                        style={{
-                          width: `${Math.max(0, Math.min(100, r.progress))}%`,
-                        }}
-                        aria-label={`Progress ${r.progress}%`}
-                      />
-                    </div>
-                  )}
                 </div>
 
+                {/* Progress bar (with % number) */}
+                {typeof r.progress === "number" && (
+                  <div
+                    className="mt-3 w-full relative h-3 rounded-full bg-gray-200"
+                    role="progressbar"
+                    aria-valuenow={clampPct(r.progress)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    title={`${clampPct(r.progress)}%`}
+                  >
+                    <div
+                      className="absolute left-0 top-0 h-3 rounded-full bg-[color:var(--primary)]"
+                      style={{ width: `${clampPct(r.progress)}%` }}
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-[10px] md:text-xs font-medium text-white select-none">
+                      {clampPct(r.progress)}%
+                    </span>
+                  </div>
+                )}
+
                 {/* Actions */}
-                <div className="mt-4 flex gap-2 flex-wrap">
-                  {/* ------------------------------------------------------------------ */}
-                  {/* accessUrl (subscription/app/content): enforce CTA rules by expiry  */}
-                  {/* ------------------------------------------------------------------ */}
-                  {r.accessUrl &&
-                    (isExpired ? (
-                      <>
-                        {/* EXPIRED → Continue disabled */}
-                        <button
-                          disabled
-                          title="This item has expired"
-                          className="flex-1 md:flex-none px-4 h-10 inline-flex items-center justify-center rounded-md border bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
-                        >
-                          Continue
-                        </button>
-
-                        {/* Renew becomes main CTA */}
-                        <button
-                          onClick={() => handleRenew(r, "month")}
-                          className="flex-1 md:flex-none px-4 h-10 inline-flex items-center justify-center rounded-md cursor-pointer bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:opacity-90"
-                        >
-                          Renew
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        {/* ACTIVE → Continue as main CTA */}
-                        <button
-                          onClick={() => handleAccessLink(r)}
-                          className="flex-1 md:flex-none px-4 h-10 inline-flex items-center justify-center rounded-md cursor-pointer bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:opacity-90"
-                        >
-                          {inferType(r) === "subscription" ||
-                          typeof r.progress === "number"
-                            ? "Continue"
-                            : "Open"}
-                        </button>
-
-                        {/* Secondary Renew (only if the item has expiry) */}
-                        {r.expireDate && (
-                          <button
-                            onClick={() => handleRenew(r, "month")}
-                            className="flex-1 md:flex-none px-4 h-10 inline-flex items-center justify-center rounded-md cursor-pointer border hover:bg-[color:var(--muted)]/40"
-                          >
-                            Renew
-                          </button>
-                        )}
-                      </>
-                    ))}
-
-                  {/* ------------------------------------------------------------------ */}
-                  {/* DIGITAL download (enabled/disabled with clear affordance)           */}
-                  {/* ------------------------------------------------------------------ */}
-                  {inferType(r) === "digital" && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {/* Continue / Download */}
+                  {isDigital(r.type) ? (
                     <button
-                      onClick={() =>
+                      onClick={() => handleDownload(r)}
+                      disabled={isDownloadDisabled(r)}
+                      className={`px-4 h-10 inline-flex items-center justify-center rounded-md border ${
                         !isDownloadDisabled(r)
-                          ? handleDownload(r)
-                          : toast.message("Download not available yet.")
-                      }
-                      title={
-                        isDownloadDisabled(r)
-                          ? "Download not available yet"
-                          : "Download your product"
-                      }
-                      className={`flex-1 md:flex-none px-4 h-10 inline-flex items-center justify-center rounded-md border ${
-                        !isDownloadDisabled(r)
-                          ? "cursor-pointer hover:bg-[color:var(--muted)]/40"
-                          : "cursor-not-allowed bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)]"
+                          ? "hover:bg-[color:var(--muted)]/40"
+                          : "bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
                       }`}
                     >
                       Download
                     </button>
+                  ) : (
+                    <button
+                      onClick={() => handleAccessLink(r)}
+                      disabled={isExpired}
+                      className={`px-4 h-10 inline-flex items-center justify-center rounded-md ${
+                        !isExpired
+                          ? "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:opacity-90"
+                          : "bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
+                      }`}
+                    >
+                      Continue
+                    </button>
                   )}
 
-                  {/* View order */}
-                  <Link
-                    to={`/orders/${r.orderId}`}
+                  {/* Renew */}
+                  <button
+                    onClick={() => handleRenew(r)}
+                    className={`px-4 h-10 inline-flex items-center justify-center rounded-md border hover:bg-[color:var(--muted)]/40 ${
+                      isExpired
+                        ? "bg-[color:var(--primary)] text-[color:var(--primary-foreground)] border-[color:var(--primary)] hover:opacity-90"
+                        : ""
+                    }`}
+                    title="Renew subscription"
+                  >
+                    Renew
+                  </button>
+
+                  {/* View product (no order detail link) */}
+                  <button
+                    onClick={() => handleViewProduct(r)}
                     className="flex-1 md:flex-none px-4 h-10 inline-flex items-center justify-center rounded-md border cursor-pointer hover:bg-[color:var(--muted)]/40"
                   >
-                    View order
-                  </Link>
+                    View product
+                  </button>
                 </div>
               </article>
             );
@@ -460,3 +446,5 @@ export function Library() {
     </section>
   );
 }
+
+export default Library;

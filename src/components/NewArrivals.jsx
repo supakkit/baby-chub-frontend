@@ -1,4 +1,3 @@
-// src/components/NewArrivals.jsx
 import React, { useRef, useContext, useMemo, useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ const GAP_PX_DEFAULT = 16;
 // ── axios instance ─────────────────────────────────────────────
 const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true, // ถ้า backend ใช้ cookie/เซสชัน
+  withCredentials: true,
 });
 
 export default function NewArrivals({
@@ -158,6 +157,20 @@ export default function NewArrivals({
         .newarrivals-no-fav button.absolute.top-3.right-3.bg-white.p-2.rounded-full.shadow {
           display: none !important;
         }
+        /* ✅ กำหนดความกว้างการ์ดแบบ responsive ด้วย media queries */
+        #new-arrivals [data-card] {
+          width: calc((100% - (3 * var(--card-gap))) / 4); /* Desktop: 4 ใบ */
+        }
+        @media (max-width: 1024px) {
+          #new-arrivals [data-card] {
+            width: calc((100% - (1 * var(--card-gap))) / 2); /* Tablet: 2 ใบ */
+          }
+        }
+        @media (max-width: 640px) {
+          #new-arrivals [data-card] {
+            width: 70%; /* Mobile: 1 ใบเต็มหน้าจอ */
+          }
+        }
       `}</style>
 
       <div className="mb-3">
@@ -199,6 +212,7 @@ export default function NewArrivals({
         className="
           flex gap-[var(--card-gap)] overflow-x-auto scroll-smooth snap-x snap-mandatory
           [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
+          py-8 px-2
         "
         style={{ ["--card-gap"]: `${gapPx}px` }}
         onMouseEnter={() => (pausedRef.current = true)}
@@ -210,8 +224,7 @@ export default function NewArrivals({
           <article
             key={product.id || product._id}
             data-card
-            className="snap-start shrink-0"
-            style={{ width: "calc((100% - (3 * var(--card-gap))) / 4)" }}
+            className="snap-center sm:snap-start shrink-0"
           >
             <ProductCard product={product} />
           </article>

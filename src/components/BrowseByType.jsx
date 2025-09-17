@@ -12,7 +12,7 @@ const types = [
 
 export default function BrowseByType() {
   return (
-    <section className="bg-background py-12 md:py-16">
+    <section className="bg-transparent py-12 md:py-16">
       <div className="layout">
         <h2 className="text-3xl font-bold text-center text-foreground mb-8">
           Browse by type

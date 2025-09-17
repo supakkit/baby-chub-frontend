@@ -12,6 +12,17 @@ import ReviewsSection from "@/components/ReviewsSection";
 export function Home() {
   return (
     <>
+      {/* ✅ พื้นหลังไล่สี (ย้ายมาจาก BestSellers) แบบ fixed อยู่ล่างจอเสมอ */}
+      <div
+        aria-hidden
+        className="
+          fixed inset-x-0 bottom-0 -z-10
+          h-[40vh]
+          bg-gradient-to-b from-white to-muted/60
+          pointer-events-none
+        "
+      />
+
       <Hero />
       <BestSellers />
       <PromotionSlider />
