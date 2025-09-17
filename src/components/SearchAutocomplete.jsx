@@ -16,7 +16,7 @@ export function SearchAutocomplete({ onSelect }) {
     });
   }, [products]);
 
-  const results = query ? fuse.search(query).map((r) => r.item) : [];
+  // const results = query ? fuse.search(query).map((r) => r.item) : [];
 
   const handleSelect = (productId) => {
     if (onSelect) {
@@ -27,8 +27,21 @@ export function SearchAutocomplete({ onSelect }) {
     setQuery(""); // ล้าง input
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+
+    const params = new URLSearchParams();
+    if (query.trim() !== '') {
+      params.append('q', JSON.stringify(query));
+    }
+
+    navigate(`/products?${params.toString()}`);
+    setQuery('');
+  };
+
   return (
     <div className="relative w-full">
+      <form onSubmit={handleSearchSubmit}>
       <input
         type="text"
         value={query}
@@ -36,9 +49,11 @@ export function SearchAutocomplete({ onSelect }) {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search products..."
         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full"
-      />
+      />  
+      </form>
+      
 
-      {results.length > 0 && (
+      {/* {results.length > 0 && (
         <ul className="absolute top-full left-0 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-auto z-50">
           {results.map((p) => (
             <li
@@ -50,7 +65,7 @@ export function SearchAutocomplete({ onSelect }) {
             </li>
           ))}
         </ul>
-      )}
+      )} */}
     </div>
   );
 }

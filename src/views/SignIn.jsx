@@ -40,7 +40,7 @@ export function SignIn() {
     setSubmitting(true);
     try {
       await login({ email: emailValue, password: passwordValue });
-      navigate(location.state?.from?.pathname ?? "/profile", { replace: true });
+      navigate(location.state?.from?.pathname ?? "/", { replace: true });
     } catch (err) {
       // ---- Error mapping (industry-standard generic) ----
       const status = err?.response?.status;

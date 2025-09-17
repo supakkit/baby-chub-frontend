@@ -30,6 +30,7 @@ export function OrderConfirmation() {
         if (prev >= 100) {
           clearInterval(interval);
           setIsDownloaded(true);
+          setTimeout(() => navigate("/library"), 1000);
           return 100;
         }
         return prev + 10;
