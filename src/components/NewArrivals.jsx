@@ -199,6 +199,7 @@ export default function NewArrivals({
         className="
           flex gap-[var(--card-gap)] overflow-x-auto scroll-smooth snap-x snap-mandatory
           [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
+          py-8
         "
         style={{ ["--card-gap"]: `${gapPx}px` }}
         onMouseEnter={() => (pausedRef.current = true)}
