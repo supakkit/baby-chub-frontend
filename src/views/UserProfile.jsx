@@ -83,14 +83,86 @@ export function UserProfile() {
   const orders = safeUser.orders;
   const savedCards = safeUser.paymentMethods;
 
-  // --- NEW: real sessions state ---
+  // --- Sessions (grouped & filtered by email) ---
   const [sessions, setSessions] = useState([]);
+  const [sessionGroups, setSessionGroups] = useState({
+    desktop: [],
+    mobile: [],
+  });
+
+  function isMobileUA(ua = "") {
+    return /Mobi|Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(ua);
+  }
+  function parseUA(ua = "") {
+    const browser = /Edg\//.test(ua)
+      ? "Edge"
+      : /OPR\//.test(ua)
+      ? "Opera"
+      : /Firefox\//.test(ua)
+      ? "Firefox"
+      : /Chrome\//.test(ua)
+      ? "Chrome"
+      : /Safari\//.test(ua)
+      ? "Safari"
+      : "Unknown";
+    const os = /Windows NT/.test(ua)
+      ? "Windows"
+      : /Macintosh/.test(ua)
+      ? "macOS"
+      : /Android/.test(ua)
+      ? "Android"
+      : /(iPhone|iPad|iPod)/.test(ua)
+      ? "iOS/iPadOS"
+      : "Unknown";
+    return { browser, os, type: isMobileUA(ua) ? "mobile" : "desktop" };
+  }
+  function groupSessions(list = []) {
+    const map = new Map();
+    list.forEach((s) => {
+      const ua = s.userAgent || s.ua || s.device || "";
+      const meta = parseUA(ua);
+      const key = `${meta.type}|${meta.os}|${meta.browser}`;
+      const lastActive = s.lastActive ? new Date(s.lastActive).getTime() : 0;
+      const item = map.get(key) || {
+        key,
+        type: meta.type,
+        os: meta.os,
+        browser: meta.browser,
+        label: `${meta.os} · ${meta.browser}`,
+        lastActive: 0,
+        ip: "",
+        sessions: [],
+      };
+      item.sessions.push(s);
+      if (lastActive >= item.lastActive) {
+        item.lastActive = lastActive;
+        item.ip = s.ip || "";
+      }
+      map.set(key, item);
+    });
+    const groups = Array.from(map.values())
+      .map((g) => ({ ...g, count: g.sessions.length }))
+      .sort((a, b) => b.lastActive - a.lastActive);
+
+    return {
+      desktop: groups.filter((g) => g.type === "desktop"),
+      mobile: groups.filter((g) => g.type === "mobile"),
+    };
+  }
+
   async function loadSessions() {
     try {
       const list = await getMySessions();
-      setSessions(Array.isArray(list) ? list : []);
+      // filter เผื่อ API เผลอส่งอีเมลอื่นมา (กันไว้ก่อน)
+      const filtered = (Array.isArray(list) ? list : []).filter(
+        (s) => !s.email || s.email === user?.email
+      );
+      setSessions(filtered);
+      setSessionGroups(groupSessions(filtered));
     } catch (e) {
-      // optional: toast.error("Failed to load sessions");
+      // toast.error("Failed to load sessions");
+      setSessions([]);
+      setSessionGroups({ desktop: [], mobile: [] });
     }
   }
   useEffect(() => {
@@ -370,16 +442,43 @@ export function UserProfile() {
     toast.success("Account deleted");
   }
 
-  // --- NEW: revoke session handler ---
-  async function handleRevoke(sessionId) {
-    try {
-      await revokeSession(sessionId);
-      await loadSessions();
-      toast.success("Session revoked");
-    } catch (e) {
-      toast.error(e?.message || "Failed to revoke session");
-    }
+  // --- Revoke (require password) ---
+const [revokeOpen, setRevokeOpen] = useState(false);
+const [revokeIds, setRevokeIds] = useState([]);          // รองรับหลาย session
+const [revokePassword, setRevokePassword] = useState("");
+const [revoking, setRevoking] = useState(false);
+
+function handleRevoke(sessionIdOrIds) {
+  const ids = Array.isArray(sessionIdOrIds) ? sessionIdOrIds : [sessionIdOrIds];
+  setRevokeIds(ids);
+  setRevokePassword("");
+  setRevokeOpen(true);
+}
+
+async function confirmRevoke(e) {
+  e?.preventDefault?.();
+  if (!revokePassword) {
+    toast.error("กรุณากรอกรหัสผ่านก่อนทำรายการ");
+    return;
   }
+  setRevoking(true);
+  try {
+    // NOTE: revokeSession รองรับ body { password } (หาก service ของคุณรับพารามิเตอร์เดียว
+    // ให้ปรับที่ service ให้รับ password ด้วย หรือเพิ่ม endpoint verify ก่อน)
+    for (const id of revokeIds) {
+      await revokeSession(id, { password: revokePassword });
+    }
+    toast.success(
+      revokeIds.length > 1 ? "Revoked all sessions in this device" : "Session revoked"
+    );
+    setRevokeOpen(false);
+    await loadSessions();
+  } catch (err) {
+    toast.error(err?.message || "Failed to revoke session");
+  } finally {
+    setRevoking(false);
+  }
+}
 
   return (
     <section className="layout mx-auto px-4 pt-8 pb-14 md:pt-10 md:pb-18">

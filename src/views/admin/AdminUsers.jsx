@@ -237,7 +237,7 @@ export default function AdminUsers() {
                         Resend verify
                       </button>
                       <button
-                        className="h-9 px-3 rounded-md border hover:bg-red-500/10"
+                        className="h-9 px-3 rounded-md border border-red-600 text-red-600 hover:bg-red-50"
                         onClick={() => onDelete(u.id)}
                         title="Delete this user permanently"
                         aria-label="Delete user"
@@ -351,7 +351,7 @@ export default function AdminUsers() {
                 Resend verify
               </button>
               <button
-                className="h-9 px-3 rounded-md border hover:bg-red-500/10"
+                className="h-9 px-3 rounded-md border border-red-600 text-red-600 hover:bg-red-50"
                 onClick={() => onDelete(detail.id)}
                 title="Delete this user permanently"
                 aria-label="Delete user"

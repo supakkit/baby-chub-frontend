@@ -21,7 +21,7 @@ export default function BrowseByType() {
         {/* ปุ่มแนวนอน + อีโมจิใหญ่ */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
           {types.map((t) => (
-            <NavigateToProducts key={t.id} filter={{"subject": [t.id]}}>
+            <NavigateToProducts key={t.id} filter={{ type: [t.id] }}>
               <span
                 className={[
                   "inline-flex items-center justify-center h-12 px-5 rounded-xl w-full cursor-pointer",
@@ -31,7 +31,7 @@ export default function BrowseByType() {
               >
                 <span className="text-sm md:text-base">{t.label}</span>
                 <span className="ml-2 text-2xl md:text-3xl">{t.emoji}</span>
-              </span>  
+              </span>
             </NavigateToProducts>
           ))}
         </div>
