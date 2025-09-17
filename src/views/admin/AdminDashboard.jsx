@@ -1,5 +1,5 @@
 // src/views/admin/AdminDashboard.jsx
-// Admin Dashboard (Mock-first) พร้อม TODO สำหรับเชื่อม Backend ภายหลัง
+// Admin Dashboard (Mock-first) with lightweight tooltips (EN)
 
 import { useEffect, useState } from "react";
 import {
@@ -7,7 +7,7 @@ import {
   Area,
   XAxis,
   YAxis,
-  Tooltip,
+  Tooltip as ChartTooltip, // alias เพื่อไม่ชนกับ InfoTip
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -15,12 +15,12 @@ import {
 } from "recharts";
 
 // ⛳ MOCK SERVICE
-// ถ้าคุณยังไม่มี alias '@' ใน vite ให้แก้เป็น import แบบ relative:
+// ถ้ายังไม่มี alias '@' ใน Vite ให้สลับเป็น import แบบ relative:
 //   import { fetchMetricsMock } from "../../mocks/metricsMock";
 import { fetchMetricsMock } from "@/mocks/metricsMock";
 
-// ✅ สวิตช์โหมดใช้งานข้อมูล: เริ่มด้วย mock เพื่อการเดโม
-//    TODO: เปลี่ยนเป็น false เมื่อ Backend พร้อม
+// ✅ เริ่มด้วย mock เพื่อความนิ่งตอนเดโม
+//    TODO: ตั้งเป็น false เมื่อ Backend พร้อม
 const USE_MOCK = true;
 
 // Helper เรียก API จริง (เผื่อสลับไปใช้ BE)
@@ -29,6 +29,46 @@ async function fetchJSON(url, init) {
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res.json();
 }
+
+// ---------- Tooltip copy (EN) & component ----------
+const TIPS = {
+  salesToday: "Gross sales completed 'today' (Asia/Bangkok time).",
+  ordersToday: "Number of orders created 'today' (all statuses).",
+  mtdSales: "Month-to-date sales from the 1st of this month through today.",
+  aov: "Average Order Value = today's sales ÷ today's orders.",
+  newUsers7d: "Users who signed up in the last 7 days.",
+  emailVerify: "Share of users who successfully verified their email.",
+  revenue30d: "Revenue for the past 30 days — hover to see each day's value.",
+  topProducts: "Products with the highest recent cumulative sales (demo data).",
+  recentOrders: "Most recent orders (demo data for presentation).",
+};
+
+function InfoTip({ text }) {
+  return (
+    <span className="relative group inline-flex items-center align-middle">
+      <svg
+        className="w-4 h-4 ml-1 cursor-help text-[color:var(--muted-foreground)]"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        role="img"
+        tabIndex={0}
+      >
+        <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.1" />
+        <path
+          d="M12 8.25a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm-1.25 4a.75.75 0 0 0 0 1.5h.5v3.5a.75.75 0 0 0 1.5 0v-4.25a.75.75 0 0 0-.75-.75h-1.25Z"
+          fill="currentColor"
+        />
+      </svg>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 whitespace-pre rounded-md bg-black/80 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition"
+      >
+        {text}
+      </span>
+    </span>
+  );
+}
+// ---------------------------------------------------
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
@@ -76,10 +116,11 @@ export default function AdminDashboard() {
       currency: "THB",
     }).format(n);
 
-  const KPI = ({ label, value, sub }) => (
+  const KPI = ({ label, value, sub, tooltip }) => (
     <div className="rounded-md border border-[color:var(--border)] bg-[color:var(--card)] p-4">
-      <div className="text-sm text-[color:var(--muted-foreground)]">
+      <div className="text-sm text-[color:var(--muted-foreground)] flex items-center">
         {label}
+        {tooltip ? <InfoTip text={tooltip} /> : null}
       </div>
       <div className="text-2xl font-bold mt-1">{value}</div>
       {sub && (
@@ -94,20 +135,40 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* KPI Cards */}
       <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-        <KPI label="Sales (Today)" value={currency(kpi.todaySales)} />
-        <KPI label="Orders (Today)" value={kpi.todayOrders} />
-        <KPI label="Sales (MTD)" value={currency(kpi.mtdSales)} />
-        <KPI label="AOV" value={currency(kpi.aov)} />
-        <KPI label="New Users (7d)" value={kpi.newUsers7d} />
+        <KPI
+          label="Sales (Today)"
+          value={currency(kpi.todaySales)}
+          tooltip={TIPS.salesToday}
+        />
+        <KPI
+          label="Orders (Today)"
+          value={kpi.todayOrders}
+          tooltip={TIPS.ordersToday}
+        />
+        <KPI
+          label="Sales (MTD)"
+          value={currency(kpi.mtdSales)}
+          tooltip={TIPS.mtdSales}
+        />
+        <KPI label="AOV" value={currency(kpi.aov)} tooltip={TIPS.aov} />
+        <KPI
+          label="New Users (7d)"
+          value={kpi.newUsers7d}
+          tooltip={TIPS.newUsers7d}
+        />
         <KPI
           label="Email Verify Rate"
           value={`${Math.round(kpi.emailVerifyRate * 100)}%`}
+          tooltip={TIPS.emailVerify}
         />
       </section>
 
       {/* Revenue Trend (Last 30 days) */}
       <section className="rounded-md border border-[color:var(--border)] bg-[color:var(--card)] p-4">
-        <div className="font-semibold mb-2">Revenue (Last 30 days)</div>
+        <div className="font-semibold mb-2 flex items-center">
+          Revenue (Last 30 days)
+          <InfoTip text={TIPS.revenue30d} />
+        </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={revenueDaily}>
@@ -128,7 +189,7 @@ export default function AdminDashboard() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
-              <Tooltip />
+              <ChartTooltip />
               <Area
                 type="monotone"
                 dataKey="amount"
@@ -144,14 +205,17 @@ export default function AdminDashboard() {
       <section className="grid md:grid-cols-2 gap-4">
         {/* Top products */}
         <div className="rounded-md border border-[color:var(--border)] bg-[color:var(--card)] p-4">
-          <div className="font-semibold mb-2">Top Products</div>
+          <div className="font-semibold mb-2 flex items-center">
+            Top Products
+            <InfoTip text={TIPS.topProducts} />
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topProducts}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip />
+                <ChartTooltip />
                 <Bar dataKey="sales" />
               </BarChart>
             </ResponsiveContainer>
@@ -160,7 +224,10 @@ export default function AdminDashboard() {
 
         {/* Recent orders */}
         <div className="rounded-md border border-[color:var(--border)] bg-[color:var(--card)] p-4">
-          <div className="font-semibold mb-2">Recent Orders</div>
+          <div className="font-semibold mb-2 flex items-center">
+            Recent Orders
+            <InfoTip text={TIPS.recentOrders} />
+          </div>
           <div className="overflow-auto">
             <table className="min-w-full text-sm">
               <thead>

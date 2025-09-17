@@ -54,12 +54,12 @@ export default function Nav() {
     {
       label: "All",
       path: "/products",
-      dropdown: [
-        { label: "By Ages 3 - 4", path: "/all/ages-3-4" },
-        { label: "By Ages 4 - 6", path: "/all/ages-4-6" },
-        { label: "By Ages 6 - 9", path: "/all/ages-6-9" },
-        { label: "By Ages 9 - 12", path: "/all/ages-9-12" },
-      ],
+      // dropdown: [
+      //   { label: "By Ages 3 - 4", path: "/all/ages-3-4" },
+      //   { label: "By Ages 4 - 6", path: "/all/ages-4-6" },
+      //   { label: "By Ages 6 - 9", path: "/all/ages-6-9" },
+      //   { label: "By Ages 9 - 12", path: "/all/ages-9-12" },
+      // ],
     },
     { label: "New Arrival", path: "/new" },
     { label: "About Us", path: "/about" },

@@ -111,34 +111,44 @@ export default function AdminOrders() {
     }
   };
 
-  const RowActions = (order) => (
-    <div className="flex flex-wrap gap-2">
-      <button
-        className="h-9 px-3 rounded-md border hover:bg-gray-100"
-        onClick={() => handleViewOrder(order._id)}
-      >
-        View
-      </button>
-      <button
-        className="h-9 px-3 rounded-md border hover:bg-gray-100"
-        onClick={() => handleChangeStatus(order._id, "paid")}
-      >
-        Mark paid
-      </button>
-      <button
-        className="h-9 px-3 rounded-md border hover:bg-gray-100"
-        onClick={() => handleChangeStatus(order._id, "cancelled")}
-      >
-        Cancel
-      </button>
-      <button
-        className="h-9 px-3 rounded-md border text-red-600 hover:bg-red-50"
-        onClick={() => handleDelete(order._id)}
-      >
-        Delete
-      </button>
-    </div>
-  );
+const RowActions = (order) => (
+  <div className="flex flex-wrap gap-2">
+    <button
+      className="h-9 px-3 rounded-md border hover:bg-gray-100"
+      onClick={() => handleViewOrder(order._id)}
+      title="View order details"
+      aria-label="View order details"
+    >
+      View
+    </button>
+    <button
+      className="h-9 px-3 rounded-md border hover:bg-gray-100"
+      onClick={() => handleChangeStatus(order._id, "paid")}
+      title="Mark this order as paid"
+      aria-label="Mark paid"
+    >
+      Mark paid
+    </button>
+    <button
+      className="h-9 px-3 rounded-md border hover:bg-gray-100"
+      onClick={() => handleChangeStatus(order._id, "cancelled")}
+      title="Cancel this order"
+      aria-label="Cancel order"
+    >
+      Cancel
+    </button>
+    <button
+      className="h-9 px-3 rounded-md border border-red-600 text-red-600 hover:bg-red-50"
+      onClick={() => handleDelete(order._id)}
+      title="Delete this order permanently"
+      aria-label="Delete order"
+    >
+      Delete
+    </button>
+  </div>
+);
+
+
 
   return (
     <div className="space-y-4">
@@ -305,18 +315,24 @@ export default function AdminOrders() {
               <button
                 className="h-9 px-3 rounded-md border border-gray-300"
                 onClick={() => handleChangeStatus(orderDetail._id, "paid")}
+                title="Mark this order as paid"
+                aria-label="Mark paid"
               >
                 Mark paid
               </button>
               <button
                 className="h-9 px-3 rounded-md border border-gray-300"
                 onClick={() => handleChangeStatus(orderDetail._id, "cancelled")}
+                title="Cancel this order"
+                aria-label="Cancel order"
               >
                 Cancel
               </button>
               <button
-                className="h-9 px-3 rounded-md border text-red-600 hover:bg-red-50"
+                className="h-9 px-3 rounded-md border border-red-600 text-red-600 hover:bg-red-50"
                 onClick={() => handleDelete(orderDetail._id)}
+                title="Delete this order permanently"
+                aria-label="Delete order"
               >
                 Delete
               </button>
