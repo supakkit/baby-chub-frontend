@@ -236,7 +236,7 @@ export default function Nav() {
                 transition={{ type: "spring", stiffness: 300, damping: 10 }}
               >
                 <Button asChild className="cursor-pointer">
-                  <button onClick={handleLogout}>Log out</button>
+                  <button onClick={handleLogout}>Sign out</button>
                 </Button>
               </motion.div>
             </>

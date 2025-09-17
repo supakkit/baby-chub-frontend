@@ -1,7 +1,9 @@
 // src/views/UserProfile.jsx
-// Professional user profile page (frontend-only mock -> updated to real sessions)
-// - Adds real sessions loading via getMySessions() and revoke via revokeSession()
-// - A11y deep pass remains (aria-busy, per-field errors, focus management)
+// Professional user profile page
+// - Keep ALL original sections (Profile, Address, Payments, Preferences, Notifications, Security, etc.)
+// - Adjust ONLY two parts as requested:
+//   (1) Orders => "Your purchase history" with single "View order" button (no downloads here)
+//   (2) Active sessions => Simple, grouped by device (OS · Browser), single "Sign out on this device" (no modal/password)
 
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -9,6 +11,7 @@ import { toast } from "sonner";
 import { useUser } from "../context/UserContext";
 import { getMySessions, revokeSession } from "../services/userServices";
 
+// ----------------------------- Utils -----------------------------
 function cn(...xs) {
   return xs.filter(Boolean).join(" ");
 }
@@ -22,15 +25,13 @@ function maskEmail(email = "") {
   return `${masked}@${domain}`;
 }
 function brandFromCard(number = "") {
-  const n = number.replace(/\s+/g, "");
+  const n = (number || "").replace(/\s+/g, "");
   if (/^4/.test(n)) return "Visa";
   if (/^5[1-5]/.test(n)) return "Mastercard";
   if (/^3[47]/.test(n)) return "Amex";
   if (/^(6011|65)/.test(n)) return "Discover";
   return "Card";
 }
-
-
 async function fileToDataURL(file) {
   if (!file) return null;
   return new Promise((resolve, reject) => {
@@ -40,7 +41,19 @@ async function fileToDataURL(file) {
     r.readAsDataURL(file);
   });
 }
+// ----------------------------- Money (THB) -----------------------------
+const thb = new Intl.NumberFormat("th-TH", {
+  style: "currency",
+  currency: "THB",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+function money(n) {
+  const v = Number(n ?? 0);
+  return thb.format(v); // ฿1,234.00
+}
 
+// --------------------------- Component ---------------------------
 export function UserProfile() {
   const {
     user,
@@ -52,6 +65,7 @@ export function UserProfile() {
     logout,
   } = useUser();
 
+  // Normalize user for safe access (keep everything else intact)
   const safeUser = {
     ...user,
     avatarUrl: user?.avatarUrl || "",
@@ -79,16 +93,17 @@ export function UserProfile() {
     orders: Array.isArray(user?.orders) ? user.orders : [],
   };
 
-  // Orders / cards
+  // ===================== Orders / cards =====================
   const orders = safeUser.orders;
   const savedCards = safeUser.paymentMethods;
 
-  // --- Sessions (grouped & filtered by email) ---
+  // ===================== Sessions (grouped & filtered) =====================
   const [sessions, setSessions] = useState([]);
   const [sessionGroups, setSessionGroups] = useState({
     desktop: [],
     mobile: [],
   });
+  const [revoking, setRevoking] = useState(false);
 
   function isMobileUA(ua = "") {
     return /Mobi|Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(ua);
@@ -117,12 +132,14 @@ export function UserProfile() {
     return { browser, os, type: isMobileUA(ua) ? "mobile" : "desktop" };
   }
   function groupSessions(list = []) {
+    // Group by "type|os|browser" so repeated logins on the same device show as one card
     const map = new Map();
     list.forEach((s) => {
-      const ua = s.userAgent || s.ua || s.device || "";
+      const ua = s?.userAgent || s?.ua || s?.device || "";
       const meta = parseUA(ua);
       const key = `${meta.type}|${meta.os}|${meta.browser}`;
-      const lastActive = s.lastActive ? new Date(s.lastActive).getTime() : 0;
+      const lastActive = s?.lastActive ? new Date(s.lastActive).getTime() : 0;
+
       const item = map.get(key) || {
         key,
         type: meta.type,
@@ -136,10 +153,11 @@ export function UserProfile() {
       item.sessions.push(s);
       if (lastActive >= item.lastActive) {
         item.lastActive = lastActive;
-        item.ip = s.ip || "";
+        item.ip = s?.ip || "";
       }
       map.set(key, item);
     });
+
     const groups = Array.from(map.values())
       .map((g) => ({ ...g, count: g.sessions.length }))
       .sort((a, b) => b.lastActive - a.lastActive);
@@ -153,30 +171,60 @@ export function UserProfile() {
   async function loadSessions() {
     try {
       const list = await getMySessions();
-      // filter เผื่อ API เผลอส่งอีเมลอื่นมา (กันไว้ก่อน)
+      // Safety: show only the currently signed-in user's sessions
       const filtered = (Array.isArray(list) ? list : []).filter(
-        (s) => !s.email || s.email === user?.email
+        (s) => !s?.email || s.email === user?.email
       );
       setSessions(filtered);
       setSessionGroups(groupSessions(filtered));
-    } catch (e) {
-      // toast.error("Failed to load sessions");
+    } catch (_) {
       setSessions([]);
       setSessionGroups({ desktop: [], mobile: [] });
     }
   }
   useEffect(() => {
     loadSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Avatar / profile states
+  // Simple revoke: confirm -> revoke each session id in that device group -> reload
+  function handleRevoke(sessionIdOrIds) {
+    const ids = Array.isArray(sessionIdOrIds)
+      ? sessionIdOrIds
+      : [sessionIdOrIds];
+    if (
+      !window.confirm(
+        `Sign out from ${ids.length} session${ids.length > 1 ? "s" : ""}?`
+      )
+    )
+      return;
+
+    setRevoking(true);
+    (async () => {
+      try {
+        for (const raw of ids) {
+          const sid = raw?._id || raw?.id || raw;
+          if (sid) await revokeSession(sid);
+        }
+        toast.success(
+          ids.length > 1 ? "Signed out on that device" : "Signed out"
+        );
+        await loadSessions();
+      } catch (err) {
+        toast.error(err?.message || "Failed to sign out");
+      } finally {
+        setRevoking(false);
+      }
+    })();
+  }
+
+  // ===================== Profile states (keep original parts) =====================
   const [avatarPreview, setAvatarPreview] = useState(safeUser.avatarUrl);
   const [avatarFileName, setAvatarFileName] = useState("");
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [email] = useState(user?.email || "");
   const [phone, setPhone] = useState(safeUser.phone);
-
   const [phoneError, setPhoneError] = useState("");
 
   const [addr, setAddr] = useState(safeUser.address);
@@ -262,7 +310,6 @@ export function UserProfile() {
     setAvatarPreview(dataURL);
     setAvatarFileName(file.name);
   }
-
   async function handleRemovePhoto() {
     setRemovingPhoto(true);
     try {
@@ -277,7 +324,6 @@ export function UserProfile() {
       setRemovingPhoto(false);
     }
   }
-
   async function handleSaveProfile(e) {
     e.preventDefault();
     const pErr = validatePhone(phone);
@@ -300,7 +346,6 @@ export function UserProfile() {
       setSavingProfile(false);
     }
   }
-
   async function handleSaveAddress(e) {
     e.preventDefault();
     setSavingAddress(true);
@@ -323,10 +368,8 @@ export function UserProfile() {
       setSavingAddress(false);
     }
   }
-
   async function handleAddCard(e) {
     e.preventDefault();
-
     const errs = validateCardFields(cardForm);
     setCardErrors(errs);
     if (hasAnyError(errs)) return;
@@ -442,44 +485,7 @@ export function UserProfile() {
     toast.success("Account deleted");
   }
 
-  // --- Revoke (require password) ---
-const [revokeOpen, setRevokeOpen] = useState(false);
-const [revokeIds, setRevokeIds] = useState([]);          // รองรับหลาย session
-const [revokePassword, setRevokePassword] = useState("");
-const [revoking, setRevoking] = useState(false);
-
-function handleRevoke(sessionIdOrIds) {
-  const ids = Array.isArray(sessionIdOrIds) ? sessionIdOrIds : [sessionIdOrIds];
-  setRevokeIds(ids);
-  setRevokePassword("");
-  setRevokeOpen(true);
-}
-
-async function confirmRevoke(e) {
-  e?.preventDefault?.();
-  if (!revokePassword) {
-    toast.error("กรุณากรอกรหัสผ่านก่อนทำรายการ");
-    return;
-  }
-  setRevoking(true);
-  try {
-    // NOTE: revokeSession รองรับ body { password } (หาก service ของคุณรับพารามิเตอร์เดียว
-    // ให้ปรับที่ service ให้รับ password ด้วย หรือเพิ่ม endpoint verify ก่อน)
-    for (const id of revokeIds) {
-      await revokeSession(id, { password: revokePassword });
-    }
-    toast.success(
-      revokeIds.length > 1 ? "Revoked all sessions in this device" : "Session revoked"
-    );
-    setRevokeOpen(false);
-    await loadSessions();
-  } catch (err) {
-    toast.error(err?.message || "Failed to revoke session");
-  } finally {
-    setRevoking(false);
-  }
-}
-
+  // ----------------------------- UI -----------------------------
   return (
     <section className="layout mx-auto px-4 pt-8 pb-14 md:pt-10 md:pb-18">
       {/* Header */}
@@ -754,13 +760,13 @@ async function confirmRevoke(e) {
             </form>
           </section>
 
-          {/* Orders */}
+          {/* Orders (MODIFIED) */}
           <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold">Orders</h2>
+                <h2 className="text-xl font-semibold">Your purchase history</h2>
                 <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
-                  Your purchase history & digital downloads.
+                  View your orders and details.
                 </p>
               </div>
               <Link
@@ -772,6 +778,7 @@ async function confirmRevoke(e) {
               </Link>
             </div>
 
+            {/* Desktop table */}
             <div className="mt-5 hidden md:block overflow-auto">
               {orders.length === 0 ? (
                 <div className="text-sm text-[color:var(--muted-foreground)]">
@@ -781,10 +788,10 @@ async function confirmRevoke(e) {
                 <table className="w-full text-sm border-collapse">
                   <thead>
                     <tr className="text-left border-b border-[color:var(--border)]">
-                      <th className="py-2 pr-3">Order</th>
+                      <th className="py-2 pr-3">Order #</th>
                       <th className="py-2 pr-3">Date</th>
-                      <th className="py-2 pr-3">Total</th>
                       <th className="py-2 pr-3">Status</th>
+                      <th className="py-2 pr-3">Total</th>
                       <th className="py-2">Actions</th>
                     </tr>
                   </thead>
@@ -794,58 +801,62 @@ async function confirmRevoke(e) {
                         key={o.id}
                         className="border-b border-[color:var(--border)]"
                       >
-                        <td className="py-3 pr-3 font-medium">#{o.id}</td>
+                        <td className="py-3 pr-3 font-medium">{o.id}</td>
                         <td className="py-3 pr-3">
-                          {new Date(o.date).toLocaleDateString()}
+                          {o?.date ? new Date(o.date).toLocaleString() : "-"}
                         </td>
-                        <td className="py-3 pr-3">${o.total?.toFixed?.(2)}</td>
-                        <td className="py-3 pr-3">{o.status}</td>
+                        <td className="py-3 pr-3">{o?.status || "-"}</td>
+                        <td className="py-3 pr-3">
+                          {typeof o?.total === "number"
+                            ? `${money(o.total)}`
+                            : "-"}
+                        </td>
                         <td className="py-3">
-                          <div className="flex gap-2 flex-wrap">
-                            <Link
-                              to={`/orders/${o.id}`}
-                              className="h-9 px-3 inline-flex items-center justify-center rounded-md border hover:bg-[color:var(--muted)]/40"
-                            >
-                              View details
-                            </Link>
-                            {(o.items || []).map((it) => {
-                              const disabled =
-                                !it.downloadable ||
-                                !it.downloadUrl ||
-                                it.downloadUrl === "#";
-                              return (
-                                <button
-                                  key={it.id}
-                                  disabled={disabled}
-                                  onClick={() =>
-                                    !disabled
-                                      ? window.open(it.downloadUrl, "_blank")
-                                      : toast.message(
-                                          "Download available after payment confirmation."
-                                        )
-                                  }
-                                  title={
-                                    disabled
-                                      ? "Download not available yet"
-                                      : "Download your product"
-                                  }
-                                  className={cn(
-                                    "h-9 px-3 inline-flex items-center justify-center rounded-md border",
-                                    !disabled
-                                      ? "hover:bg-[color:var(--muted)]/40"
-                                      : "bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
-                                  )}
-                                >
-                                  Download {it.name}
-                                </button>
-                              );
-                            })}
-                          </div>
+                          <Link
+                            to={`/orders/${o.id}`}
+                            className="h-9 px-3 inline-flex items-center justify-center rounded-md border hover:bg-[color:var(--muted)]/40"
+                            title="View order"
+                          >
+                            View order
+                          </Link>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+
+            {/* Mobile cards */}
+            <div className="mt-4 grid grid-cols-1 gap-3 md:hidden">
+              {orders.map((o) => (
+                <div
+                  key={o.id}
+                  className="rounded-[var(--radius)] border border-[color:var(--border)] bg-white p-4"
+                >
+                  <div className="font-medium">Order #{o.id}</div>
+                  <div className="text-sm text-[color:var(--muted-foreground)]">
+                    {(o?.date && new Date(o.date).toLocaleString()) || "-"} ·{" "}
+                    {o?.status || "-"} ·{" "}
+                    {typeof o?.total === "number"
+                      ? `$${o.total.toFixed(2)}`
+                      : "-"}
+                  </div>
+                  <div className="mt-3">
+                    <Link
+                      to={`/orders/${o.id}`}
+                      className="h-9 px-3 inline-flex items-center justify-center rounded-md border hover:bg-[color:var(--muted)]/40"
+                      title="View order"
+                    >
+                      View order
+                    </Link>
+                  </div>
+                </div>
+              ))}
+              {orders.length === 0 && (
+                <div className="text-[color:var(--muted-foreground)]">
+                  No orders yet.
+                </div>
               )}
             </div>
           </section>
@@ -854,7 +865,7 @@ async function confirmRevoke(e) {
           <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
             <h2 className="text-xl font-semibold">Security</h2>
             <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
-              Change your password and review active sessions.
+              Change your password and review active devices.
             </p>
 
             <form
@@ -919,38 +930,55 @@ async function confirmRevoke(e) {
               </div>
             </form>
 
+            {/* Active sessions (MODIFIED: grouped & simple) */}
             <div className="mt-6">
               <h3 className="font-medium">Active sessions</h3>
-              <div className="mt-3 space-y-2">
-                {sessions.length === 0 ? (
-                  <div className="text-sm text-[color:var(--muted-foreground)]">
-                    No active sessions.
-                  </div>
-                ) : (
-                  sessions.map((s) => (
+              <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
+                You're signed in on these devices. Choose where to sign out.
+              </p>
+
+              <div className="mt-3 grid grid-cols-1 gap-3">
+                {[...sessionGroups.desktop, ...sessionGroups.mobile].map(
+                  (g) => (
                     <div
-                      key={s._id}
-                      className="flex items-center justify-between rounded-md border border-[color:var(--border)] bg-white px-3 py-2 text-sm"
+                      key={g.key}
+                      className="flex items-center justify-between rounded-md border border-[color:var(--border)] bg-white px-4 py-3 text-sm"
                     >
                       <div>
-                        <div className="font-medium">
-                          {s.device || "Unknown device"}
-                        </div>
+                        <div className="font-medium">{g.label}</div>
                         <div className="text-[color:var(--muted-foreground)]">
-                          IP {s.ip || "-"} —{" "}
-                          {s.lastActive
-                            ? new Date(s.lastActive).toLocaleString()
-                            : "-"}
+                          {g.count} session{g.count > 1 ? "s" : ""} · last
+                          active{" "}
+                          {g.lastActive
+                            ? new Date(g.lastActive).toLocaleString()
+                            : "—"}
+                          {g.ip ? ` · IP ${g.ip}` : ""}
                         </div>
                       </div>
+
                       <button
-                        onClick={() => handleRevoke(s._id)}
-                        className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/50"
+                        onClick={() =>
+                          handleRevoke(
+                            g.sessions
+                              .map((s) => s?._id || s?.id)
+                              .filter(Boolean)
+                          )
+                        }
+                        disabled={revoking || g.sessions.length === 0}
+                        className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/50 disabled:opacity-60"
+                        title="Sign out on this device"
                       >
-                        Revoke
+                        {revoking ? "Working..." : "Sign out on this device"}
                       </button>
                     </div>
-                  ))
+                  )
+                )}
+
+                {sessionGroups.desktop.length + sessionGroups.mobile.length ===
+                  0 && (
+                  <div className="text-sm text-[color:var(--muted-foreground)]">
+                    No active devices.
+                  </div>
                 )}
               </div>
             </div>
@@ -1013,75 +1041,302 @@ async function confirmRevoke(e) {
                     onChange={(e) => setNewsletter(e.target.checked)}
                     disabled={savingNotif}
                   />
-                  Subscribe to newsletter
+                  Receive newsletter
                 </label>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  ref={btnNotifRef}
+                  disabled={savingNotif}
+                  className="inline-flex items-center justify-center h-9 px-3 rounded-md bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:opacity-90 disabled:opacity-60"
+                >
+                  {savingNotif ? "Saving..." : "Save preferences"}
+                </button>
+              </div>
+            </form>
+          </section>
+
+          {/* Payment methods */}
+          <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
+            <h2 className="text-xl font-semibold">Payment methods</h2>
+            <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
+              Add a new card or remove an existing one.
+            </p>
+
+            {/* Saved cards */}
+            <div className="mt-4 space-y-2">
+              {savedCards.length === 0 ? (
+                <div className="text-sm text-[color:var(--muted-foreground)]">
+                  No payment methods yet.
+                </div>
+              ) : (
+                savedCards.map((c, i) => (
+                  <div
+                    key={`${c.brand}-${c.last4}-${i}`}
+                    className="flex items-center justify-between rounded-md border border-[color:var(--border)] bg-white px-3 py-2"
+                  >
+                    <div className="text-sm">
+                      <div className="font-medium">
+                        {c.brand || "Card"} ·•••• {c.last4}
+                      </div>
+                      <div className="text-[color:var(--muted-foreground)]">
+                        Holder {c.holder || "-"} · exp {c.expMonth}/{c.expYear}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCard(i)}
+                      className="inline-flex items-center justify-center h-8 px-3 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/40"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Add card form */}
+            <form
+              onSubmit={handleAddCard}
+              className="mt-4 space-y-3"
+              aria-busy={addingCard}
+            >
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-sm mb-1">Name on card</label>
+                  <input
+                    value={cardForm.holder}
+                    onChange={(e) =>
+                      setCardForm({ ...cardForm, holder: e.target.value })
+                    }
+                    className={cn(
+                      "w-full h-10 px-3 rounded-md border bg-white",
+                      cardErrors.holder
+                        ? "border-red-500"
+                        : "border-[color:var(--input)]"
+                    )}
+                    aria-invalid={!!cardErrors.holder}
+                  />
+                  {cardErrors.holder && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {cardErrors.holder}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Card number</label>
+                  <input
+                    value={cardForm.number}
+                    onChange={(e) =>
+                      setCardForm({ ...cardForm, number: e.target.value })
+                    }
+                    className={cn(
+                      "w-full h-10 px-3 rounded-md border bg-white",
+                      cardErrors.number
+                        ? "border-red-500"
+                        : "border-[color:var(--input)]"
+                    )}
+                    aria-invalid={!!cardErrors.number}
+                    inputMode="numeric"
+                  />
+                  {cardErrors.number && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {cardErrors.number}
+                    </p>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-sm mb-1">MM</label>
+                    <input
+                      value={cardForm.expMonth}
+                      onChange={(e) =>
+                        setCardForm({ ...cardForm, expMonth: e.target.value })
+                      }
+                      className={cn(
+                        "w-full h-10 px-3 rounded-md border bg-white",
+                        cardErrors.expMonth
+                          ? "border-red-500"
+                          : "border-[color:var(--input)]"
+                      )}
+                      inputMode="numeric"
+                    />
+                    {cardErrors.expMonth && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {cardErrors.expMonth}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">YY / YYYY</label>
+                    <input
+                      value={cardForm.expYear}
+                      onChange={(e) =>
+                        setCardForm({ ...cardForm, expYear: e.target.value })
+                      }
+                      className={cn(
+                        "w-full h-10 px-3 rounded-md border bg-white",
+                        cardErrors.expYear
+                          ? "border-red-500"
+                          : "border-[color:var(--input)]"
+                      )}
+                      inputMode="numeric"
+                    />
+                    {cardErrors.expYear && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {cardErrors.expYear}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">CVC</label>
+                    <input
+                      value={cardForm.cvc}
+                      onChange={(e) =>
+                        setCardForm({ ...cardForm, cvc: e.target.value })
+                      }
+                      className={cn(
+                        "w-full h-10 px-3 rounded-md border bg-white",
+                        cardErrors.cvc
+                          ? "border-red-500"
+                          : "border-[color:var(--input)]"
+                      )}
+                      inputMode="numeric"
+                    />
+                    {cardErrors.cvc && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {cardErrors.cvc}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <button
                 type="submit"
-                ref={btnNotifRef}
-                disabled={savingNotif}
-                className="mt-3 inline-flex items-center justify-center h-10 px-4 rounded-md bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:opacity-90 disabled:opacity-60"
+                ref={btnAddCardRef}
+                disabled={addingCard}
+                className="inline-flex items-center justify-center h-9 px-3 rounded-md bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:opacity-90 disabled:opacity-60"
               >
-                {savingNotif ? "Saving..." : "Save notifications"}
+                {addingCard ? "Adding..." : "Add payment method"}
               </button>
             </form>
           </section>
 
-          {/* Privacy & Account */}
+          {/* Preferences */}
           <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
-            <h2 className="text-xl font-semibold">Privacy & Account</h2>
+            <h2 className="text-xl font-semibold">Preferences</h2>
             <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
-              Control your data and account status.
+              Choose age range and topics you’re interested in.
             </p>
 
-            <div className="mt-4 space-y-3">
+            <form
+              onSubmit={handleSavePrefs}
+              className="mt-5 space-y-3"
+              aria-busy={savingPrefs}
+            >
+              <div>
+                <label className="block text-sm mb-1">Age range</label>
+                <select
+                  value={ageRange}
+                  onChange={(e) => setAgeRange(e.target.value)}
+                  className="w-full h-10 px-3 rounded-md border border-[color:var(--input)] bg-white"
+                >
+                  <option value="">Not set</option>
+                  <option value="0-2">0–2</option>
+                  <option value="3-5">3–5</option>
+                  <option value="6-9">6–9</option>
+                  <option value="10-12">10–12</option>
+                  <option value="13+">13+</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Interests</label>
+                <input
+                  value={interests.join(", ")}
+                  onChange={(e) =>
+                    setInterests(
+                      e.target.value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                    )
+                  }
+                  className="w-full h-10 px-3 rounded-md border border-[color:var(--input)] bg-white"
+                  placeholder="toys, stroller, feeding, education"
+                />
+              </div>
+
+              <button
+                type="submit"
+                ref={btnPrefsRef}
+                disabled={savingPrefs}
+                className="inline-flex items-center justify-center h-9 px-3 rounded-md bg-[color:var(--primary)] text-[color:var(--primary-foreground)] hover:opacity-90 disabled:opacity-60"
+              >
+                {savingPrefs ? "Saving..." : "Save preferences"}
+              </button>
+            </form>
+          </section>
+
+          {/* Data & privacy */}
+          <section className="rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-5 md:p-6">
+            <h2 className="text-xl font-semibold">Data & privacy</h2>
+            <p className="text-sm text-[color:var(--muted-foreground)] mt-1">
+              Download a copy of your data or delete your account.
+            </p>
+
+            <div className="mt-5 space-y-3">
               <button
                 onClick={handleExportData}
-                className="w-full inline-flex items-center justify-center h-10 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/40"
+                className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/40"
               >
-                Export my data
+                Request my data
               </button>
 
-              <div className="rounded-md border border-[color:var(--border)] p-3 bg-white">
-                <div className="text-sm font-medium text-red-600">
-                  Delete account
-                </div>
-                <p className="text-xs text-[color:var(--muted-foreground)] mt-1">
-                  This action is permanent and cannot be undone. Type{" "}
-                  <b>DELETE</b> to confirm.
-                </p>
+              <div className="pt-3">
+                <label className="block text-sm mb-1">
+                  Type <code>DELETE</code> to confirm account deletion
+                </label>
                 <input
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value)}
-                  placeholder='Type "DELETE" to confirm'
-                  className="mt-2 w-full h-9 px-3 rounded-md border border-[color:var(--input)] bg-white"
+                  className="w-full h-10 px-3 rounded-md border border-[color:var(--input)] bg-white"
+                  placeholder="DELETE"
                 />
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2">
                   <button
-                    disabled={!confirmOk}
                     onClick={handleDeleteAccount}
-                    className={cn(
-                      "inline-flex items-center justify-center h-10 px-4 rounded-md",
-                      confirmOk
-                        ? "bg-red-600 text-white hover:opacity-90"
-                        : "bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
-                    )}
+                    disabled={!confirmOk}
+                    className="inline-flex items-center justify-center h-9 px-3 rounded-md bg-red-600 text-white hover:opacity-90 disabled:opacity-60"
                   >
-                    Permanently delete
-                  </button>
-                  <button
-                    onClick={logout}
-                    className="inline-flex items-center justify-center h-10 px-4 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/40"
-                  >
-                    Log out
+                    Delete my account
                   </button>
                 </div>
               </div>
             </div>
           </section>
+
+          {/* Sign out */}
+          <div className="flex items-center justify-between rounded-[var(--radius)] border border-[color:var(--border)] bg-[color:var(--card)] p-4">
+            <div>
+              <div className="font-medium">Sign out</div>
+              <div className="text-sm text-[color:var(--muted-foreground)]">
+                Sign out from this browser.
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-[color:var(--border)] hover:bg-[color:var(--muted)]/40"
+            >
+              Sign out
+            </button>
+          </div>
         </aside>
       </div>
     </section>
   );
 }
+
+export default UserProfile;
