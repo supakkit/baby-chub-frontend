@@ -1,9 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
 import { Link, useParams } from "react-router-dom";
-// import { CartContext } from "../context/CartContext";
-// import UserReview from "../components/UserReview";
-// import RecommendProducts from "../components/RecommendProducts";
+import UserReview from "../components/UserReview";
+import RecommendProducts from "../components/RecommendProducts";
 
 import { addToFavorite } from "../services/favoriteService";
 import { addToCart } from "../services/cartService";
@@ -73,15 +72,16 @@ export function ProductDetail() {
               </div>
               <div className="pb-10 w-full">
                 <Carousel>
-                  <CarouselContent className="gap-2">
+                  <CarouselContent className="flex gap-2">
                     {thumbnails.map((img, idx) => (
                       <CarouselItem
                         key={idx}
-                        className="md:basis-1/2 lg:basis-1/3 cursor-pointer"
+                        className="flex-none w-1/3 h-24 cursor-pointer"
                       >
                         <img
                           src={img}
                           alt=""
+                          className="w-full h-full object-cover rounded-md"
                           onMouseEnter={() => setMainImage(img)}
                         />
                       </CarouselItem>
@@ -130,17 +130,16 @@ export function ProductDetail() {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-4 mt-4 items-end w-full">
-              {/* ไอคอน Favorite + Cart */}
-              <div className="flex flex-row gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center w-full gap-4 mt-4">
+              <div className="flex justify-center gap-4 order-1 sm:order-1 sm:justify-start">
                 <img
-                  className="h-10 cursor-pointer"
+                  className="h-10 w-10 cursor-pointer"
                   src="/images/heart(2).svg"
                   alt="Add to Favorite"
                   onClick={() => addToFavorite(product._id)}
                 />
                 <img
-                  className="h-10 cursor-pointer"
+                  className="h-10 w-10 cursor-pointer"
                   src="/images/addToCart.svg"
                   alt="Add to Cart"
                   onClick={() => addToCart(product._id, selectPlan?.type)}
@@ -150,11 +149,12 @@ export function ProductDetail() {
               <Button
                 asChild
                 variant="default"
-                className="w-full sm:w-auto cursor-pointer"
+                className="w-full sm:w-auto sm:flex-1 sm:min-w-[250px] text-lg font-semibold py-4 order-2 sm:order-2"
               >
                 <Link
                   to="/checkout"
                   onClick={() => addToCheckout(product, selectPlan?.type)}
+                  className="w-full block text-center"
                 >
                   Checkout
                 </Link>
@@ -165,14 +165,13 @@ export function ProductDetail() {
       </div>
 
       {/* User Reviews */}
-      {/* <div className="w-full p-4 lg:p-10">
-        <UserReview />
-      </div> */}
+      <div className="w-full p-4 lg:p-10">
+        <UserReview productId={product._id} />
+      </div>
 
       {/* Recommend Products */}
       <div className="w-full p-4 lg:p-10">
-        <h2 className="text-2xl font-bold pb-4">You May Also Like</h2>
-        {/* <RecommendProducts currentType={product.type} limit={12} /> */}
+        <RecommendProducts />
       </div>
     </>
   );

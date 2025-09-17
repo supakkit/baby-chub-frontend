@@ -5,7 +5,7 @@ export const getReviews = async (productId, params = {}) => {
     const response = await api.get(`/products/${productId}/reviews`, {
       params,
     });
-    return response.data;
+    return response.data.reviews;
   } catch (error) {
     console.error(error);
   }
