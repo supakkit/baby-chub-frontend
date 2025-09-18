@@ -35,18 +35,21 @@ export function Products() {
         setSearchParams(params, { replace: true });
     }, [setSearchParams, pageSize]);
 
-    const fetchProducts = async (query) => {
-        const data = await getProductsByQuery(query);
-        // console.log('data:', data)
-        setFilteredProducts(data?.products || []);
-        
-        if (typeof data?.total === "number") setTotal(data.total);
-        if (typeof data?.page === "number") setPage(data.page);
-        // console.log('total:', data.total)
+    const fetchProducts = useCallback(
+        async (query) => {
+            const data = await getProductsByQuery(query);
+            // console.log('data:', data)
+            setFilteredProducts(data?.products || []);
+            
+            if (typeof data?.total === "number") setTotal(data.total);
+            if (typeof data?.page === "number") setPage(data.page);
+            // console.log('total:', data.total)
 
-        // reflect current state in URL
-        setURLParams({ ...selectedFilters, page, limit: pageSize });    
-    };
+            // reflect current state in URL
+            setURLParams({ ...selectedFilters, page, limit: pageSize });    
+        } ,[getProductsByQuery, setURLParams]
+    );
+     
 
     const handlePrev = () => {
         fetchProducts({ ...selectedFilters, page: page-1 });
@@ -74,6 +77,7 @@ export function Products() {
     const ageParam = searchParams.get('age');
     const typeParam = searchParams.get('type');
     const subjectParam = searchParams.get('subject');
+    const queryParam = searchParams.get('q');
     
     let initialFilters = { ...defaultFilters };
 
@@ -87,6 +91,10 @@ export function Products() {
 
     if (subjectParam) {
         initialFilters.subject = JSON.parse(subjectParam);
+    }
+
+    if (queryParam) {
+        initialFilters.q = queryParam;
     }
     
     // Set the state and fetch products based on the URL params

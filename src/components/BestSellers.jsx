@@ -1,5 +1,5 @@
 // src/components/BestSellers.jsx
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
@@ -23,6 +23,7 @@ const api = axios.create({
 export default function BestSellers() {
   const [items, setItems] = useState([]);
   const [error, setError] = useState("");
+  const mobileTrackRef = useRef(null); // ใช้เป็น ref ของแทร็คมือถือ (ไม่ต้องมีปุ่มก็ได้)
 
   // fallback mock เผื่อกรณีหา product id ไม่ครบจริง ๆ
   const mock = [
@@ -35,7 +36,6 @@ export default function BestSellers() {
     let cancelled = false;
     (async () => {
       try {
-        // 1) ลองดึงล็อตใหญ่ก่อนแล้วกรองเอาเฉพาะ 3 id นี้
         const { data } = await api.get("/products", { params: { limit: 100 } });
         const list = Array.isArray(data?.products) ? data.products : [];
 
@@ -57,7 +57,6 @@ export default function BestSellers() {
 
         let ordered = FIXED_PRODUCT_IDS.map((id) => mapById.get(String(id))).filter(Boolean);
 
-        // 2) ถ้ายังหาไม่ครบ 3 ตัว ลองยิงทีละ id
         if (ordered.length < FIXED_PRODUCT_IDS.length) {
           const missingIds = FIXED_PRODUCT_IDS.filter(
             (id) => !ordered.find((it) => String(it?.id) === String(id))
@@ -85,17 +84,12 @@ export default function BestSellers() {
             })
           );
 
-          // รวมและเรียงตาม FIXED_PRODUCT_IDS
           const merged = new Map(ordered.map((it) => [String(it.id), it]));
-          fetchedMissing
-            .filter(Boolean)
-            .forEach((it) => merged.set(String(it.id), it));
-
+          fetchedMissing.filter(Boolean).forEach((it) => merged.set(String(it.id), it));
           ordered = FIXED_PRODUCT_IDS.map((id) => merged.get(String(id))).filter(Boolean);
         }
 
         if (!cancelled) {
-          // ถ้ายังไม่ครบ 3 ตัวจริง ๆ ให้ใช้ mock เติมให้ครบ
           const finalItems =
             ordered.length === FIXED_PRODUCT_IDS.length
               ? ordered
@@ -115,12 +109,41 @@ export default function BestSellers() {
   }, []);
 
   const [first, second, third] = useMemo(() => {
-    // ต้องการลำดับ 1–2–3; โพเดียมจะแสดงเป็น 2–1–3
     return [items[0], items[1], items[2]];
   }, [items]);
 
   return (
-    <section className="relative w-screen left-1/2 -translate-x-1/2 bg-gradient-to-b from-white to-muted/40 py-12 md:py-16">
+    <section className="relative w-screen left-1/2 -translate-x-1/2 py-12 md:py-16 bg-transparent">
+      {/* CSS เฉพาะมือถือ */}
+      <style>{`
+  @media (max-width: 640px) {
+    /* แทร็ค carousel: snap ทีละใบ */
+    #bs-track-mobile {
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      padding: 16px 16px;  /* buffer บน–ล่าง กันตกขอบ */
+      gap: 16px;
+
+      /* ⬅️ เพิ่มบรรทัดนี้ให้เลื่อนนิ้วลื่นขึ้นบน iOS */
+      -webkit-overflow-scrolling: touch;
+    }
+    #bs-track-mobile::-webkit-scrollbar { display: none; }
+
+    /* การ์ด: 70vw เพื่อไม่ล้นแนวตั้ง */
+    .bs-card {
+      width: 70vw !important;
+      flex: 0 0 auto;
+      scroll-snap-align: center;
+    }
+
+    .bs-flat-mobile { transform: translateY(0) !important; }
+    #bs-aura { display: none !important; }
+  }
+`}</style>
+
+
       <div className="layout">
         <h2 className="text-3xl font-bold text-foreground text-center mb-2">
           ✨ Loved by Little Learners ✨
@@ -129,10 +152,53 @@ export default function BestSellers() {
           Discover the picks that parents can’t stop talking about.
         </p>
 
-        {/* PODIUM 2 – 1 – 3 */}
-        <div className="relative mx-auto flex items-end justify-center gap-4 md:gap-8">
-          {/* Aura หลังอันดับ 1 */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex justify-center">
+        {/* ---------- มือถือ: Carousel 1 → 2 → 3 (ไม่มีปุ่ม) ---------- */}
+        <div className="relative md:hidden">
+          <div
+          id="bs-track-mobile"
+          ref={mobileTrackRef}
+          className="relative mx-auto flex items-stretch justify-start gap-4
+          snap-x snap-mandatory touch-pan-x overscroll-x-contain"
+          >
+            {first && (
+              <PodiumCard
+                item={first}
+                rank={1}
+                size="lg"
+                className="bs-card bs-flat-mobile"
+                badgeBg="bg-muted"
+                highlight
+              />
+            )}
+            {second && (
+              <PodiumCard
+                item={second}
+                rank={2}
+                size="sm"
+                className="bs-card bs-flat-mobile"
+                badgeBg="bg-secondary"
+              />
+            )}
+            {third && (
+              <PodiumCard
+                item={third}
+                rank={3}
+                size="sm"
+                className="bs-card bs-flat-mobile"
+                badgeBg="bg-accent"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* ---------- เดสก์ท็อป: คงเดิม 2 – 1 – 3 (ไม่มีปุ่มอยู่แล้ว) ---------- */}
+        <div className="relative mx-auto hidden md:flex items-end justify-center gap-4 md:gap-8">
+          {/* Aura หลังอันดับ 1 (เดสก์ท็อปเท่านั้น) */}
+          <div
+            id="bs-aura"
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -z-10 flex justify-center"
+          >
             <div className="relative">
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 h-48 w-48 md:h-64 md:w-64 rounded-full bg-pink-200/40 blur-3xl animate-pulse" />
               <div className="absolute -top-14 left-1/2 -translate-x-1/2 h-56 w-56 md:h-72 md:w-72 rounded-full bg-purple-200/30 blur-3xl animate-[spin_16s_linear_infinite]" />
@@ -196,9 +262,10 @@ function PodiumCard({
   const isSilver = rank === 2;
   const isBronze = rank === 3;
 
+  // มือถือใช้ .bs-card คุมความกว้างภายนอก → ภายในใช้ w-full
   const sizes = {
-    sm: "w-40 md:w-56",
-    lg: "w-56 md:w-72",
+    sm: "w-full md:w-56",
+    lg: "w-full md:w-72",
   };
 
   const medal = isGold ? "🏆" : isSilver ? "🥈" : "🥉";
@@ -210,14 +277,14 @@ function PodiumCard({
       <div className="absolute -top-3 -left-3 z-20">
         <div
           className={[
-            "inline-flex items-center justify-center h-9 min-w-[88px] px-3 rounded-full",
+            "inline-flex items-center justify-center h-9 min-w-[96px] px-3 rounded-full",
             "border border-border/20 shadow-sm leading-none",
             badgeBg,
-            "text-foreground",
+            "text-foreground text-sm md:text-sm",
           ].join(" ")}
         >
           <span className="mr-1 text-base leading-none align-middle">{medal}</span>
-          <span className="text-xs md:text-sm font-semibold leading-none align-middle">
+          <span className="font-semibold leading-none align-middle">
             {label}
           </span>
         </div>
@@ -229,8 +296,8 @@ function PodiumCard({
         <figure
           className={[
             "relative overflow-hidden aspect-square",
-            "shadow-[0_10px_25px_rgba(0,0,0,0.12)] group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.16)]",
-            "transition-transform duration-300 will-change-transform group-hover:-translate-y-1",
+            "shadow-[0_10px_25px_rgba(0,0,0,0.12)] md:group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.16)]",
+            "transition-transform duration-300 will-change-transform md:group-hover:-translate-y-1",
             "rounded-none bg-transparent",
             highlight ? "ring-1 ring-primary/30" : "",
           ].join(" ")}
@@ -245,11 +312,11 @@ function PodiumCard({
 
         {/* ชื่อ + รายละเอียด */}
         <div className="mt-3 text-center">
-          <div className="inline-flex px-3 py-1 rounded-full text-xs md:text-sm font-medium text-card-foreground bg-white/80 backdrop-blur border border-border/20 shadow-sm">
+          <div className="inline-flex px-4 py-1.5 rounded-full text-sm md:text-sm font-medium text-card-foreground bg-white/80 backdrop-blur border border-border/20 shadow-sm">
             {item.title}
           </div>
           {item.desc ? (
-            <div className="mt-2 text-sm text-foreground/80 line-clamp-2 px-2">
+            <div className="mt-2 text-sm md:text-sm text-foreground/80 line-clamp-2 px-2">
               {item.desc}
             </div>
           ) : null}
@@ -259,7 +326,7 @@ function PodiumCard({
       {/* ฐานโพเดียม */}
       <div
         className={[
-          "mx-auto mt-2 h-2 rounded-full",
+          "mx-auto mt-3 h-2 rounded-full",
           isGold ? "w-3/4 bg-primary/40" : isSilver ? "w-2/3 bg-muted/50" : "w-2/3 bg-muted/50",
         ].join(" ")}
       />

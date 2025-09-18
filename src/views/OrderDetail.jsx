@@ -1,16 +1,16 @@
 // src/views/OrderDetail.jsx
 // Professional order detail page (frontend-only mock)
-// - Download buttons: disable + tooltip for placeholder links ('#')
+// - Actions: View product only (removed download logic)
+// - Currency: Thai Baht (THB) formatting
 // - Quantity: supports both `quantity` and legacy `qty`
 // - Billing address: read from the order snapshot (not from profile)
-// - Clean structure with clear sections & English comments
+// - Clean structure with clear sections & comments
 
 // ======================================================
 // SECTION: Imports
 // ======================================================
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMemo } from "react";
-import { toast } from "sonner";
 import { useUser } from "../context/UserContext";
 
 // ======================================================
@@ -20,9 +20,16 @@ function cn(...xs) {
   return xs.filter(Boolean).join(" ");
 }
 
+// Format money as Thai Baht (e.g., ฿1,234.00)
+const thb = new Intl.NumberFormat("th-TH", {
+  style: "currency",
+  currency: "THB",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 function money(n) {
   const v = Number(n ?? 0);
-  return `$${v.toFixed(2)}`;
+  return thb.format(v);
 }
 
 function fmtDate(d) {
@@ -48,10 +55,6 @@ function renderBillingAddress(addr) {
   return parts || "—";
 }
 
-// Helpers for download availability
-const isDownloadDisabled = (it) =>
-  !it?.downloadable || !it?.downloadUrl || it.downloadUrl === "#";
-
 // ======================================================
 // SECTION: Component
 // ======================================================
@@ -61,7 +64,7 @@ export function OrderDetail() {
   const { orderId } = useParams();
 
   // ----------------------------------------------------
-  // Find order by id from user snapshot
+  // Find order by id from user snapshot (frontend-only)
   // ----------------------------------------------------
   const order = useMemo(() => {
     const list = Array.isArray(user?.orders) ? user.orders : [];
@@ -88,17 +91,6 @@ export function OrderDetail() {
         </div>
       </section>
     );
-  }
-
-  // ----------------------------------------------------
-  // Handlers
-  // ----------------------------------------------------
-  function handleDownload(it) {
-    if (!isDownloadDisabled(it)) {
-      window.open(it.downloadUrl, "_blank", "noopener,noreferrer");
-    } else {
-      toast.message("Download available after payment confirmation.");
-    }
   }
 
   // ======================================================
@@ -164,7 +156,7 @@ export function OrderDetail() {
             <tbody>
               {(order.items || []).map((it) => {
                 const qty = it.quantity ?? it.qty ?? 1;
-                const disabled = isDownloadDisabled(it);
+                const canView = !!it.productId;
                 return (
                   <tr
                     key={it.id}
@@ -175,33 +167,25 @@ export function OrderDetail() {
                     <td className="py-3 pr-3">{money(it.price)}</td>
                     <td className="py-3">
                       <div className="flex gap-2 flex-wrap">
-                        {/* View product only if productId provided */}
-                        {it.productId && (
+                        {canView ? (
                           <Link
                             to={`/product/${it.productId}`}
                             className="h-9 px-3 inline-flex items-center justify-center rounded-md border hover:bg-[color:var(--muted)]/40"
                           >
                             View product
                           </Link>
-                        )}
-
-                        <button
-                          disabled={disabled}
-                          onClick={() => handleDownload(it)}
-                          title={
+                        ) : (
+                          <button
                             disabled
-                              ? "Download not available yet"
-                              : "Download your product"
-                          }
-                          className={cn(
-                            "h-9 px-3 inline-flex items-center justify-center rounded-md border",
-                            !disabled
-                              ? "hover:bg-[color:var(--muted)]/40"
-                              : "bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
-                          )}
-                        >
-                          Download {it.name}
-                        </button>
+                            className={cn(
+                              "h-9 px-3 inline-flex items-center justify-center rounded-md border",
+                              "bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
+                            )}
+                            title="Product page unavailable"
+                          >
+                            View product
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -224,7 +208,7 @@ export function OrderDetail() {
         <div className="mt-4 grid grid-cols-1 gap-3 md:hidden">
           {(order.items || []).map((it) => {
             const qty = it.quantity ?? it.qty ?? 1;
-            const disabled = isDownloadDisabled(it);
+            const canView = !!it.productId;
             return (
               <div
                 key={it.id}
@@ -235,31 +219,25 @@ export function OrderDetail() {
                   Qty {qty} · {money(it.price)}
                 </div>
                 <div className="pt-2 flex gap-2 flex-wrap">
-                  {it.productId && (
+                  {canView ? (
                     <Link
                       to={`/product/${it.productId}`}
                       className="h-9 px-3 inline-flex items-center justify-center rounded-md border hover:bg-[color:var(--muted)]/40"
                     >
                       View product
                     </Link>
-                  )}
-                  <button
-                    disabled={disabled}
-                    onClick={() => handleDownload(it)}
-                    title={
+                  ) : (
+                    <button
                       disabled
-                        ? "Download not available yet"
-                        : "Download your product"
-                    }
-                    className={cn(
-                      "h-9 px-3 rounded-md border text-sm inline-flex items-center justify-center",
-                      !disabled
-                        ? "bg-white hover:bg-[color:var(--muted)]/40"
-                        : "bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
-                    )}
-                  >
-                    Download {it.name}
-                  </button>
+                      className={cn(
+                        "h-9 px-3 rounded-md border text-sm inline-flex items-center justify-center",
+                        "bg-[color:var(--muted)]/30 text-[color:var(--muted-foreground)] cursor-not-allowed"
+                      )}
+                      title="Product page unavailable"
+                    >
+                      View product
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -299,3 +277,5 @@ export function OrderDetail() {
     </section>
   );
 }
+
+export default OrderDetail;

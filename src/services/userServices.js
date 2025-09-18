@@ -1,45 +1,31 @@
 // src/services/userServices.js
-// NOTE(ไทย): ใช้ Axios instance จาก api.js ซึ่งเลือก baseURL จาก VITE_* และเปิด withCredentials แล้ว
+// NOTE(TH): ใช้ Axios instance จาก api.js สำหรับทุก endpoint ปกติ
+//           ยกเว้น "Orders" ที่เราบังคับให้ใช้ mock เพื่อเดโมหน้า Library
 import api from "./api";
 
-/* =========================
- * 1) Sign Up
- *  body: {
- *    email, password,
- *    fullName (หรือ firstName + lastName),
- *    mobile,
- *    targetAge: { from, to },  // ช่วงอายุ 3–15
- *    agreeToPolicy: true
- *  }
- * ========================= */
+/* =======================================================================
+ * 1) Auth: Sign Up / Sign In / Forgot / Reset
+ * ======================================================================= */
 export async function signup(payload) {
   const { data } = await api.post("/auth/signup", payload);
   return data; // { user, message }
 }
 
-// resend verify mail
 export async function resendVerification(email) {
   const { data } = await api.post("/auth/resend-verification", { email });
-  return data; // { message: "If email exists, verification mail was sent." }
+  return data; // { message }
 }
 
-/* =========================
- * 2) Sign In
- *  body: { email, password }
- *  สำเร็จแล้ว backend เซ็ต httpOnly cookie: accessToken
- * ========================= */
 export async function signin({ email, password }) {
   const { data } = await api.post("/auth/login", { email, password });
   return data; // { user, message }
 }
 
-/* =========================
- * 3) Forgot / Reset Password
- * ========================= */
 export async function forgotPassword(email) {
   const { data } = await api.post("/auth/forgot-password", { email });
   return data; // { message }
 }
+
 export async function resetPassword({ token, newPassword }) {
   const { data } = await api.post("/auth/reset-password", {
     token,
@@ -48,47 +34,51 @@ export async function resetPassword({ token, newPassword }) {
   return data; // { message }
 }
 
-/* =========================
- * 5) Get Current User (อ่านจาก cookie)
- * ========================= */
+/* =======================================================================
+ * 2) Me / Profile
+ * ======================================================================= */
 export async function getCurrentUser() {
   const { data } = await api.get("/auth/me");
   return data.user; // sanitized user
 }
 
-/* =========================
- * 6) User Profile CRUD
- * ========================= */
 export async function getProfile() {
   const { data } = await api.get("/users");
   return data.user;
 }
+
 export async function updateProfileBasics(payload) {
   const { data } = await api.patch("/users", payload);
   return data.user;
 }
+
 export async function updateAddress(addressPayload) {
   const { data } = await api.patch("/users/address", addressPayload);
   return data.user;
 }
+
 export async function updateNotifications(prefs) {
   const { data } = await api.patch("/users/notifications", prefs);
   return data.user;
 }
+
 export async function toggleNewsletter(newsletter) {
   const { data } = await api.patch("/users/newsletter", {
     newsletter: !!newsletter,
   });
   return data.user;
 }
+
 export async function updateAvatar(avatarUrl) {
   const { data } = await api.patch("/users/avatar", { avatarUrl });
   return data.user;
 }
+
 export async function removeAvatar() {
   const { data } = await api.delete("/users/avatar");
   return data.user;
 }
+
 export async function changePassword({ currentPassword, newPassword }) {
   const { data } = await api.patch("/users/password", {
     currentPassword,
@@ -97,52 +87,65 @@ export async function changePassword({ currentPassword, newPassword }) {
   return data; // { message }
 }
 
-/* =========================
- * (เสริม) Orders
- * ========================= */
+/* =======================================================================
+ * 3) Orders (LIBRARY-ONLY MOCK)
+ *    - บังคับใช้ mock เพื่อเดโมหน้า Library บน production ได้ทันที
+ *    - ไม่แตะ endpoint อื่น ทำให้ส่วนอื่นของระบบยังเรียก API ได้ตามปกติ
+ *    - Library.jsx จะอ่านจาก user.orders ที่ UserContext preload มา
+ *      (จึงเพียงต้องให้ getMyOrders() คืน mock orders ก็พอ)
+ * ======================================================================= */
+const USE_LIBRARY_MOCK = true;
+
+// Helper: lazy import mock เพื่อให้ bundle หลักเล็กลง
+async function importLibraryMock() {
+  // NOTE: path จาก src/services → src/mocks
+  const { getMockOrders } = await import("../mocks/libraryMock");
+  const orders = getMockOrders();
+  return Array.isArray(orders) ? orders : [];
+}
+
 export async function getMyOrders() {
+  if (USE_LIBRARY_MOCK) {
+    return importLibraryMock();
+  }
+  // (เผื่ออนาคตจะกลับมาใช้ API จริง)
   const { data } = await api.get("/users/orders");
   return data.orders || [];
 }
+
 export async function getOrderById(orderId) {
+  if (USE_LIBRARY_MOCK) {
+    const orders = await importLibraryMock();
+    return orders.find((o) => String(o.id) === String(orderId)) || null;
+  }
   const { data } = await api.get(`/orders/${orderId}`);
   return data.order;
 }
 
-/* =========================
- * Sessions API (สำหรับหน้า Active sessions)
- * ========================= */
-
-// NOTE(ไทย): ดึงทุก session ของผู้ใช้ปัจจุบัน (ฝั่ง backend อ่านจาก cookie)
+/* =======================================================================
+ * 4) Sessions (สำหรับหน้า Active Sessions)
+ * ======================================================================= */
 export async function getMySessions() {
   const { data } = await api.get("/users/sessions");
   return data.sessions || [];
 }
 
-// NOTE(ไทย): ดึง session id ปัจจุบันของแท็บ/อุปกรณ์นี้ เพื่อนำไปติดป้าย "This device"
 export async function getCurrentSessionId() {
-  // แนะนำให้ backend ทำ endpoint นี้
   // ตัวอย่าง response: { id: "sess_abc123" }
   const { data } = await api.get("/users/sessions/current");
   return data?.id || data?._id;
 }
 
-// NOTE(ไทย): เพิกถอน session แบบเดี่ยว โดยต้องใส่ password เพื่อยืนยัน
-// - ถ้า backend รองรับ DELETE พร้อม body ให้ใช้ data:{password} แบบนี้ได้
-// - ถ้า backend ไม่รองรับ DELETE body: เปลี่ยนไปใช้ POST /users/sessions/:id/revoke แทน
 export async function revokeSession(sessionId, { password } = {}) {
+  // รองรับ DELETE พร้อม body (บาง backend อาจต้องเปลี่ยนเป็น POST /revoke)
   if (password) {
-    await api.delete(`/users/sessions/${sessionId}`, {
-      data: { password },
-    });
+    await api.delete(`/users/sessions/${sessionId}`, { data: { password } });
   } else {
     await api.delete(`/users/sessions/${sessionId}`);
   }
   return true;
 }
 
-// NOTE(ไทย): เพิกถอนหลาย session (ทำทีละอันจากฝั่ง frontend)
-// - ถ้าอยากลดจำนวน request: ทำ endpoint bulk บน backend แล้วรวมเรียกทีเดียว
 export async function revokeSessionsBulk(sessionIds = [], password) {
   for (const id of sessionIds) {
     await revokeSession(id, { password });
@@ -150,9 +153,9 @@ export async function revokeSessionsBulk(sessionIds = [], password) {
   return true;
 }
 
-/* =========================
- * 7) Logout (ล้าง cookie)
- * ========================= */
+/* =======================================================================
+ * 5) Logout
+ * ======================================================================= */
 export async function logout() {
   const { data } = await api.post("/auth/logout");
   return data; // { message }
